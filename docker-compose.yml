@@ -1,0 +1,35 @@
+version: "3.8"
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: crypto_mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  jupyter:
+    image: jupyter/scipy-notebook:latest
+    container_name: crypto_pyspark
+    ports:
+      - "8888:8888"
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+    volumes:
+      - ./notebooks:/home/jovyan/notebooks
+      - ./requirements.txt:/tmp/requirements.txt
+    command: >
+      bash -c "
+      pip install -r /tmp/requirements.txt &&
+      start-notebook.sh
+      "
+
+volumes:
+  mongo_data:
+
+networks:
+  crypto_net:
+    name: crypto_network

@@ -1,9 +1,27 @@
 # Byte-compiled / optimized / DLL files
+# Ignore Python and Jupyter cache files
 __pycache__/
-*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+
+# Jupyter NB Checkpoints
+.ipynb_checkpoints/
+
+# DotEnv configuration
+.env
 
 # C extensions
 *.so
+
+# Ignore data files (optional, especially if large)
+data/raw/
+data/interim/
+data/processed/
+data/external/
+
+# exclude data from source control by default
+/data/
 
 # Distribution / packaging
 .Python
@@ -47,17 +65,11 @@ coverage.xml
 *.mo
 *.pot
 
-# Django stuff:
-*.log
-
 # Sphinx documentation
 docs/_build/
 
 # PyBuilder
 target/
-
-# DotEnv configuration
-.env
 
 # Database
 *.db
@@ -71,12 +83,6 @@ target/
 
 # Spyder
 .spyproject/
-
-# Jupyter NB Checkpoints
-.ipynb_checkpoints/
-
-# exclude data from source control by default
-/data/
 
 # Mac OS-specific storage files
 .DS_Store
