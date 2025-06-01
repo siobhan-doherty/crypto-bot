@@ -144,11 +144,3 @@ cryptobot/
 |`/api/v3/ticker/price`|Latest price|Live updates|
 |`/api/v3/trades`|Recent trades|Volume analysis|
 |`/api/v3/exchangeInfo`|Trading pairs & filters|Available pairs, validation|
-
-
-## 7. Next Steps
-
-- Set up MongoDB in Docker
-- Develop and test data ingestion scripts (PySpark and Kafka)
-- Validate historical and streaming data flow into MongoDB
-- Prepare first EDA notebook for exploration
