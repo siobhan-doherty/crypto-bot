@@ -4,3 +4,5 @@ requests
 pymongo
 binance
 mplfinance
+findspark
+dotenv
