@@ -7,16 +7,17 @@ from pymongo import MongoClient
 import pandas as pd
 from pymongo.errors import ConnectionFailure
 
-MONGO_URI = os.getenv('MONGO_URI', 'mongodb://crypto_project:dst123@localhost:27017/')
+print("Attempting to connect to MongoDB...")
 
 try:
-    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+    client = MongoClient(os.getenv('MONGO_URI'), serverSelectionTimeoutMS=5000)
     client.server_info()
     db = client["cryptobot"]
     collection = db["historical_data"]
     print("Successfully connected to MongoDB")
-except ConnectionFailure as e:
-    print(f"Could not connect to MongoDB: {e}")
+    print(f"Available collections: {db.list_collection_names()}")
+except Exception as e:
+    print(f"Error connecting to MongoDB: {str(e)}")
     raise
 
 
@@ -101,10 +102,8 @@ def update_graph(start_date, end_date):
     if not pd.api.types.is_datetime64_any_dtype(df['close_time']):
         df['close_time'] = pd.to_datetime(df['close_time'], unit='ms')
     
-    # Sort by time to ensure the line is drawn correctly
     df = df.sort_values('close_time')
     
-    # Filter the DataFrame based on the selected date range
     if start_date and end_date:
         df = df[(df['close_time'] >= pd.to_datetime(start_date)) & (df['close_time'] <= pd.to_datetime(end_date))]
     
@@ -136,4 +135,4 @@ def update_graph(start_date, end_date):
     }
 
 if __name__ == '__main__':
-    app.run(debug=True, host = 'localhost', port = 8080)
+    app.run(debug=True, host='0.0.0.0', port=8050)

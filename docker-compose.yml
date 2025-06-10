@@ -31,6 +31,18 @@ services:
       start-notebook.sh
       "
 
+  dash:
+    build:
+      context: .
+      dockerfile: Dockerfile.dash
+    container_name: crypto_dash
+    ports:
+      - "8050:8050"
+    environment:
+      - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@crypto_mongo:27017/
+    depends_on:
+      - mongodb
+
 volumes:
   mongo_data:
 

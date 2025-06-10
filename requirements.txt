@@ -7,3 +7,4 @@ python-binance
 findspark
 dotenv
 pyspark==3.4.2
+dash_bootstrap-components
