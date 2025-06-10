@@ -1,0 +1,35 @@
+FROM debian:bullseye-slim
+
+# Set environment variables
+ENV SPARK_VERSION=3.4.2
+ENV SPARK_HOME=/opt/spark
+ENV PATH=$SPARK_HOME/bin:$PATH
+
+# Install Java, Python, and system dependencies
+RUN apt-get update && apt-get install -y \
+    openjdk-11-jdk python3 python3-pip curl gnupg procps && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    pip3 install --no-cache-dir --upgrade pip && \
+    # 🔧 Add this line to ensure consistent Java path expected by Spark
+    ln -s /usr/lib/jvm/java-11-openjdk-* /usr/lib/jvm/java-11-openjdk-amd64
+
+# Set JAVA_HOME *after* symlink is created
+ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+ENV PATH="$JAVA_HOME/bin:$PATH"
+
+# Install Spark
+RUN curl -fsSL https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz | \
+    tar -xz -C /opt/ && \
+    mv /opt/spark-${SPARK_VERSION}-bin-hadoop3 /opt/spark
+
+# Install Python dependencies
+COPY requirements.txt /tmp/requirements.txt
+RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
+
+# Setup workdir and copy files
+WORKDIR /app
+COPY src /app/src
+COPY .env /app/.env
+
+CMD ["python3", "/app/src/data/collect_historical_data.py"]
