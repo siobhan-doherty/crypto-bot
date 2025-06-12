@@ -53,7 +53,7 @@ services:
       - ./notebooks:/home/jovyan/notebooks
       - ./src:/home/jovyan/src
       - ./requirements.txt:/tmp/requirements.txt
-      - ./env:/home/jovyan/.env
+      - ./.env:/home/jovyan/.env
     command: >
       bash -c "
       pip install -r /tmp/requirements.txt &&

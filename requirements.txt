@@ -10,6 +10,7 @@ dash_bootstrap-components
 python-binance
 mplfinance
 #=== Extract data from Kafka ===
+dotenv
 findspark
 python-dotenv
 kafka-python

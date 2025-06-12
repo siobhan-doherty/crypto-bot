@@ -13,7 +13,7 @@ findspark.init()
 
 
 # Load environment variables
-load_dotenv(dotenv_path="/app/.env", override=True)
+load_dotenv(dotenv_path="/home/jovyan/.env", override=True)
 API_KEY = os.getenv("BINANCE_API_KEY")
 SECRET_KEY = os.getenv("BINANCE_SECRET_KEY")
 
