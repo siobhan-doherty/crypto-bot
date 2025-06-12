@@ -41,7 +41,7 @@ services:
   jupyter:
     build: 
       context: .
-      dockerfile: ./docker/Dockerfile.jupyter
+      dockerfile: ./Dockerfile.jupyter
     container_name: crypto_pyspark
     ports:
       - "8888:8888"
@@ -52,7 +52,7 @@ services:
     volumes:
       - ./notebooks:/home/jovyan/notebooks
       - ./src:/home/jovyan/src
-      - ./docker/requirements.txt:/tmp/requirements.txt
+      - ./requirements.txt:/tmp/requirements.txt
       - ./env:/home/jovyan/.env
     command: >
       bash -c "

@@ -11,6 +11,6 @@ python-binance
 mplfinance
 #=== Extract data from Kafka ===
 findspark
-dotenv
+python-dotenv
 kafka-python
 aiohttp
