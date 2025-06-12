@@ -3,8 +3,14 @@ pandas
 numpy
 requests
 pymongo
-python-binance
-findspark
-dotenv
 pyspark==3.4.2
 dash_bootstrap-components
+#=== Extract data from Binance ===
+#binance
+python-binance
+mplfinance
+#=== Extract data from Kafka ===
+findspark
+dotenv
+kafka-python
+aiohttp
