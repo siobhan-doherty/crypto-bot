@@ -1,65 +1,18 @@
-import os
 import dash 
 from dash import html, dcc
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
-from pymongo import MongoClient
 import pandas as pd
-from pymongo.errors import ConnectionFailure
+from fetch_data import fetch_historical_data
+from plots.lineplot import create_lineplot
+from plots.candlestickplot import create_candlestickplot
 
-print("Attempting to connect to MongoDB...")
-
-try:
-    client = MongoClient(os.getenv('MONGO_URI'), serverSelectionTimeoutMS=5000)
-    client.server_info()
-    db = client["cryptobot"]
-    collection = db["historical_data"]
-    print("Successfully connected to MongoDB")
-    print(f"Available collections: {db.list_collection_names()}")
-except Exception as e:
-    print(f"Error connecting to MongoDB: {str(e)}")
-    raise
 
 
 # BOOTSTRAP, CERULEAN, DARKLY, FLATLY, LITERA, LUX, MATERIA, MINTY, PULSE, SANDSTONE, SIMPLEX, SKETCHY, SLATE, SOLAR, SPACELAB, UNITED
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
 
-
-def fetch_data_from_mongo():
-    data = list(collection.find())
-    if not data:
-        return pd.DataFrame()
-    df = pd.DataFrame(data)
-    df['close_time'] = pd.to_datetime(df['close_time'], unit='ms')
-    return df
-
-df = fetch_data_from_mongo()
-
-def create_figure(df):
-    if df.empty:
-        return {'data': [], 'layout': {}}
-        
-    df = df.sort_values('close_time')
-    
-    return {
-        'data': [{
-            'x': df['close_time'],
-            'y': df['close'],
-            'type': 'line',
-            'name': 'Close Price'
-        }],
-        'layout': {
-            'title': 'BITCUSDT Close Price',
-            'xaxis': {
-                'title': 'Time',
-                'rangeslider': {'visible': True, 'thickness': 0.1},
-                'type': 'date'
-            },
-            'yaxis': {'title': 'Close Price (USDT)'},
-            'margin': {'l': 60, 'r': 30, 't': 80, 'b': 100},
-            'height': 600
-        }
-    }
+df = fetch_historical_data()
 
 app.layout = html.Div([
     html.H1('Crypto Dashboard', style={'textAlign': 'center'}),
@@ -83,7 +36,11 @@ app.layout = html.Div([
         
         dcc.Graph(
             id='close-price-graph',
-            figure=create_figure(df)
+            figure=create_lineplot(df)
+        ),
+        dcc.Graph(
+            id='candlestick-graph',
+            figure=create_candlestickplot(df)
         )
     ])
 ])
@@ -93,8 +50,10 @@ app.layout = html.Div([
     Input('date-picker', 'start_date'),
     Input('date-picker', 'end_date')
 )
-def update_graph(start_date, end_date):
-    df = fetch_data_from_mongo()
+
+
+def update_lineplot(start_date, end_date):
+    df = fetch_historical_data()
     if df.empty:
         return {'data': [], 'layout': {}}
         
