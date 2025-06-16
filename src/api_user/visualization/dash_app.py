@@ -48,7 +48,7 @@ app.layout = html.Div(children=[
                 id='candlestick-graph',
                 figure=create_candlestickplot(df)
             ),
-             create_date_range_slider(df, 'candlestick-time-slider')
+            create_date_range_slider(df, 'candlestick-time-slider')
         ])
 ])
 
