@@ -4,7 +4,6 @@ def create_candlestickplot(df):
         
     df = df.sort_values('close_time')
     
-    # Define colors for increasing and decreasing candlesticks
     increasing_color = '#00bc8c'  # Green for increasing
     decreasing_color = '#e74c3c'  # Red for decreasing
     
@@ -37,7 +36,8 @@ def create_candlestickplot(df):
                 'type': 'date',
                 'gridcolor': 'rgba(255, 255, 255, 0.1)',
                 'linecolor': 'rgba(255, 255, 255, 0.1)',
-                'zerolinecolor': 'rgba(255, 255, 255, 0.1)'
+                'zerolinecolor': 'rgba(255, 255, 255, 0.1)',
+                'rangeslider': {'visible': False}  # Disable the built-in range slider
             },
             'yaxis': {
                 'title': 'Price (USDT)',
