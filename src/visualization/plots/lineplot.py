@@ -1,4 +1,5 @@
 import pandas as pd
+from layout.theme import PLOT_LAYOUT, LINE_PLOT
 
 def create_lineplot(df):
     """
@@ -15,51 +16,24 @@ def create_lineplot(df):
         
     df = df.sort_values('close_time')
     
+    layout = PLOT_LAYOUT.copy()
+    
+    layout.update({
+        'title': {'text': 'BITCUSDT Close Price', 'font': {'color': PLOT_LAYOUT['font']['color']}},
+        'xaxis': {**PLOT_LAYOUT['xaxis'], 'title': 'Time'},
+        'yaxis': {**PLOT_LAYOUT['yaxis'], 'title': 'Close Price (USDT)'}
+    })
+    
     return {
         'data': [{
             'x': df['close_time'],
             'y': df['close'],
             'type': 'line',
             'name': 'Close Price',
-            'line': {'color': '#00bc8c', 'width': 2}
+            'line': {
+                'color': LINE_PLOT['line_color'],
+                'width': LINE_PLOT['line_width']
+            }
         }],
-        'layout': {
-            'title': {'text': 'BITCUSDT Close Price', 'font': {'color': '#f8f9fa'}},
-            'xaxis': {
-                'title': 'Time',
-                'titlefont': {'color': '#f8f9fa'},
-                'tickfont': {'color': '#f8f9fa'},
-                'gridcolor': 'rgba(255, 255, 255, 0.1)',
-                'linecolor': 'rgba(255, 255, 255, 0.1)',
-                'zerolinecolor': 'rgba(255, 255, 255, 0.1)',
-                'showgrid': True,
-                'showline': True
-            },
-            'yaxis': {
-                'title': 'Close Price (USDT)',
-                'titlefont': {'color': '#f8f9fa'},
-                'tickfont': {'color': '#f8f9fa'},
-                'gridcolor': 'rgba(255, 255, 255, 0.1)',
-                'linecolor': 'rgba(255, 255, 255, 0.1)',
-                'zerolinecolor': 'rgba(255, 255, 255, 0.1)',
-                'showgrid': True,
-                'showline': True
-            },
-            'margin': {'l': 60, 'r': 30, 't': 80, 'b': 100},
-            'height': 500,
-            'plot_bgcolor': '#222',
-            'paper_bgcolor': '#222',
-            'font': {'color': '#f8f9fa'},
-            'hovermode': 'x unified',
-            'hoverlabel': {
-                'font': {'color': '#f8f9fa'},
-                'bgcolor': '#303030'
-            },
-            'legend': {
-                'font': {'color': '#f8f9fa'},
-                'bgcolor': '#222',
-                'bordercolor': 'rgba(255, 255, 255, 0.1)'
-            },
-            'transition': {'duration': 300}
-        }
+        'layout': layout
     }

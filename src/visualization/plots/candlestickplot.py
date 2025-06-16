@@ -1,60 +1,36 @@
+import pandas as pd
+from plotly.graph_objs import Figure, Candlestick
+from layout.theme import PLOT_LAYOUT, CANDLESTICK
+
 def create_candlestickplot(df):
     if df.empty:
         return {'data': [], 'layout': {}}
         
     df = df.sort_values('close_time')
     
-    increasing_color = '#00bc8c'  # Green for increasing
-    decreasing_color = '#e74c3c'  # Red for decreasing
+    layout = PLOT_LAYOUT.copy()
     
-    return {
-        'data': [{
-            'x': df['close_time'],
-            'open': df['open'],
-            'high': df['high'],
-            'low': df['low'],
-            'close': df['close'],
-            'type': 'candlestick',
-            'name': 'Price',
-            'increasing': {
-                'line': {'color': increasing_color},
-                'fillcolor': increasing_color
-            },
-            'decreasing': {
-                'line': {'color': decreasing_color},
-                'fillcolor': decreasing_color
-            },
-            'line': {'width': 1},
-            'whiskerwidth': 0.8
-        }],
-        'layout': {
-            'title': {'text': 'BITCUSDT Candlestick Chart', 'font': {'color': '#f8f9fa'}},
-            'xaxis': {
-                'title': 'Time',
-                'titlefont': {'color': '#f8f9fa'},
-                'tickfont': {'color': '#f8f9fa'},
-                'type': 'date',
-                'gridcolor': 'rgba(255, 255, 255, 0.1)',
-                'linecolor': 'rgba(255, 255, 255, 0.1)',
-                'zerolinecolor': 'rgba(255, 255, 255, 0.1)',
-                'rangeslider': {'visible': False}  # Disable the built-in range slider
-            },
-            'yaxis': {
-                'title': 'Price (USDT)',
-                'titlefont': {'color': '#f8f9fa'},
-                'tickfont': {'color': '#f8f9fa'},
-                'gridcolor': 'rgba(255, 255, 255, 0.1)',
-                'linecolor': 'rgba(255, 255, 255, 0.1)',
-                'zerolinecolor': 'rgba(255, 255, 255, 0.1)'
-            },
-            'margin': {'l': 60, 'r': 30, 't': 80, 'b': 100},
-            'height': 600,
-            'plot_bgcolor': '#303030',
-            'paper_bgcolor': '#222',
-            'font': {'color': '#f8f9fa'},
-            'hovermode': 'x unified',
-            'hoverlabel': {'font': {'color': '#f8f9fa'}},
-            'legend': {'font': {'color': '#f8f9fa'}},
-            'showlegend': False
-        }
-    }
+    layout.update({
+        'title': {'text': 'BITCUSDT Candlestick Chart', 'font': {'color': PLOT_LAYOUT['font']['color']}},
+        'xaxis': {**PLOT_LAYOUT['xaxis'], 'title': 'Time', 'type': 'date', 'rangeslider': {'visible': False}},
+        'yaxis': {**PLOT_LAYOUT['yaxis'], 'title': 'Price (USDT)'}
+    })
+    
+    candlestick = Candlestick(
+        x=df['close_time'],
+        open=df['open'],
+        high=df['high'],
+        low=df['low'],
+        close=df['close'],
+        name='Candlesticks',
+        increasing_line_color=CANDLESTICK['increasing'],
+        decreasing_line_color=CANDLESTICK['decreasing'],
+        increasing_fillcolor=CANDLESTICK['increasing'],
+        decreasing_fillcolor=CANDLESTICK['decreasing'],
+        line=dict(width=1),
+        opacity=0.8
+    )
+    
+    fig = Figure(data=[candlestick], layout=layout)
+    
+    return fig.to_dict()
