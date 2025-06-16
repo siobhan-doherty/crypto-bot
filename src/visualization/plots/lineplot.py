@@ -26,10 +26,7 @@ def create_lineplot(df):
         'layout': {
             'title': 'BITCUSDT Close Price',
             'xaxis': {
-                'title': 'Time',
-                'rangeslider': {'visible': True, 'thickness': 0.1},
-                'type': 'date',
-                'gridcolor': 'rgba(0,0,0,0.1)'
+                'title': 'Time'
             },
             'yaxis': {
                 'title': 'Close Price (USDT)',

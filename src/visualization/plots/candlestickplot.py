@@ -18,7 +18,6 @@ def create_candlestickplot(df):
             'title': 'BITCUSDT Close Price',
             'xaxis': {
                 'title': 'Time',
-                'rangeslider': {'visible': True, 'thickness': 0.1},
                 'type': 'date'
             },
             'yaxis': {'title': 'Close Price (USDT)'},
