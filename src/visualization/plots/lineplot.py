@@ -21,22 +21,45 @@ def create_lineplot(df):
             'y': df['close'],
             'type': 'line',
             'name': 'Close Price',
-            'line': {'color': '#1f77b4'}
+            'line': {'color': '#00bc8c', 'width': 2}
         }],
         'layout': {
-            'title': 'BITCUSDT Close Price',
+            'title': {'text': 'BITCUSDT Close Price', 'font': {'color': '#f8f9fa'}},
             'xaxis': {
-                'title': 'Time'
+                'title': 'Time',
+                'titlefont': {'color': '#f8f9fa'},
+                'tickfont': {'color': '#f8f9fa'},
+                'gridcolor': 'rgba(255, 255, 255, 0.1)',
+                'linecolor': 'rgba(255, 255, 255, 0.1)',
+                'zerolinecolor': 'rgba(255, 255, 255, 0.1)',
+                'showgrid': True,
+                'showline': True
             },
             'yaxis': {
                 'title': 'Close Price (USDT)',
-                'gridcolor': 'rgba(0,0,0,0.1)'
+                'titlefont': {'color': '#f8f9fa'},
+                'tickfont': {'color': '#f8f9fa'},
+                'gridcolor': 'rgba(255, 255, 255, 0.1)',
+                'linecolor': 'rgba(255, 255, 255, 0.1)',
+                'zerolinecolor': 'rgba(255, 255, 255, 0.1)',
+                'showgrid': True,
+                'showline': True
             },
             'margin': {'l': 60, 'r': 30, 't': 80, 'b': 100},
             'height': 500,
-            'plot_bgcolor': 'white',
-            'paper_bgcolor': 'white',
-            'font': {'color': '#2c3e50'},
-            'hovermode': 'x unified'
+            'plot_bgcolor': '#222',
+            'paper_bgcolor': '#222',
+            'font': {'color': '#f8f9fa'},
+            'hovermode': 'x unified',
+            'hoverlabel': {
+                'font': {'color': '#f8f9fa'},
+                'bgcolor': '#303030'
+            },
+            'legend': {
+                'font': {'color': '#f8f9fa'},
+                'bgcolor': '#222',
+                'bordercolor': 'rgba(255, 255, 255, 0.1)'
+            },
+            'transition': {'duration': 300}
         }
     }
