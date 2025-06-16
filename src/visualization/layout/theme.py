@@ -56,3 +56,9 @@ LINE_PLOT = {
     'line_color': COLORS['primary'],
     'line_width': 2
 }
+
+VOLUME_PLOT = {
+    'bar_color': COLORS['primary'],
+    'line_width': 2
+}
+

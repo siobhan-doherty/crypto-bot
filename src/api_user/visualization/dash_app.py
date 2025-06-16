@@ -4,6 +4,7 @@ import dash_bootstrap_components as dbc
 from fetch_data import fetch_historical_data
 from plots.lineplot import create_lineplot
 from plots.candlestickplot import create_candlestickplot
+from plots.volumeplot import create_volumeplot
 from callbacks.callbacks import register_callbacks
 from layout.controls import create_date_range_slider
 from layout.theme import COLORS
@@ -71,10 +72,11 @@ app.layout = html.Div(children=[
             ])
         ]),
         
+        # Candlestick Chart Section
         html.Div(style=chart_container_style, children=[
             html.H2('Candlestick Chart', style={
                 'textAlign': 'center',
-                'color': '#f8f9fa',
+                'color': COLORS['text'],
                 'marginBottom': '20px'
             }),
             dcc.Graph(
@@ -84,11 +86,33 @@ app.layout = html.Div(children=[
             ),
             html.Div(style={'padding': '0 15px'}, children=[
                 html.Div('Date Range:', style={
-                    'color': '#f8f9fa',
+                    'color': COLORS['text'],
                     'marginBottom': '10px',
                     'fontWeight': 'bold'
                 }),
                 create_date_range_slider(df, 'candlestick-time-slider')
+            ])
+        ]),
+        
+        # Volume Chart Section
+        html.Div(style=chart_container_style, children=[
+            html.H2('Trading Volume', style={
+                'textAlign': 'center',
+                'color': COLORS['text'],
+                'marginBottom': '20px'
+            }),
+            dcc.Graph(
+                id='volume-graph',
+                figure=create_volumeplot(df),
+                style={'marginBottom': '20px'}
+            ),
+            html.Div(style={'padding': '0 15px'}, children=[
+                html.Div('Date Range:', style={
+                    'color': COLORS['text'],
+                    'marginBottom': '10px',
+                    'fontWeight': 'bold'
+                }),
+                create_date_range_slider(df, 'volume-time-slider')
             ])
         ])
     ])
