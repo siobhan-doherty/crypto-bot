@@ -1,0 +1,19 @@
+FROM jupyter/scipy-notebook:latest
+
+USER root
+
+RUN apt-get update && apt-get install -y openjdk-11-jdk curl
+
+ENV SPARK_VERSION=3.4.2 \
+    SPARK_HOME=/opt/spark \
+    JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64 \
+    PATH=$SPARK_HOME/bin:$JAVA_HOME/bin:$PATH
+
+RUN curl -fsSL https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz | \
+    tar -xz -C /opt/ && mv /opt/spark-${SPARK_VERSION}-bin-hadoop3 /opt/spark
+
+USER $NB_UID
+
+COPY src/api_admin/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+

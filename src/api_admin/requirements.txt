@@ -1,0 +1,6 @@
+pyspark==3.4.2
+python-binance
+kafka-python
+python-dotenv
+requests
+findspark

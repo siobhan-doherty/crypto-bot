@@ -11,7 +11,7 @@ consumer = KafkaConsumer(
     value_deserializer=lambda x: json.loads(x.decode('utf-8'))
 )
 
-# MongoDB config (ajusta usuario, password y host si hace falta)
+# MongoDB 
 mongo_client = MongoClient('mongodb://crypto_project:dst123@crypto_mongo:27017/')
 db = mongo_client['cryptobot']
 collection = db['streaming_data']
@@ -20,6 +20,6 @@ print("Consumer started. Listening for messages...")
 for message in consumer:
     data = message.value
     print("Received:", data)
-    # Guarda en MongoDB
+    # save in MongoDB
     collection.insert_one(data)
     print("Saved to MongoDB:", data['symbol'], data['ts'])

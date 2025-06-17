@@ -5,12 +5,13 @@ requests
 pymongo
 pyspark==3.4.2
 dash_bootstrap-components
+
 #=== Extract data from Binance ===
 #binance
 python-binance
 mplfinance
+
 #=== Extract data from Kafka ===
-dotenv
 findspark
 python-dotenv
 kafka-python

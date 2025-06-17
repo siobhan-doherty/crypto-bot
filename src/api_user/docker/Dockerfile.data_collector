@@ -23,13 +23,10 @@ RUN curl -fsSL https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spar
     tar -xz -C /opt/ && \
     mv /opt/spark-${SPARK_VERSION}-bin-hadoop3 /opt/spark
 
-# Install Python dependencies
-COPY requirements.txt /tmp/requirements.txt
-RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
-#RUN pip3 install -r /tmp/requirements.txt
-# Setup workdir and copy files
+COPY src/api_user/requirements.txt /tmp/requirements.txt
+RUN pip install -r /tmp/requirements.txt
+
 WORKDIR /app
-COPY src /app/src
-COPY .env /app/.env
+COPY src/ /app/src
 
 CMD ["python3", "/app/src/data/collect_historical_data.py"]
