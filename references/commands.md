@@ -21,12 +21,12 @@ docker-compose up -d
 ## Execute in different terminals
 docker exec -it crypto_pyspark python3 src/api_admin/data/collect_historical_data.py
 docker exec -it crypto_pyspark python3 src/api_admin/data/kafka_producer.py
-docker exec -it crypto_pyspark python3 src/api_admin/data/kafka_consume.py
+docker exec -it crypto_pyspark python3 src/api_admin/data/kafka_consumer.py
 # launch dash
 docker exec -it crypto_dash python3 src/api_user/visualization/dash_app.py
 
 ## Check data in MongoDB
-docker exec -it crypto_mongo mongosh -u crypto_project -p dst123 --authenticationDatabase admin
+docker exec -it crypto_mongo mongosh -u <USER_NAME> -p <PASSWORD> --authenticationDatabase admin
 
 db.adminCommand('listDatabases')
 use cryptobot

@@ -60,6 +60,7 @@ services:
     environment:
       - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@crypto_mongo:27017/
     networks: [crypto_network]
+    
 volumes:
   mongo_data:
 

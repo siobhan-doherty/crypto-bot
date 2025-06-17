@@ -62,14 +62,14 @@ while True:
             if not klines:
                 print(f"No klines received for {symbol}")
                 continue
-                
+            time.sleep(2)  # 2 sec delay per symbol
             msg = process_kline(symbol, klines[0])
             producer.send('binance_prices', msg)
             print(f"Sent kline for {symbol} at {current_ts}")
             
         producer.flush()
-        time.sleep(20)  # wait 60 seconds
-        
+        time.sleep(60)  # API rate limit (Binance could ban) and reduce system load
+
     except Exception as e:
         print(f"Error: {e}")
-        time.sleep(10)
+        time.sleep(60)  # Wait before retrying to avoid spamming the API
