@@ -8,10 +8,12 @@ from plots.volumeplot import create_volumeplot
 def register_callbacks(app, fetch_historical_data):
     @app.callback(
         Output('close-price-graph', 'figure'),
-        Input('lineplot-time-slider', 'value')
+        Input('lineplot-time-slider', 'value'),
+        Input('trading-pair-dropdown', 'value')
     )
-    def update_lineplot(date_range):
-        df = fetch_historical_data()
+    def update_lineplot(date_range, trading_pair):
+        trading_pair = trading_pair or 'BTCUSDT'
+        df = fetch_historical_data(trading_pair)
         if df.empty:
             return {'data': [], 'layout': {}}
             
@@ -30,10 +32,12 @@ def register_callbacks(app, fetch_historical_data):
 
     @app.callback(
         Output('candlestick-graph', 'figure'),
-        Input('candlestick-time-slider', 'value')
+        Input('candlestick-time-slider', 'value'),
+        Input('trading-pair-dropdown', 'value')
     )
-    def update_candlestick(date_range):
-        df = fetch_historical_data()
+    def update_candlestick(date_range, trading_pair):
+        trading_pair = trading_pair or 'BTCUSDT'
+        df = fetch_historical_data(trading_pair)
         if df.empty:
             return {'data': [], 'layout': {}}
             
@@ -48,14 +52,16 @@ def register_callbacks(app, fetch_historical_data):
             end_date = pd.to_datetime(end_ts, unit='s')
             df = df[(df['close_time'] >= start_date) & (df['close_time'] <= end_date)]
         
-        return create_candlestickplot(df)
+        return create_candlestickplot(df) 
 
     @app.callback(
         Output('volume-graph', 'figure'),
-        Input('volume-time-slider', 'value')
+        Input('volume-time-slider', 'value'),
+        Input('trading-pair-dropdown', 'value')
     )
-    def update_volume(date_range):
-        df = fetch_historical_data()
+    def update_volume(date_range, trading_pair):
+        trading_pair = trading_pair or 'BTCUSDT'
+        df = fetch_historical_data(trading_pair)
         if df.empty:
             return {'data': [], 'layout': {}}
             

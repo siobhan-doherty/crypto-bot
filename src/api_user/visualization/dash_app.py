@@ -6,7 +6,7 @@ from plots.lineplot import create_lineplot
 from plots.candlestickplot import create_candlestickplot
 from plots.volumeplot import create_volumeplot
 from callbacks.callbacks import register_callbacks
-from layout.controls import create_date_range_slider
+from layout.controls import create_date_range_slider, create_trading_pair_dropdown
 from layout.theme import COLORS
 
 
@@ -27,6 +27,23 @@ chart_container_style = {
 
 app.layout = html.Div(children=[
     html.H1('Crypto Dashboard', style={'textAlign': 'center', 'marginBottom': '20px'}),
+    
+    html.Div(style={
+        'textAlign': 'center',
+        'marginBottom': '20px',
+        'padding': '10px',
+        'backgroundColor': COLORS['panel'],
+        'borderRadius': '8px',
+        'maxWidth': '800px',
+        'margin': '0 auto 20px'
+    }, children=[
+        html.Div('Select Trading Pair:', style={
+            'color': COLORS['text'],
+            'marginBottom': '10px',
+            'fontWeight': 'bold'
+        }),
+        create_trading_pair_dropdown('trading-pair-dropdown')
+    ]),
     
     # Data info section
     html.Div(style={
