@@ -7,7 +7,7 @@ services:
     ports: ["2181:2181"]
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
-    networks: [crypto_net]
+    networks: [crypto_network]
 
   kafka:
     image: bitnami/kafka:3.7
@@ -21,7 +21,7 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       ALLOW_PLAINTEXT_LISTENER: yes
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    networks: [crypto_net]
+    networks: [crypto_network]
 
   mongodb:
     image: mongo:7.0
@@ -31,7 +31,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-    networks: [crypto_net]
+    networks: [crypto_network]
 
   jupyter:
     build:
@@ -44,7 +44,7 @@ services:
       - ./src:/home/jovyan/src
     environment:
       - JUPYTER_ENABLE_LAB=yes
-    networks: [crypto_net]
+    networks: [crypto_network]
     env_file:
     - ./src/api_admin/.env
 
@@ -59,21 +59,12 @@ services:
     depends_on: [mongodb]
     environment:
       - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@crypto_mongo:27017/
-    networks: [crypto_net]
-
-  data_collector:
-    build:
-      context: .
-      dockerfile: src/api_user/docker/Dockerfile.data_collector
-    container_name: crypto_data_collector
-    env_file:
-    - ./src/api_user/.env
-    depends_on: [mongodb]
-    networks: [crypto_net]
-
+    networks: [crypto_network]
 volumes:
   mongo_data:
 
 networks:
-  crypto_net:
+  crypto_network:
     name: crypto_network
+    driver: bridge
+    external: true

@@ -8,9 +8,10 @@ RUN apt-get update && apt-get install -y gcc curl && \
 COPY src/api_user/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
+
 COPY . .
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app
 
-CMD ["python", "src/visualization/dash_app.py"]
+CMD ["tail", "-f", "/dev/null"]
