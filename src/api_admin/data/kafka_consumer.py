@@ -1,6 +1,7 @@
 from kafka import KafkaConsumer
 import json
 from pymongo import MongoClient
+import os
 
 # Kafka consumer config
 consumer = KafkaConsumer(
@@ -11,8 +12,8 @@ consumer = KafkaConsumer(
     value_deserializer=lambda x: json.loads(x.decode('utf-8'))
 )
 
-# MongoDB 
-mongo_client = MongoClient('mongodb://crypto_project:dst123@crypto_mongo:27017/')
+# MongoDB
+mongo_client = MongoClient(os.getenv("MONGO_URI"))
 db = mongo_client['cryptobot']
 collection = db['streaming_data']
 
