@@ -1,6 +1,6 @@
 # Crypto Data Pipeline Project
 
-## 1 The project
+ 1. **The project**:
 This project provides a modular and containerized architecture for collecting, storing, streaming, and visualizing cryptocurrency data using tools like **PySpark**, **Kafka**, **MongoDB**, **Dash**, and **Jupyter**.
 
 ---
@@ -130,7 +130,7 @@ MONGO_URI=mongodb://your_user:your_pass@crypto_mongo:27017/
 
 ## Authors
 
-* Team A – BDE INT OPA Bootcamp Project (April 2025)
+* Team A – DataScientest : Bootcamp Data Engineer Project (April 2025)
   * Indira Burga 
   * Katharina Klat
   * Siobhan Doherty
@@ -140,11 +140,4 @@ MONGO_URI=mongodb://your_user:your_pass@crypto_mongo:27017/
 
 ## License
 
-MIT License — use freely, cite responsibly.
-
-```
-
----
-
-Let me know if you want to include an **architecture diagram**, **Makefile**, or sample API requests for FastAPI in the future.
-```
+Licensed under the [Apache License 2.0](./LICENSE).
