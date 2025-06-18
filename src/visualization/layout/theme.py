@@ -4,13 +4,13 @@ Defines colors and styles to maintain consistency across all plots.
 """
 
 COLORS = {
-    'background': '#222',
-    'panel': '#2d2d2d',
-    'grid': 'rgba(255, 255, 255, 0.1)',
-    'text': '#f8f9fa',
-    'primary': '#00bc8c',  # Teal/Green
-    'secondary': '#e74c3c',  # Red
-    'border': 'rgba(255, 255, 255, 0.1)'
+    'background': '#222222',  # dark gray
+    'panel': '#2d2d2d',       # slightly lighter gray
+    'grid': 'rgba(255, 255, 255, 0.1)',  # semi-transparent white
+    'text': '#f8f9fa',        # light gray/white
+    'primary': '#00bc8c',     # Teal/Green
+    'secondary': '#e74c3c',   # Red
+    'border': 'rgba(39, 41, 61, 0.5)'  # semi-transparent dark gray
 }
 
 PLOT_LAYOUT = {

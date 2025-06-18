@@ -38,15 +38,20 @@ def create_date_range_slider(df, slider_id, min_date_col='close_time', max_date_
         step=None
     )
 
+#from .theme import DROPDOWN_STYLES
+
 def create_trading_pair_dropdown(dropdown_id):
     options=[
-            {'label': 'BTC/USDT', 'value': 'BTCUSDT'},
-            {'label': 'ETH/USDT', 'value': 'ETHUSDT'},
-            {'label': 'ETH/BTC', 'value': 'ETHBTC'},
-        ]
+        {'label': 'BTC/USDT', 'value': 'BTCUSDT'},
+        {'label': 'ETH/USDT', 'value': 'ETHUSDT'},
+        {'label': 'ETH/BTC', 'value': 'ETHBTC'},
+    ]
+    
     return dcc.Dropdown(
         id=dropdown_id,
+        className='custom-dropdown',
         options=options,
         value='BTCUSDT',
-        style={'width': '200px'}
+        clearable=False,
+        searchable=False,
     )

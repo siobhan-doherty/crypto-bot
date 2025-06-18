@@ -1,0 +1,49 @@
+
+/* Dropdown Styles */
+.custom-dropdown .Select-control {
+    background-color: #222 !important;
+    border: 1px solid rgba(39, 41, 61, 0.5) !important;
+    font-size: 16px;
+    color: #f8f9fa !important;
+    min-height: 38px;
+    border-radius: 4px;
+}
+
+.custom-dropdown .Select-control:hover {
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
+}
+
+.custom-dropdown .Select-menu-outer {
+    background-color: #2d2d2d !important;
+    border: 1px solid rgba(39, 41, 61, 0.5);
+    border-top-color: rgba(39, 41, 61, 0.5);
+    margin-top: -1px;
+    max-height: 300px;
+}
+
+.custom-dropdown .Select-option {
+    padding: 10px;
+    font-weight: bold;
+    color: #f8f9fa !important;
+    background-color: #2d2d2d;
+}
+
+.custom-dropdown .Select-option.is-focused,
+.custom-dropdown .Select-option:hover,
+.custom-dropdown .Select-option.is-selected {
+    background-color: #3d3d3d;
+    color: #f8f9fa !important;
+}
+
+.custom-dropdown .Select-value-label {
+    color: #f8f9fa !important;
+    font-weight: bold;
+}
+
+/* Style for the dropdown arrow */
+.custom-dropdown .Select-arrow-zone > .Select-arrow {
+    border-top-color: #f8f9fa !important;
+}
+
+
+
