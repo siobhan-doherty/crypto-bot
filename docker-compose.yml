@@ -44,9 +44,11 @@ services:
       - ./src:/home/jovyan/src
     environment:
       - JUPYTER_ENABLE_LAB=yes
+      - PYTHONPATH=/home/jovyan/src
     networks: [crypto_network]
     env_file:
     - ./src/api_admin/.env
+    
 
   dash:
     build:
