@@ -38,20 +38,57 @@ def create_date_range_slider(df, slider_id, min_date_col='close_time', max_date_
         step=None
     )
 
-#from .theme import DROPDOWN_STYLES
-
-def create_trading_pair_dropdown(dropdown_id):
+def create_trading_pair_dropdown(dropdown_id, multi=False, value=None):
     options=[
         {'label': 'BTC/USDT', 'value': 'BTCUSDT'},
-        {'label': 'ETH/USDT', 'value': 'ETHUSDT'},
-        {'label': 'ETH/BTC', 'value': 'ETHBTC'},
+        {'label': 'ETH/USDT', 'value': 'ETHUSDT'}
     ]
+    
+    if value is None:
+        value = 'BTCUSDT' if not multi else ['BTCUSDT', 'ETHUSDT']
     
     return dcc.Dropdown(
         id=dropdown_id,
         className='custom-dropdown',
         options=options,
-        value='BTCUSDT',
-        clearable=False,
+        value=value,
+        multi=multi,
+        clearable=not multi,  # Don't allow clearing when multi-select
         searchable=False,
     )
+
+def create_atr_period_input(input_id, default_period=14):
+    """
+    Create a numeric input for ATR period selection.
+    
+    Args:
+        input_id (str): The ID for the input component
+        default_period (int): Default ATR period (default: 14)
+        
+    Returns:
+        html.Div: Styled numeric input component
+    """
+    return html.Div([
+        html.Label('Average True Range Period:', style={
+            'color': 'white',
+            'marginRight': '10px',
+            'fontSize': '14px'
+        }),
+        dcc.Input(
+            id=input_id,
+            type='number',
+            min=5,
+            max=50,
+            step=1,
+            value=default_period,
+            style={
+                'width': '60px',
+                'marginRight': '10px',
+                'backgroundColor': '#2d2d2d',
+                'color': 'white',
+                'border': '1px solid #00bc8c',
+                'borderRadius': '4px',
+                'padding': '4px 8px'
+            }
+        )
+    ], style={'display': 'flex', 'alignItems': 'center'})
