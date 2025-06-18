@@ -2,6 +2,8 @@ from kafka import KafkaConsumer
 import json
 from pymongo import MongoClient
 import os
+from api_admin.db.mongo_utils import save_to_collection 
+
 
 # Kafka consumer config
 consumer = KafkaConsumer(
@@ -22,5 +24,5 @@ for message in consumer:
     data = message.value
     print("Received:", data)
     # save in MongoDB
-    collection.insert_one(data)
+    save_to_collection("cryptobot", "streaming_data", data)
     print("Saved to MongoDB:", data['symbol'], data['ts'])
