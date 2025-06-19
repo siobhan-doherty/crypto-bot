@@ -1,8 +1,7 @@
-import pandas as pd
 from plotly.graph_objs import Figure, Candlestick
-from layout.theme import PLOT_LAYOUT, CANDLESTICK
+from layout.theme import PLOT_LAYOUT, COLORS
 
-def create_candlestickplot(df):
+def create_candlestickplot(df, trading_pair='BTCUSDT'):
     if df.empty:
         return {'data': [], 'layout': {}}
         
@@ -10,8 +9,12 @@ def create_candlestickplot(df):
     
     layout = PLOT_LAYOUT.copy()
     
+    # Create a copy of the default title config and update the text
+    title_config = PLOT_LAYOUT.get('title', {}).copy()
+    title_config['text'] = f'{trading_pair} Candlestick Chart'
+    
     layout.update({
-        'title': {'text': 'BITCUSDT Candlestick Chart', 'font': {'color': PLOT_LAYOUT['font']['color']}},
+        'title': title_config,
         'xaxis': {**PLOT_LAYOUT['xaxis'], 'title': 'Time', 'type': 'date', 'rangeslider': {'visible': False}},
         'yaxis': {**PLOT_LAYOUT['yaxis'], 'title': 'Price (USDT)'}
     })
@@ -23,10 +26,10 @@ def create_candlestickplot(df):
         low=df['low'],
         close=df['close'],
         name='Candlesticks',
-        increasing_line_color=CANDLESTICK['increasing'],
-        decreasing_line_color=CANDLESTICK['decreasing'],
-        increasing_fillcolor=CANDLESTICK['increasing'],
-        decreasing_fillcolor=CANDLESTICK['decreasing'],
+        increasing_line_color=COLORS['increase'],
+        decreasing_line_color=COLORS['decrease'],
+        increasing_fillcolor=COLORS['increase'],
+        decreasing_fillcolor=COLORS['decrease'],
         line=dict(width=1),
         opacity=0.8
     )

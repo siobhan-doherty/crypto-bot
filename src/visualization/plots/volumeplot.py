@@ -1,7 +1,7 @@
 import plotly.graph_objects as go
 from layout.theme import PLOT_LAYOUT, COLORS
 
-def create_volumeplot(df):
+def create_volumeplot(df, trading_pair='BTCUSDT'):
     """
     Create a volume plot with color-coded bars based on price movement.
     
@@ -18,8 +18,12 @@ def create_volumeplot(df):
     
     layout = PLOT_LAYOUT.copy()
     
+    # Create a copy of the default title config and update the text
+    title_config = PLOT_LAYOUT.get('title', {}).copy()
+    title_config['text'] = f'{trading_pair} Volume'
+    
     layout.update({
-        'title': {'text': 'Trading Volume', 'font': {'color': PLOT_LAYOUT['font']['color']}},
+        'title': title_config,
         'xaxis': {**PLOT_LAYOUT['xaxis'], 'title': 'Time'},
         'yaxis': {**PLOT_LAYOUT['yaxis'], 'title': 'Volume (USDT)'},
         'showlegend': False

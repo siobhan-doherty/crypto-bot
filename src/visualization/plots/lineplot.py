@@ -4,12 +4,13 @@ def calculate_ema(series, periods):
     """Calculate Exponential Moving Average"""
     return series.ewm(span=periods, min_periods=periods, adjust=False).mean()
 
-def create_lineplot(df):
+def create_lineplot(df, trading_pair='BTCUSDT'):
     """
     Create a line plot of the close price over time with EMA indicators.
     
     Args:
         df (pd.DataFrame): DataFrame containing 'close_time' and 'close' columns
+        trading_pair (str): The trading pair being displayed (e.g., 'BTCUSDT')
         
     Returns:
         dict: Plotly figure as a dictionary
@@ -26,10 +27,14 @@ def create_lineplot(df):
     
     layout = PLOT_LAYOUT.copy()
     
+    # Create a copy of the default title config and update the text
+    title_config = PLOT_LAYOUT.get('title', {}).copy()
+    title_config['text'] = f'{trading_pair} Close Price with Exponential Moving Averages'
+    
     layout.update({
-        'title': {'text': 'BITCUSDT Close Price with EMAs', 'font': {'color': PLOT_LAYOUT['font']['color']}},
+        'title': title_config,
         'xaxis': {**PLOT_LAYOUT['xaxis'], 'title': 'Time'},
-        'yaxis': {**PLOT_LAYOUT['yaxis'], 'title': 'Price (USDT)'},
+        'yaxis': {**PLOT_LAYOUT['yaxis'], 'title': 'Price (USDT)'}, 
         'legend': {
             'orientation': 'h',
             'yanchor': 'bottom',
