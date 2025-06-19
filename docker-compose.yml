@@ -28,6 +28,11 @@ services:
     container_name: crypto_mongo
     ports: ["27017:27017"]
     volumes: [mongo_data:/data/db] # persistent storage for MongoDB
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
@@ -49,7 +54,6 @@ services:
     env_file:
     - ./src/api_admin/.env
     
-
   dash:
     build:
       context: .
@@ -76,7 +80,6 @@ services:
       - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@crypto_mongo:27017/
     networks: [crypto_network]
 
-    
 volumes:
   mongo_data: # named volume for MongoDB data persistence
 
