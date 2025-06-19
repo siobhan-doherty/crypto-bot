@@ -1,51 +1,90 @@
+version: '3.8'
+
 services:
+  zookeeper:
+    image: bitnami/zookeeper:3.9
+    container_name: crypto_zookeeper
+    ports: ["2181:2181"]
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    networks: [crypto_network]
+
+  kafka:
+    image: bitnami/kafka:3.7
+    container_name: crypto_kafka
+    hostname: kafka
+    ports: ["9092:9092"]
+    depends_on: [zookeeper]
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      ALLOW_PLAINTEXT_LISTENER: yes
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks: [crypto_network]
+
   mongodb:
     image: mongo:7.0
     container_name: crypto_mongo
+    ports: ["27017:27017"]
+    volumes: [mongo_data:/data/db] # persistent storage for MongoDB
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
+    networks: [crypto_network]
 
   jupyter:
-    build: 
+    build:
       context: .
-      dockerfile: Dockerfile.jupyter
+      dockerfile: src/api_admin/docker/Dockerfile.jupyter
     container_name: crypto_pyspark
-    ports:
-      - "8888:8888"
-    environment:
-      - JUPYTER_ENABLE_LAB=yes
-      - SPARK_HOME=/opt/spark
-      - PYSPARK_PYTHON=python3
+    ports: ["8888:8888"]
     volumes:
       - ./notebooks:/home/jovyan/notebooks
-      - ./requirements.txt:/tmp/requirements.txt
-      - ./.env:/home/jovyan/.env
-    command: >
-      bash -c "
-      pip install -r /tmp/requirements.txt &&
-      start-notebook.sh
-      "
-
+      - ./src:/home/jovyan/src
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - PYTHONPATH=/home/jovyan/src
+    networks: [crypto_network]
+    env_file:
+    - ./src/api_admin/.env
+    
   dash:
     build:
       context: .
-      dockerfile: Dockerfile.dash
+      dockerfile: src/api_user/docker/Dockerfile.dash
     container_name: crypto_dash
-    ports:
-      - "8050:8050"
+    ports: ["8050:8050"]
+    env_file:
+    - ./src/api_user/.env
+    depends_on: [mongodb]
     environment:
       - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@crypto_mongo:27017/
-    depends_on:
-      - mongodb
+    networks: [crypto_network]
+
+  system_checker:
+    build:
+      context: .
+      dockerfile: src/system_checker/docker/Dockerfile.system_checker
+    container_name: crypto_system_checker
+    ports: ["5000:5000"]
+    env_file:
+    - ./src/system_checker/.env
+    depends_on: [mongodb]
+    environment:
+      - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@crypto_mongo:27017/
+    networks: [crypto_network]
 
 volumes:
-  mongo_data:
+  mongo_data: # named volume for MongoDB data persistence
 
 networks:
-  crypto_net:
+  crypto_network:
     name: crypto_network
+    driver: bridge
+    external: true
