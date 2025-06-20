@@ -22,7 +22,6 @@ df = fetch_historical_data()
 # default trading pair
 TRADING_PAIR = 'BTCUSDT'
 
-
 chart_container_style = {
     'border': f'1px solid {COLORS["border"]}',
     'borderRadius': '8px',
