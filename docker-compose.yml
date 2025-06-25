@@ -53,18 +53,40 @@ services:
     networks: [crypto_network]
     env_file:
     - ./src/api_admin/.env
+
+  fastapi:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.fastapi
+    container_name: crypto_fastapi
+    ports:
+      - "8000:8000"
+    env_file:
+    - ./src/api_admin/.env
+    depends_on:
+      - mongodb
+      - kafka
+    environment:
+      - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@crypto_mongo:27017/
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - LOG_LEVEL=debug            # Todo: remove in production
+      - DEBUG=1                    # Todo: remove in production
+    networks: [crypto_network]
     
   dash:
     build:
       context: .
-      dockerfile: src/api_user/docker/Dockerfile.dash
+      dockerfile: docker/Dockerfile.dash
     container_name: crypto_dash
     ports: ["8050:8050"]
     env_file:
     - ./src/api_user/.env
-    depends_on: [mongodb]
+    depends_on:
+      - mongodb
+      - fastapi
     environment:
       - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@crypto_mongo:27017/
+      - API_BASE_URL=http://crypto_fastapi:8000/api
     networks: [crypto_network]
 
   system_checker:
