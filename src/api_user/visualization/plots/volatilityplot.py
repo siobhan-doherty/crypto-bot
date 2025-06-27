@@ -57,14 +57,14 @@ def create_volatility_plot(df, period=14):
         if pair not in df:
             continue
             
-        pair_df = df[pair].sort_values('close_time')
+        pair_df = df[pair].sort_values('close_datetime')
         atr = calculate_atr(pair_df, period)
         
         # First pair uses left y-axis, second uses right y-axis
         y_axis = 'y' if i == 0 else 'y2'
         
         fig.add_trace(go.Scatter(
-            x=pair_df['close_time'],
+            x=pair_df['close_datetime'],
             y=atr,
             mode='lines',
             name=pair,  # Just the pair name, no prefix

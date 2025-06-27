@@ -1,3 +1,4 @@
+import pandas as pd
 from layout.theme import PLOT_LAYOUT, COLORS
 
 def calculate_ema(series, periods):
@@ -9,16 +10,40 @@ def create_lineplot(df, trading_pair='BTCUSDT'):
     Create a line plot of the close price over time with EMA indicators.
     
     Args:
-        df (pd.DataFrame): DataFrame containing 'close_time' and 'close' columns
+        df (pd.DataFrame): DataFrame containing time series data
         trading_pair (str): The trading pair being displayed (e.g., 'BTCUSDT')
         
     Returns:
         dict: Plotly figure as a dictionary
     """
+    # TODO remove debug output
+    print("\n[DEBUG] create_lineplot - Input DataFrame columns:", df.columns.tolist())
+    print("First few rows of data:", df[['open_datetime', 'close_datetime', 'close']].head().to_dict())
+    
     if df.empty:
+        print("Warning: Empty DataFrame passed to create_lineplot")
         return {'data': [], 'layout': {}}
-        
-    df = df.sort_values('close_time')
+    
+    # Ensure we have the required columns
+    if 'close' not in df.columns:
+        print("Error: Missing 'close' column in DataFrame")
+        return {'data': [], 'layout': {}}
+    
+    # Use the appropriate time column
+    time_col = 'close_datetime' if 'close_datetime' in df.columns else 'open_datetime' if 'open_datetime' in df.columns else None
+    if time_col is None:
+        print("Error: No time column found in DataFrame")
+        return {'data': [], 'layout': {}}
+    
+    # Make a copy to avoid modifying the original
+    df = df.copy()
+    
+    # Ensure the time column is in datetime format
+    if not pd.api.types.is_datetime64_any_dtype(df[time_col]):
+        df[time_col] = pd.to_datetime(df[time_col], unit='ms')
+    
+    # Sort by time
+    df = df.sort_values(time_col)
     
     # Calculate EMAs with different periods
     ema_periods = [9, 21, 50, 200]
@@ -56,7 +81,7 @@ def create_lineplot(df, trading_pair='BTCUSDT'):
     
     for period in ema_periods:
         traces.append({
-            'x': df['close_time'],
+            'x': df['close_datetime'],
             'y': df[f'ema_{period}'],
             'type': 'line',
             'name': f'EMA {period}',
@@ -69,14 +94,12 @@ def create_lineplot(df, trading_pair='BTCUSDT'):
         })
     
     traces.append({
-        'x': df['close_time'],
+        'type': 'scatter',
+        'x': df[time_col],
         'y': df['close'],
-        'type': 'line',
-        'name': 'Close Price',
-        'line': {
-            'color': COLORS['primary'],
-            'width': 2
-        }
+        'mode': 'lines',
+        'name': 'Price',
+        'line': {'color': COLORS['primary'], 'width': 2}
     })
     
     return {

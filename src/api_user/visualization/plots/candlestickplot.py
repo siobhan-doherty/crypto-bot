@@ -5,7 +5,7 @@ def create_candlestickplot(df, trading_pair='BTCUSDT'):
     if df.empty:
         return {'data': [], 'layout': {}}
         
-    df = df.sort_values('close_time')
+    df = df.sort_values('close_datetime')
     
     layout = PLOT_LAYOUT.copy()
     
@@ -20,7 +20,7 @@ def create_candlestickplot(df, trading_pair='BTCUSDT'):
     })
     
     candlestick = Candlestick(
-        x=df['close_time'],
+        x=df['close_datetime'],
         open=df['open'],
         high=df['high'],
         low=df['low'],

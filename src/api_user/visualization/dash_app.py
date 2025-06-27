@@ -62,9 +62,9 @@ app.layout = html.Div(children=[
             'paddingRight': '20px'
         }, children=[
             html.Div(f'Available Data: {len(df)} records', style={'margin': '5px 0'}),
-            html.Div(f'Earliest Data: {df["close_time"].min().strftime("%Y-%m-%d %H:%M:%S")}', 
+            html.Div(f'Earliest Data: {df["close_datetime"].min().strftime("%Y-%m-%d %H:%M:%S")}', 
                    style={'margin': '5px 0'}),
-            html.Div(f'Latest Data: {df["close_time"].max().strftime("%Y-%m-%d %H:%M:%S")}', 
+            html.Div(f'Latest Data: {df["close_datetime"].max().strftime("%Y-%m-%d %H:%M:%S")}', 
                    style={'margin': '5px 0'})
         ])
     ]),
