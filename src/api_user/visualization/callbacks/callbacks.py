@@ -14,14 +14,9 @@ def register_callbacks(app, fetch_historical_data):
     )
     def update_lineplot(trading_pair, date_range):
         trading_pair = trading_pair or 'BTCUSDT'
-        print(f"[DEBUG] update_lineplot called with trading_pair={trading_pair}, date_range={date_range}")
-        
         df = fetch_historical_data(trading_pair)
         if df.empty:
-            print("[WARNING] No data returned from fetch_historical_data")
             return {'data': [], 'layout': {}}
-        
-        print(f"[DEBUG] Fetched {len(df)} rows of data")
         
         # Ensure datetime columns are in the correct format
         if 'open_datetime' in df.columns:
@@ -31,13 +26,9 @@ def register_callbacks(app, fetch_historical_data):
         
         time_col = 'open_datetime' if 'open_datetime' in df.columns else 'close_datetime'
         if time_col not in df.columns:
-            print(f"[ERROR] Neither 'open_datetime' nor 'close_datetime' found in DataFrame columns: {df.columns.tolist()}")
             return {'data': [], 'layout': {}}
             
         df = df.sort_values(time_col)
-        
-        # Debug print first few rows
-        print(f"[DEBUG] First few rows after sorting:\n{df[[time_col, 'close']].head()}")
         
         # Apply date range filter if provided
         if date_range and len(date_range) == 2:
@@ -45,18 +36,12 @@ def register_callbacks(app, fetch_historical_data):
             start_date = pd.to_datetime(start_ts, unit='s', utc=True)
             end_date = pd.to_datetime(end_ts, unit='s', utc=True)
             
-            print(f"[DEBUG] Filtering data from {start_date} to {end_date}")
-            
             # Filter the dataframe based on the selected date range
             mask = (df[time_col] >= start_date) & (df[time_col] <= end_date)
             df = df.loc[mask]
-            
-            print(f"[DEBUG] After filtering: {len(df)} rows")
         
         # Create the line plot
-        fig = create_lineplot(df, trading_pair)
-        print("[DEBUG] Created line plot")
-        return fig
+        return create_lineplot(df, trading_pair)
     
     # Register other callbacks but keep them simple for now
     @app.callback(

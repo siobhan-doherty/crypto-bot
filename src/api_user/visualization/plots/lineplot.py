@@ -16,34 +16,10 @@ def create_lineplot(df, trading_pair='BTCUSDT'):
     Returns:
         dict: Plotly figure as a dictionary
     """
-    # TODO remove debug output
-    print("\n[DEBUG] create_lineplot - Input DataFrame columns:", df.columns.tolist())
-    print("First few rows of data:", df[['open_datetime', 'close_datetime', 'close']].head().to_dict())
-    
-    if df.empty:
-        print("Warning: Empty DataFrame passed to create_lineplot")
-        return {'data': [], 'layout': {}}
-    
-    # Ensure we have the required columns
+
     if 'close' not in df.columns:
         print("Error: Missing 'close' column in DataFrame")
         return {'data': [], 'layout': {}}
-    
-    # Use the appropriate time column
-    time_col = 'close_datetime' if 'close_datetime' in df.columns else 'open_datetime' if 'open_datetime' in df.columns else None
-    if time_col is None:
-        print("Error: No time column found in DataFrame")
-        return {'data': [], 'layout': {}}
-    
-    # Make a copy to avoid modifying the original
-    df = df.copy()
-    
-    # Ensure the time column is in datetime format
-    if not pd.api.types.is_datetime64_any_dtype(df[time_col]):
-        df[time_col] = pd.to_datetime(df[time_col], unit='ms')
-    
-    # Sort by time
-    df = df.sort_values(time_col)
     
     # Calculate EMAs with different periods
     ema_periods = [9, 21, 50, 200]
@@ -52,7 +28,6 @@ def create_lineplot(df, trading_pair='BTCUSDT'):
     
     layout = PLOT_LAYOUT.copy()
     
-    # Create a copy of the default title config and update the text
     title_config = PLOT_LAYOUT.get('title', {}).copy()
     title_config['text'] = f'{trading_pair} Close Price with Exponential Moving Averages'
     
@@ -95,7 +70,7 @@ def create_lineplot(df, trading_pair='BTCUSDT'):
     
     traces.append({
         'type': 'scatter',
-        'x': df[time_col],
+         'x': df['close_datetime'],
         'y': df['close'],
         'mode': 'lines',
         'name': 'Price',

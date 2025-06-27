@@ -4,7 +4,6 @@ import pandas as pd
 from typing import Optional, Tuple
 from datetime import datetime, timedelta, timezone
 
-# Get API base URL from environment variables with default
 API_BASE_URL = os.getenv('API_BASE_URL', 'http://crypto_fastapi:8000')
 
 def get_available_date_range() -> Tuple[datetime, datetime]:
@@ -15,13 +14,10 @@ def get_available_date_range() -> Tuple[datetime, datetime]:
         Tuple[datetime, datetime]: (min_date, max_date) from the API
     """
     try:
-        # Use the /market/range endpoint to get the date range
         response = requests.get(f"{API_BASE_URL}/market/range")
         response.raise_for_status()
         
         data = response.json()
-        
-        # Parse the dates from the response
         min_date = datetime.fromisoformat(data['min_date']).replace(tzinfo=timezone.utc)
         max_date = datetime.fromisoformat(data['max_date']).replace(tzinfo=timezone.utc)
         
@@ -47,7 +43,7 @@ def fetch_historical_data(
         end_time: Optional end time for the data range (defaults to latest available data)
         
     Returns:
-        pd.DataFrame: DataFrame containing the historical OHLCV data
+        pd.DataFrame: DataFrame containing the historical OHLCV data with datetime columns
     """
     try:
         # Prepare query parameters
@@ -56,11 +52,20 @@ def fetch_historical_data(
             'interval': '1d'  # Default interval, adjust if needed
         }
         
+        # Convert datetime objects to milliseconds since epoch for the API
         if start_time:
+            if start_time.tzinfo is None:
+                start_time = start_time.replace(tzinfo=timezone.utc)
             params['start_time'] = int(start_time.timestamp() * 1000)  # Convert to milliseconds
+            print(f"[DEBUG] Fetching data from: {start_time} (timestamp: {params['start_time']})")
+            
         if end_time:
+            if end_time.tzinfo is None:
+                end_time = end_time.replace(tzinfo=timezone.utc)
             params['end_time'] = int(end_time.timestamp() * 1000)  # Convert to milliseconds
+            print(f"[DEBUG] Fetching data to: {end_time} (timestamp: {params['end_time']})")
         
+        print(f"[DEBUG] Making request to {API_BASE_URL}/market/ohlcv with params: {params}")
         response = requests.get(f"{API_BASE_URL}/market/ohlcv", params=params)
         response.raise_for_status()
         
@@ -71,11 +76,15 @@ def fetch_historical_data(
             return pd.DataFrame()
         
         df = pd.DataFrame(data)
+        print(f"[DEBUG] Fetched {len(df)} records for {trading_pair}")
         
-        if 'open_time' in df.columns:
-            df['open_time'] = pd.to_datetime(df['open_time'], unit='ms')
-        if 'close_time' in df.columns:
-            df['close_time'] = pd.to_datetime(df['close_time'], unit='ms')
+        # Convert datetime strings to datetime objects
+        datetime_columns = ['open_datetime', 'close_datetime']
+        for col in datetime_columns:
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], utc=True)
+        
+        return df
         
         # Ensure numeric columns are numeric
         numeric_cols = ['open', 'high', 'low', 'close', 'volume', 'quote_asset_volume', 

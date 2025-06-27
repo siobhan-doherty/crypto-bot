@@ -165,7 +165,7 @@ async def get_ohlcv(
         limit: Maximum number of candles to return
         
     Returns:
-        List of OHLCV data points
+        List of OHLCV data points with datetime strings
     """
     client = None
     try:
@@ -173,31 +173,25 @@ async def get_ohlcv(
         db = client.cryptobot
         collection = db.historical_data
         
-        # Get a sample document to check collection structure
-        sample_doc = collection.find_one()
-        print(f"[DEBUG] Sample document: {sample_doc}")
-        
-        if not sample_doc:
-            print("[WARNING] No documents found in the collection")
-            return []
-            
-        # Build query - since we know there's only one symbol, we don't need to filter by it
-        query = {}
+        # Build query
+        query = {"symbol": symbol.upper()}
         
         # Add time range to query if provided
         if start_time is not None or end_time is not None:
             time_query = {}
             if start_time is not None:
-                time_query["$gte"] = start_time
-                print(f"[DEBUG] Start time: {start_time} ({datetime.fromtimestamp(start_time/1000, tz=timezone.utc)})")
+                start_dt = datetime.fromtimestamp(start_time/1000, tz=timezone.utc).isoformat()
+                time_query["$gte"] = start_dt
+                print(f"[DEBUG] Start datetime: {start_dt}")
             if end_time is not None:
-                time_query["$lte"] = end_time + 86400000  # Add 24 hours to include the end day
-                print(f"[DEBUG] End time: {end_time} ({datetime.fromtimestamp(end_time/1000, tz=timezone.utc)})")
-            query["open_time"] = time_query
+                end_dt = datetime.fromtimestamp(end_time/1000, tz=timezone.utc).isoformat()
+                time_query["$lte"] = end_dt
+                print(f"[DEBUG] End datetime: {end_dt}")
+            query["open_datetime"] = time_query
         
         print(f"[DEBUG] Executing query: {query}")
         
-        cursor = collection.find(query).sort("open_time", 1).limit(limit)
+        cursor = collection.find(query).sort("open_datetime", 1).limit(limit)
         
         # Convert cursor to list of documents
         data = list(cursor)
@@ -210,11 +204,10 @@ async def get_ohlcv(
         # Format the response
         results = []
         for doc in data:
-            # Convert ObjectId to string and format the document
             result = {
                 '_id': str(doc['_id']),
-                'open_time': doc.get('open_time'),
-                'close_time': doc.get('close_time'),
+                'open_datetime': doc.get('open_datetime'),
+                'close_datetime': doc.get('close_datetime'),
                 'open': doc.get('open'),
                 'high': doc.get('high'),
                 'low': doc.get('low'),
