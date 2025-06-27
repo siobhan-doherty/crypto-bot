@@ -25,7 +25,7 @@ docker exec -it crypto_pyspark python3 src/api_admin/data/kafka_consumer.py
 
 docker exec -it crypto_pyspark python3 src/system_checker/status_checker.py
 # launch dash
-docker exec -it crypto_dash python3 src/api_user/visualization/dash_app.py
+docker exec -it crypto_dash python3 /app/src/api_user/visualization/dash_app.py
 
 
 docker volume inspect apr25_bde_int_opa_team_a_mongo_data

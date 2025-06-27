@@ -1,138 +1,159 @@
-import os
 import dash 
 from dash import html, dcc
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output
-from pymongo import MongoClient
-import pandas as pd
-from pymongo.errors import ConnectionFailure
-
-print("Attempting to connect to MongoDB...")
-
-try:
-    client = MongoClient(os.getenv('MONGO_URI'), serverSelectionTimeoutMS=5000)
-    client.server_info()
-    db = client["cryptobot"]
-    collection = db["historical_data"]
-    print("Successfully connected to MongoDB")
-    print(f"Available collections: {db.list_collection_names()}")
-except Exception as e:
-    print(f"Error connecting to MongoDB: {str(e)}")
-    raise
+from fetch_data import fetch_historical_data
+from plots.lineplot import create_lineplot
+from plots.candlestickplot import create_candlestickplot
+from plots.volumeplot import create_volumeplot
+from plots.volatilityplot import create_volatility_plot
+from callbacks.callbacks import register_callbacks
+from layout.controls import (
+    create_date_range_slider, 
+    create_trading_pair_dropdown, 
+    create_atr_period_input
+)
+from layout.theme import COLORS
 
 
 # BOOTSTRAP, CERULEAN, DARKLY, FLATLY, LITERA, LUX, MATERIA, MINTY, PULSE, SANDSTONE, SIMPLEX, SKETCHY, SLATE, SOLAR, SPACELAB, UNITED
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
 
+df = fetch_historical_data()
+# default trading pair
+TRADING_PAIR = 'BTCUSDT'
 
-def fetch_data_from_mongo():
-    data = list(collection.find())
-    if not data:
-        return pd.DataFrame()
-    df = pd.DataFrame(data)
-    df['close_time'] = pd.to_datetime(df['close_time'], unit='ms')
-    return df
+chart_container_style = {
+    'border': f'1px solid {COLORS["border"]}',
+    'borderRadius': '8px',
+    'padding': '20px',
+    'marginBottom': '30px',
+    'backgroundColor': COLORS['panel'],
+    'boxShadow': '0 2px 4px rgba(0,0,0,0.1)'
+}
 
-df = fetch_data_from_mongo()
-
-def create_figure(df):
-    if df.empty:
-        return {'data': [], 'layout': {}}
-        
-    df = df.sort_values('close_time')
+app.layout = html.Div(children=[
+    html.H1('Crypto Dashboard', style={'textAlign': 'center', 'marginBottom': '20px'}),
     
-    return {
-        'data': [{
-            'x': df['close_time'],
-            'y': df['close'],
-            'type': 'line',
-            'name': 'Close Price'
-        }],
-        'layout': {
-            'title': 'BITCUSDT Close Price',
-            'xaxis': {
-                'title': 'Time',
-                'rangeslider': {'visible': True, 'thickness': 0.1},
-                'type': 'date'
-            },
-            'yaxis': {'title': 'Close Price (USDT)'},
-            'margin': {'l': 60, 'r': 30, 't': 80, 'b': 100},
-            'height': 600
-        }
-    }
-
-app.layout = html.Div([
-    html.H1('Crypto Dashboard', style={'textAlign': 'center'}),
-    html.Div(style={'margin': '20px', 'padding': '20px'}, children=[
-        html.Span('Available Data:     ' + str(len(df)) + ' records'),
-        html.Br(),
-        html.Span('Earliest Data:   ' + str(df['close_time'].min().strftime('%Y-%m-%d %H:%M:%S'))),
-        html.Br(),
-        html.Span('Latest Data:     ' + str(df['close_time'].max().strftime('%Y-%m-%d %H:%M:%S')))]),
-    html.Div(style={ 'padding': '50px'}, children=[
-        html.H2('Close Price of BITCUSDT', style={'textAlign': 'center'}),
-        html.Br(),
-        dcc.DatePickerRange(
-            id='date-picker',
-            display_format='YYYY-MM-DD',    
-            min_date_allowed=df['close_time'].min(),
-            max_date_allowed=df['close_time'].max(),
-            start_date=df['close_time'].min(),
-            end_date=df['close_time'].max()
-        ),
+    # Data info section with trading pair selector
+    html.Div(style={
+        'display': 'flex',
+        'justifyContent': 'space-between',
+        'alignItems': 'center',
+        'margin': '20px auto',
+        'padding': '15px',
+        'maxWidth': '1000px',
+        'backgroundColor': COLORS['panel'],
+        'borderRadius': '8px',
+        'color': COLORS['text']
+    }, children=[
+        html.Div(style={'width': '30%'}, children=[
+            html.Div('', style={
+                'color': COLORS['text'],
+                'marginBottom': '8px',
+                'fontWeight': 'bold',
+                'textAlign': 'left',
+                'paddingLeft': '10px'
+            }),
+            create_trading_pair_dropdown('trading-pair-dropdown')
+        ]),
+        html.Div(style={
+            'width': '65%',
+            'textAlign': 'right',
+            'paddingRight': '20px'
+        }, children=[
+            html.Div(f'Available Data: {len(df)} records', style={'margin': '5px 0'}),
+            html.Div(f'Earliest Data: {df["close_time"].min().strftime("%Y-%m-%d %H:%M:%S")}', 
+                   style={'margin': '5px 0'}),
+            html.Div(f'Latest Data: {df["close_time"].max().strftime("%Y-%m-%d %H:%M:%S")}', 
+                   style={'margin': '5px 0'})
+        ])
+    ]),
+    
+    # Main content container
+    html.Div(style={
+        'maxWidth': '1400px',
+        'margin': '0 auto',
+        'padding': '0 20px'
+    }, children=[
+        html.Div(style=chart_container_style, children=[
+            dcc.Graph(
+                id='close-price-graph',
+                figure=create_lineplot(df, trading_pair = TRADING_PAIR),
+                style={'marginBottom': '20px'}
+            ),
+            html.Div(style={'padding': '0 15px'}, children=[
+                html.Div('Date Range:', style={
+                    'color': '#f8f9fa',
+                    'marginBottom': '10px',
+                    'fontWeight': 'bold'
+                }),
+                create_date_range_slider(df, 'lineplot-time-slider')
+            ])
+        ]),
         
-        dcc.Graph(
-            id='close-price-graph',
-            figure=create_figure(df)
-        )
+        # Candlestick Chart Section
+        html.Div(style=chart_container_style, children=[
+            dcc.Graph(
+                id='candlestick-graph',
+                figure=create_candlestickplot(df,trading_pair = TRADING_PAIR),
+                style={'marginBottom': '20px'}
+            ),
+            html.Div(style={'padding': '0 15px'}, children=[
+                html.Div('Date Range:', style={
+                    'color': COLORS['text'],
+                    'marginBottom': '10px',
+                    'fontWeight': 'bold'
+                }),
+                create_date_range_slider(df, 'candlestick-time-slider')
+            ])
+        ]),
+        
+        # Volume Chart Section
+        html.Div(style=chart_container_style, children=[
+            dcc.Graph(
+                id='volume-graph',
+                figure=create_volumeplot(df),
+                style={'marginBottom': '20px'}
+            ),
+            html.Div(style={'padding': '0 15px'}, children=[
+                html.Div('Date Range:', style={
+                    'color': COLORS['text'],
+                    'marginBottom': '10px',
+                    'fontWeight': 'bold'
+                }),
+                create_date_range_slider(df, 'volume-time-slider')
+            ])
+        ]),
+        
+        # Volatility Chart Section
+        html.Div(style=chart_container_style, children=[
+            html.Div(style={
+                'display': 'flex',
+                'justifyContent': 'flex-end',
+                'marginBottom': '10px',
+                'alignItems': 'center'
+            }, children=[
+                create_atr_period_input('atr-period-input')
+            ]),
+            dcc.Graph(
+                id='volatility-graph',
+                figure=create_volatility_plot(df),
+                style={'marginBottom': '20px'}
+            ),
+            html.Div(style={'padding': '0 15px'}, children=[
+                html.Div('Date Range:', style={
+                    'color': COLORS['text'],
+                    'marginBottom': '10px',
+                    'fontWeight': 'bold'
+                }),
+                create_date_range_slider(df, 'volatility-time-slider')
+            ])
+        ])
     ])
 ])
 
-@app.callback(
-    Output('close-price-graph', 'figure'),
-    Input('date-picker', 'start_date'),
-    Input('date-picker', 'end_date')
-)
-def update_graph(start_date, end_date):
-    df = fetch_data_from_mongo()
-    if df.empty:
-        return {'data': [], 'layout': {}}
-        
-    # Convert close_time to datetime if it's not already
-    if not pd.api.types.is_datetime64_any_dtype(df['close_time']):
-        df['close_time'] = pd.to_datetime(df['close_time'], unit='ms')
-    
-    df = df.sort_values('close_time')
-    
-    if start_date and end_date:
-        df = df[(df['close_time'] >= pd.to_datetime(start_date)) & (df['close_time'] <= pd.to_datetime(end_date))]
-    
-    return {    
-        'data': [{
-            'x': df['close_time'],
-            'y': df['close'],
-            'type': 'line',
-            'name': 'Close Price'
-        }],
-        'layout': {
-            'title': 'BITCUSDT Close Price',
-            'xaxis': {
-                'title': 'Time',
-                'type': 'date',
-                'rangeselector': {
-                    'buttons': [
-                        {'count': 1, 'label': '1d', 'step': 'day', 'stepmode': 'backward'},
-                        {'count': 7, 'label': '1w', 'step': 'day', 'stepmode': 'backward'},
-                        {'step': 'all'}
-                    ]
-                }
-            },
-            'yaxis': {'title': 'Close Price (USDT)'},
-            'margin': {'l': 60, 'r': 30, 't': 80, 'b': 120},
-            'height': 600,
-            'showlegend': False
-        }
-    }
+
+register_callbacks(app, fetch_historical_data)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=8050)
