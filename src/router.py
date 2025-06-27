@@ -1,7 +1,7 @@
 import os
 from fastapi import APIRouter, HTTPException
 from pymongo import MongoClient
-from typing import List, Optional, Dict, Any
+from typing import Optional
 from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel
 
@@ -145,7 +145,6 @@ async def get_date_range():
         if client:
             client.close()
 
-# TODO remove debug output
 @router.get("/market/ohlcv")
 async def get_ohlcv(
     symbol: str,
@@ -173,35 +172,25 @@ async def get_ohlcv(
         db = client.cryptobot
         collection = db.historical_data
         
-        # Build query
         query = {"symbol": symbol.upper()}
         
-        # Add time range to query if provided
         if start_time is not None or end_time is not None:
             time_query = {}
             if start_time is not None:
                 start_dt = datetime.fromtimestamp(start_time/1000, tz=timezone.utc).isoformat()
                 time_query["$gte"] = start_dt
-                print(f"[DEBUG] Start datetime: {start_dt}")
             if end_time is not None:
                 end_dt = datetime.fromtimestamp(end_time/1000, tz=timezone.utc).isoformat()
                 time_query["$lte"] = end_dt
-                print(f"[DEBUG] End datetime: {end_dt}")
             query["open_datetime"] = time_query
-        
-        print(f"[DEBUG] Executing query: {query}")
         
         cursor = collection.find(query).sort("open_datetime", 1).limit(limit)
         
-        # Convert cursor to list of documents
         data = list(cursor)
-        print(f"[DEBUG] Found {len(data)} documents")
         
         if not data:
-            print("[WARNING] No data found for the given query")
             return []
             
-        # Format the response
         results = []
         for doc in data:
             result = {
@@ -218,12 +207,10 @@ async def get_ohlcv(
             }
             results.append(result)
         
-        print(f"Returning {len(results)} OHLCV records for {symbol}")
         return results
         
     except Exception as e:
         error_msg = f"Error in get_ohlcv: {str(e)}"
-        print(f"[ERROR] {error_msg}")
         raise HTTPException(
             status_code=500, 
             detail=error_msg

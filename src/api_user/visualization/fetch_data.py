@@ -57,34 +57,27 @@ def fetch_historical_data(
             if start_time.tzinfo is None:
                 start_time = start_time.replace(tzinfo=timezone.utc)
             params['start_time'] = int(start_time.timestamp() * 1000)  # Convert to milliseconds
-            print(f"[DEBUG] Fetching data from: {start_time} (timestamp: {params['start_time']})")
             
         if end_time:
             if end_time.tzinfo is None:
                 end_time = end_time.replace(tzinfo=timezone.utc)
             params['end_time'] = int(end_time.timestamp() * 1000)  # Convert to milliseconds
-            print(f"[DEBUG] Fetching data to: {end_time} (timestamp: {params['end_time']})")
         
-        print(f"[DEBUG] Making request to {API_BASE_URL}/market/ohlcv with params: {params}")
         response = requests.get(f"{API_BASE_URL}/market/ohlcv", params=params)
         response.raise_for_status()
         
         data = response.json()
         
         if not data:
-            print(f"No data found for {trading_pair} in the specified date range")
             return pd.DataFrame()
         
         df = pd.DataFrame(data)
-        print(f"[DEBUG] Fetched {len(df)} records for {trading_pair}")
         
         # Convert datetime strings to datetime objects
         datetime_columns = ['open_datetime', 'close_datetime']
         for col in datetime_columns:
             if col in df.columns:
                 df[col] = pd.to_datetime(df[col], utc=True)
-        
-        return df
         
         # Ensure numeric columns are numeric
         numeric_cols = ['open', 'high', 'low', 'close', 'volume', 'quote_asset_volume', 
@@ -94,12 +87,11 @@ def fetch_historical_data(
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
         
-        # Sort by open_time if it exists
+        # Sort by open_time if it exists, otherwise by open_datetime
         if 'open_time' in df.columns:
             df = df.sort_values('open_time')
-            print(f"Fetched {len(df)} records for {trading_pair} from {df['open_time'].min()} to {df['open_time'].max()}")
-        else:
-            print(f"Fetched {len(df)} records for {trading_pair}")
+        elif 'open_datetime' in df.columns:
+            df = df.sort_values('open_datetime')
             
         return df
         
