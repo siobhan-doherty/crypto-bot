@@ -8,10 +8,12 @@ RUN apt-get update && apt-get install -y gcc curl && \
 COPY src/api_user/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-
-COPY . .
+# copy visualisation package
+COPY src/api_user/visualization /app/src/api_user/visualization
 
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app
+    PYTHONPATH=/app/src
 
-CMD ["tail", "-f", "/dev/null"]
+WORKDIR /app/src/api_user/visualization
+
+CMD ["python", "dash_app.py"]

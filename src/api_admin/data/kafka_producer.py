@@ -1,14 +1,13 @@
-import os
-import time
-import json
+import os, time, json
 from dotenv import load_dotenv
 from binance.client import Client
 from kafka import KafkaProducer
 from datetime import datetime, timezone
 from pathlib import Path
 
-# Load .env
-load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / ".env")
+
+# load .env
+load_dotenv(dotenv_path = Path(__file__).resolve().parents[2] / ".env")
 
 api_key = os.getenv('BINANCE_API_KEY')
 secret_key = os.getenv('BINANCE_SECRET_KEY')
@@ -16,8 +15,8 @@ client = Client(api_key, secret_key)
 
 # Kafka producer config
 producer = KafkaProducer(
-    bootstrap_servers='kafka:9092',
-    value_serializer=lambda v: json.dumps(v).encode('utf-8')
+    bootstrap_servers = 'kafka:9092',
+    value_serializer = lambda v: json.dumps(v).encode('utf-8')
 )
 
 symbols_to_send = ['BTCUSDT', 'ETHUSDT']
@@ -27,7 +26,7 @@ print("Producer started. Streaming klines every minute...")
 
 def get_iso_timestamp():
     """Return current UTC time in ISO 8601 format with milliseconds"""
-    return datetime.now(timezone.utc).isoformat(timespec='milliseconds')
+    return datetime.now(timezone.utc).isoformat(timespec = 'milliseconds')
 
 def process_kline(symbol, kline_data):
     """Process raw kline data into standardized format"""
@@ -54,11 +53,13 @@ def process_kline(symbol, kline_data):
         "ts": get_iso_timestamp()  # Date ISO 8601 standard
     }
 
+print("Kafka Producer started...")
+
 while True:
     try:
         current_ts = get_iso_timestamp()
         for symbol in symbols_to_send:
-            klines = client.get_klines(symbol=symbol, interval=interval, limit=1)
+            klines = client.get_klines(symbol = symbol, interval = interval, limit = 1)
             if not klines:
                 print(f"No klines received for {symbol}")
                 continue
