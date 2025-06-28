@@ -76,6 +76,25 @@ docker ps
 
 ---
 
+## Running Data Collector Scripts 
+Seed 3–6 months of 15m data: 
+```bash
+docker exec -it crypto_data_collector python /app/src/api_admin/data/initialize_historical_data.py
+```
+Pull only new 15m candles:
+```bash
+docker exec -it crypto_data_collector python /app/src/api_admin/data/update_historical_data.py
+```
+Start 1-minute Kafka producer:
+```bash
+docker exec -it crypto_data_collector python /app/src/api_admin/data/kafka_producer.py
+```
+Start Kafka consumer:
+```bash
+docker exec -it crypto_data_collector python /app/src/api_admin/data/kafka_consumer.py
+``````
+
+
 ## Running Dash Apps
 
 ```bash
@@ -124,7 +143,6 @@ MONGO_URI=mongodb://your_user:your_pass@crypto_mongo:27017/
 * Kafka (Bitnami images)
 * MongoDB
 * Dash (Plotly)
-* Jupyter Notebook
 * Docker & Docker Compose
 
 
