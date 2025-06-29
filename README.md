@@ -16,7 +16,7 @@ This project provides a modular and containerized architecture for collecting, s
 
 -  **Data Visualization**:
   - Interactive dashboards built with Plotly Dash.
-  - Jupyter Notebooks for exploration and development.
+  - Jupyter Notebooks (optional) for exploration and development.
 
 -  **Dockerized Architecture**:
   - All services run in isolated containers managed by Docker Compose.
@@ -41,7 +41,8 @@ pr25_bde_int_opa_team_a
 └── src
     ├── api_admin
     │   ├── data
-    │   │   ├── collect_historical_data.py
+    │   │   ├── initialize_historical_data.py
+    │   │   ├── update_historical_data.py
     │   │   ├── __init__.py
     │   │   ├── kafka_consume.py
     │   │   └── kafka_producer.py
@@ -49,7 +50,7 @@ pr25_bde_int_opa_team_a
     │   │   ├── __init__.py
     │   │   └── mongo_utils.py
     │   ├── docker
-    │   │   └── Dockerfile.jupyter
+    │   │   └── Dockerfile.data_collector
     │   ├── __init__.py
     │   └── requirements.txt
     └── api_user
@@ -72,8 +73,7 @@ docker ps
 
 * Jupyter: [http://localhost:8888](http://localhost:8888)
 * Dash app (after launching manually): [http://localhost:8050](http://localhost:8050)
-* MongoDB: `localhost:27017`
-
+* MongoDB (from containers): `crypto_mongo:27017`
 ---
 
 ## Running Data Collector Scripts 
