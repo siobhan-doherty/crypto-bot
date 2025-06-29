@@ -1,7 +1,7 @@
 # Crypto Data Pipeline Project
 
  1. **The project**:
-This project provides a modular and containerized architecture for collecting, storing, streaming, and visualizing cryptocurrency data using tools like **PySpark**, **Kafka**, **MongoDB**, **Dash**, and **Jupyter**.
+This project provides a modular and containerized architecture for collecting, storing, streaming, and visualizing cryptocurrency data using tools like **PySpark**, **Kafka**, **MongoDB**, **Dash**, and **Jupyter** (optional).
 
 ---
 
@@ -44,13 +44,14 @@ pr25_bde_int_opa_team_a
     │   │   ├── initialize_historical_data.py
     │   │   ├── update_historical_data.py
     │   │   ├── __init__.py
-    │   │   ├── kafka_consume.py
+    │   │   ├── kafka_consumer.py
     │   │   └── kafka_producer.py
     │   ├── db
     │   │   ├── __init__.py
     │   │   └── mongo_utils.py
     │   ├── docker
     │   │   └── Dockerfile.data_collector
+    │   │   └── entrypoint.sh
     │   ├── __init__.py
     │   └── requirements.txt
     └── api_user
@@ -71,8 +72,8 @@ docker ps
 
 3. **Access services**:
 
-* Jupyter: [http://localhost:8888](http://localhost:8888)
-* Dash app (after launching manually): [http://localhost:8050](http://localhost:8050)
+* Jupyter (Optional): [http://localhost:8888](http://localhost:8888)
+* Dash app: [http://localhost:8050](http://localhost:8050)
 * MongoDB (from containers): `crypto_mongo:27017`
 ---
 
@@ -104,13 +105,13 @@ docker exec -it crypto_dash python3 src/api_user/visualization/dash_app.py
 
 ## Services Overview
 
-| Service     | Description                   | Port  |
-| ----------- | ----------------------------- | ----- |
-| `jupyter`   | PySpark + Jupyter Notebook    | 8888  |
-| `kafka`     | Kafka broker                  | 9092  |
-| `zookeeper` | Manages Kafka                 | 2181  |
-| `mongo`     | NoSQL document DB             | 27017 |
-| `dash`      | Dash dashboard (run manually) | 8050  |
+| Service             | Description                   | Port  |
+| -----------         | ----------------------------- | ----- |
+| `jupyter` (legacy)  | PySpark + Jupyter Notebook    | 8888  |
+| `kafka`             | Kafka broker                  | 9092  |
+| `zookeeper`         | Manages Kafka                 | 2181  |
+| `mongo`             | NoSQL document DB             | 27017 |
+| `dash`              | Dash dashboard                | 8050  |
 
 
 ## Environment Variables
@@ -126,7 +127,7 @@ Create a `.env` file in src/api_admin directory:
 ```dotenv
 MONGO_INITDB_ROOT_USERNAME=your_user
 MONGO_INITDB_ROOT_PASSWORD=your_pass
-MONGO_URI=mongodb://your_user:your_pass@crypto_mongo:27017/
+MONGO_URI=mongodb://your_user:your_pass@crypto_mongo:27017/cryptobot?authSource=admin
 BINANCE_API_KEY=api_key
 BINANCE_SECRET_KEY=api_secret
 ```
@@ -134,7 +135,7 @@ BINANCE_SECRET_KEY=api_secret
 Create a `.env` file in src/api_user directory:
 
 ```dotenv
-MONGO_URI=mongodb://your_user:your_pass@crypto_mongo:27017/
+MONGO_URI=mongodb://your_user:your_pass@crypto_mongo:27017/cryptobot?authSource=admin
 ```
 ## Tools Used
 
