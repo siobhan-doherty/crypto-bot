@@ -145,6 +145,7 @@ async def get_date_range():
         if client:
             client.close()
 
+
 @router.get("/market/ohlcv")
 async def get_ohlcv(
     symbol: str,
