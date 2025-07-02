@@ -8,11 +8,11 @@ RUN apt-get update && apt-get install -y gcc curl && \
 COPY src/api_user/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-COPY . .
+# copy visualisation package
+COPY src/api_user/visualization /app/src/api_user/visualization
 
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app \
-    DASH_DEBUG_MODE=True
+    PYTHONPATH=/app/src
 
 WORKDIR /app/src/api_user/visualization
 
