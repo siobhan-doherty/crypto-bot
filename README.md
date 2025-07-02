@@ -1,7 +1,7 @@
 # Crypto Data Pipeline Project
 
  1. **The project**:
-This project provides a modular and containerized architecture for collecting, storing, streaming, and visualizing cryptocurrency data using tools like **PySpark**, **Kafka**, **MongoDB**, **Dash**, and **Jupyter**.
+This project provides a modular and containerized architecture for collecting, storing, streaming, and visualizing cryptocurrency data using tools like **PySpark**, **Kafka**, **MongoDB**, **Dash**, and **Jupyter** (optional).
 
 ---
 
@@ -16,7 +16,7 @@ This project provides a modular and containerized architecture for collecting, s
 
 -  **Data Visualization**:
   - Interactive dashboards built with Plotly Dash.
-  - Jupyter Notebooks for exploration and development.
+  - Jupyter Notebooks (optional) for exploration and development.
 
 -  **Dockerized Architecture**:
   - All services run in isolated containers managed by Docker Compose.
@@ -41,15 +41,17 @@ pr25_bde_int_opa_team_a
 └── src
     ├── api_admin
     │   ├── data
-    │   │   ├── collect_historical_data.py
+    │   │   ├── initialize_historical_data.py
+    │   │   ├── update_historical_data.py
     │   │   ├── __init__.py
-    │   │   ├── kafka_consume.py
+    │   │   ├── kafka_consumer.py
     │   │   └── kafka_producer.py
     │   ├── db
     │   │   ├── __init__.py
     │   │   └── mongo_utils.py
     │   ├── docker
-    │   │   └── Dockerfile.jupyter
+    │   │   └── Dockerfile.data_collector
+    │   │   └── entrypoint.sh
     │   ├── __init__.py
     │   └── requirements.txt
     └── api_user
@@ -70,11 +72,29 @@ docker ps
 
 3. **Access services**:
 
-* Jupyter: [http://localhost:8888](http://localhost:8888)
-* Dash app (after launching manually): [http://localhost:8050](http://localhost:8050)
-* MongoDB: `localhost:27017`
-
+* Jupyter (Optional): [http://localhost:8888](http://localhost:8888)
+* Dash app: [http://localhost:8050](http://localhost:8050)
+* MongoDB (from containers): `crypto_mongo:27017`
 ---
+
+## Running Data Collector Scripts 
+Seed 3–6 months of 15m data: 
+```bash
+docker exec -it crypto_data_collector python /app/src/api_admin/data/initialize_historical_data.py
+```
+Pull only new 15m candles:
+```bash
+docker exec -it crypto_data_collector python /app/src/api_admin/data/update_historical_data.py
+```
+Start 1-minute Kafka producer:
+```bash
+docker exec -it crypto_data_collector python /app/src/api_admin/data/kafka_producer.py
+```
+Start Kafka consumer:
+```bash
+docker exec -it crypto_data_collector python /app/src/api_admin/data/kafka_consumer.py
+``````
+
 
 ## Running Dash Apps
 
@@ -85,13 +105,13 @@ docker exec -it crypto_dash python3 src/api_user/visualization/dash_app.py
 
 ## Services Overview
 
-| Service     | Description                   | Port  |
-| ----------- | ----------------------------- | ----- |
-| `jupyter`   | PySpark + Jupyter Notebook    | 8888  |
-| `kafka`     | Kafka broker                  | 9092  |
-| `zookeeper` | Manages Kafka                 | 2181  |
-| `mongo`     | NoSQL document DB             | 27017 |
-| `dash`      | Dash dashboard (run manually) | 8050  |
+| Service             | Description                   | Port  |
+| -----------         | ----------------------------- | ----- |
+| `jupyter` (legacy)  | PySpark + Jupyter Notebook    | 8888  |
+| `kafka`             | Kafka broker                  | 9092  |
+| `zookeeper`         | Manages Kafka                 | 2181  |
+| `mongo`             | NoSQL document DB             | 27017 |
+| `dash`              | Dash dashboard                | 8050  |
 
 
 ## Environment Variables
@@ -107,7 +127,7 @@ Create a `.env` file in src/api_admin directory:
 ```dotenv
 MONGO_INITDB_ROOT_USERNAME=your_user
 MONGO_INITDB_ROOT_PASSWORD=your_pass
-MONGO_URI=mongodb://your_user:your_pass@crypto_mongo:27017/
+MONGO_URI=mongodb://your_user:your_pass@crypto_mongo:27017/cryptobot?authSource=admin
 BINANCE_API_KEY=api_key
 BINANCE_SECRET_KEY=api_secret
 ```
@@ -115,7 +135,7 @@ BINANCE_SECRET_KEY=api_secret
 Create a `.env` file in src/api_user directory:
 
 ```dotenv
-MONGO_URI=mongodb://your_user:your_pass@crypto_mongo:27017/
+MONGO_URI=mongodb://your_user:your_pass@crypto_mongo:27017/cryptobot?authSource=admin
 ```
 ## Tools Used
 
@@ -124,7 +144,6 @@ MONGO_URI=mongodb://your_user:your_pass@crypto_mongo:27017/
 * Kafka (Bitnami images)
 * MongoDB
 * Dash (Plotly)
-* Jupyter Notebook
 * Docker & Docker Compose
 
 

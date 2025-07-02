@@ -12,8 +12,7 @@ RUN pip install --upgrade pip && \
 COPY src/api_user/ /app/src/api_user/
 
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app \
-    DASH_DEBUG_MODE=True
+    PYTHONPATH=/app/src
 
 WORKDIR /app/src/api_user/visualization
 

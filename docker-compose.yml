@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   zookeeper:
     image: bitnami/zookeeper:3.9
@@ -38,23 +36,50 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
     networks: [crypto_network]
 
-  jupyter:
+  # build one image that has Spark + 4 python scripts + mongo_utils + entrypoint.sh
+  data_collector:
     build:
       context: .
-      dockerfile: src/api_admin/docker/Dockerfile.jupyter
-    container_name: crypto_pyspark
-    ports: ["8888:8888"]
+      dockerfile: src/api_admin/docker/Dockerfile.data_collector
+    image: crypto_data_collector
+    container_name: crypto_data_collector
+    env_file:
+      - ./src/api_admin/.env
     volumes:
-      - ./notebooks:/home/jovyan/notebooks
-      - ./src:/home/jovyan/src
-    environment:
-      - JUPYTER_ENABLE_LAB=yes
-      - PYTHONPATH=/home/jovyan/src
+      - ./src/api_admin/.env:/app/.env:ro
+    depends_on:
+      - mongodb
+      - kafka
     networks: [crypto_network]
+
+  # reuse same image but override entrypoint to only run producer
+  kafka_producer:
+    image: crypto_data_collector
+    container_name: crypto_kafka_producer
     env_file:
     - ./src/api_admin/.env
+    volumes:
+      - ./src/api_admin/.env:/app/.env:ro
+    depends_on:
+      - kafka
+    command: ["python", "/app/src/api_admin/data/kafka_producer.py"]
+    networks: [crypto_network]
 
-  fastapi:
+  # reuse same image but override entrypoint to only run consumer
+  kafka_consumer:
+    image: crypto_data_collector
+    container_name: crypto_kafka_consumer
+    env_file:
+      - ./src/api_admin/.env
+    volumes:
+      - ./src/api_admin/.env:/app/.env:ro
+    depends_on:
+      - mongodb
+      - kafka
+    command: ["python", "/app/src/api_admin/data/kafka_consumer.py"]
+    networks: [crypto_network]
+
+fastapi:
     build:
       context: .
       dockerfile: src/api_user/docker/Dockerfile.fastapi
@@ -62,7 +87,7 @@ services:
     ports:
       - "8000:8000"
     env_file:
-    - ./src/api_user/.env
+      - ./src/api_user/.env
     depends_on:
       - mongodb
       - kafka
@@ -96,7 +121,7 @@ services:
     container_name: crypto_system_checker
     ports: ["5000:5000"]
     env_file:
-    - ./src/system_checker/.env
+      - ./src/system_checker/.env
     depends_on: [mongodb]
     environment:
       - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@crypto_mongo:27017/
