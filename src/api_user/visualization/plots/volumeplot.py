@@ -14,7 +14,7 @@ def create_volumeplot(df, trading_pair='BTCUSDT'):
     if df.empty:
         return {'data': [], 'layout': {}}
         
-    df = df.sort_values('close_time')
+    df = df.sort_values('close_datetime')
     
     layout = PLOT_LAYOUT.copy()
     
@@ -32,7 +32,7 @@ def create_volumeplot(df, trading_pair='BTCUSDT'):
     increasing_mask = df['close'] > df['open']
     
     increasing_bars = go.Bar(
-        x=df[increasing_mask]['close_time'],
+        x=df[increasing_mask]['close_datetime'],
         y=df[increasing_mask]['volume'],
         name='Increasing Volume',
         marker_color=COLORS['primary'],
@@ -43,7 +43,7 @@ def create_volumeplot(df, trading_pair='BTCUSDT'):
     )
     
     decreasing_bars = go.Bar(
-        x=df[~increasing_mask]['close_time'],
+        x=df[~increasing_mask]['close_datetime'],
         y=df[~increasing_mask]['volume'],
         name='Decreasing Volume',
         marker_color=COLORS['secondary'],

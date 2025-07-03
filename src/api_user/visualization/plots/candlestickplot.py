@@ -2,25 +2,41 @@ from plotly.graph_objs import Figure, Candlestick
 from layout.theme import PLOT_LAYOUT, COLORS
 
 def create_candlestickplot(df, trading_pair='BTCUSDT'):
-    if df.empty:
-        return {'data': [], 'layout': {}}
+    """
+    Create a candlestick plot for the given OHLC data.
+    
+    Args:
+        df (pd.DataFrame): DataFrame containing OHLC data with 'close_datetime' column
+        trading_pair (str): Name of the trading pair for the title
         
-    df = df.sort_values('close_time')
+    Returns:
+        dict: Plotly figure as a dictionary
+    """
+    
+    if 'close_datetime' not in df.columns or 'open' not in df.columns or 'high' not in df.columns or 'low' not in df.columns or 'close' not in df.columns:
+        print("Error: Missing required columns in DataFrame")
+        return {'data': [], 'layout': {}}
+    
+    # Make a copy to avoid modifying the original dataframe
+    df = df.copy()
+    
+
+    df = df.sort_values('close_datetime')
     
     layout = PLOT_LAYOUT.copy()
-    
-    # Create a copy of the default title config and update the text
-    title_config = PLOT_LAYOUT.get('title', {}).copy()
-    title_config['text'] = f'{trading_pair} Candlestick Chart'
-    
     layout.update({
-        'title': title_config,
-        'xaxis': {**PLOT_LAYOUT['xaxis'], 'title': 'Time', 'type': 'date', 'rangeslider': {'visible': False}},
+        'title': f'{trading_pair} Candlestick Chart',
+        'xaxis': {
+            **PLOT_LAYOUT['xaxis'],
+            'title': 'Time',
+            'type': 'date',
+            'rangeslider': {'visible': False}
+        },
         'yaxis': {**PLOT_LAYOUT['yaxis'], 'title': 'Price (USDT)'}
     })
     
     candlestick = Candlestick(
-        x=df['close_time'],
+        x=df['close_datetime'],
         open=df['open'],
         high=df['high'],
         low=df['low'],
@@ -35,5 +51,4 @@ def create_candlestickplot(df, trading_pair='BTCUSDT'):
     )
     
     fig = Figure(data=[candlestick], layout=layout)
-    
     return fig.to_dict()

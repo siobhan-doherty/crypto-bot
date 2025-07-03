@@ -1,3 +1,4 @@
+import pandas as pd
 from layout.theme import PLOT_LAYOUT, COLORS
 
 def calculate_ema(series, periods):
@@ -9,16 +10,16 @@ def create_lineplot(df, trading_pair='BTCUSDT'):
     Create a line plot of the close price over time with EMA indicators.
     
     Args:
-        df (pd.DataFrame): DataFrame containing 'close_time' and 'close' columns
+        df (pd.DataFrame): DataFrame containing time series data
         trading_pair (str): The trading pair being displayed (e.g., 'BTCUSDT')
         
     Returns:
         dict: Plotly figure as a dictionary
     """
-    if df.empty:
+
+    if 'close' not in df.columns:
+        print("Error: Missing 'close' column in DataFrame")
         return {'data': [], 'layout': {}}
-        
-    df = df.sort_values('close_time')
     
     # Calculate EMAs with different periods
     ema_periods = [9, 21, 50, 200]
@@ -27,7 +28,6 @@ def create_lineplot(df, trading_pair='BTCUSDT'):
     
     layout = PLOT_LAYOUT.copy()
     
-    # Create a copy of the default title config and update the text
     title_config = PLOT_LAYOUT.get('title', {}).copy()
     title_config['text'] = f'{trading_pair} Close Price with Exponential Moving Averages'
     
@@ -56,7 +56,7 @@ def create_lineplot(df, trading_pair='BTCUSDT'):
     
     for period in ema_periods:
         traces.append({
-            'x': df['close_time'],
+            'x': df['close_datetime'],
             'y': df[f'ema_{period}'],
             'type': 'line',
             'name': f'EMA {period}',
@@ -69,14 +69,12 @@ def create_lineplot(df, trading_pair='BTCUSDT'):
         })
     
     traces.append({
-        'x': df['close_time'],
+        'type': 'scatter',
+         'x': df['close_datetime'],
         'y': df['close'],
-        'type': 'line',
-        'name': 'Close Price',
-        'line': {
-            'color': COLORS['primary'],
-            'width': 2
-        }
+        'mode': 'lines',
+        'name': 'Price',
+        'line': {'color': COLORS['primary'], 'width': 2}
     })
     
     return {

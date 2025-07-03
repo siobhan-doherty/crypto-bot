@@ -1,54 +1,105 @@
-from pymongo import MongoClient
-import pandas as pd
 import os
+import requests
+import pandas as pd
+from typing import Optional, Tuple
+from datetime import datetime, timedelta, timezone
 
-MONGO_URI = os.getenv('MONGO_URI')
+API_BASE_URL = os.getenv('API_BASE_URL', 'http://crypto_fastapi:8000')
+DEFAULT_INTERVAL = '15m'
 
-def get_mongo_client():
-    print("Attempting to connect to MongoDB...")
-    return MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
-
-def fetch_historical_data(trading_pair="BTCUSDT"):
+def get_available_date_range() -> Tuple[datetime, datetime]:
     """
-    Fetch historical data for a specific trading pair.
+    Fetch the available date range from the FastAPI endpoint.
+    
+    Returns:
+        Tuple[datetime, datetime]: (min_date, max_date) from the API
+    """
+    try:
+        response = requests.get(f"{API_BASE_URL}/market/range")
+        response.raise_for_status()
+        
+        data = response.json()
+        min_date = datetime.fromisoformat(data['min_date']).replace(tzinfo=timezone.utc)
+        max_date = datetime.fromisoformat(data['max_date']).replace(tzinfo=timezone.utc)
+        
+        return min_date, max_date
+        
+    except Exception as e:
+        print(f"Error fetching date range from API: {e}")
+        # Fallback to default range if API call fails
+        end_date = datetime.now(timezone.utc)
+        return end_date - timedelta(days=7), end_date
+
+def fetch_historical_data(
+    trading_pair: str = "BTCUSDT",
+    start_time: Optional[datetime] = None,
+    end_time: Optional[datetime] = None
+) -> pd.DataFrame:
+    """
+    Fetch historical data for a specific trading pair from the FastAPI endpoint.
     
     Args:
-        trading_pair (str): The trading pair to fetch data for (e.g., 'BTCUSDT', 'ETHUSDT', 'ETHBTC')
+        trading_pair: The trading pair to fetch data for (e.g., 'BTCUSDT')
+        start_time: Optional start time for the data range
+        end_time: Optional end time for the data range (defaults to latest available data)
         
     Returns:
-        pd.DataFrame: DataFrame containing the historical data
+        pd.DataFrame: DataFrame containing the historical OHLCV data with datetime columns
     """
-    print(f"Fetching historical data for {trading_pair}...")
-    client = get_mongo_client()
-    print("Connected to MongoDB")
-    db = client["cryptobot"]
-
-    # The data from all trading pairs is stored in a single collection
-    # called "historical_data".  Filter by the desired pair via the
-    # `symbol` field (added when the data was ingested).
-    collection_name = "historical_data"
-    collection = db[collection_name]
-
-    query = {"symbol": trading_pair} if trading_pair else {}
-
-    print(f"Querying collection '{collection_name}' with filter: {query}")
-    data = list(collection.find(query))
-    df = pd.DataFrame(data) if data else pd.DataFrame()
-
-    if df.empty:
-        print("No matching documents found.")
+    try:
+        # Prepare query parameters
+        params = {
+            'symbol': trading_pair.upper(),
+            'interval': DEFAULT_INTERVAL,
+            # limit is optional to speed up the API call
+            'limit': 1000
+        }
+        
+        # Convert datetime objects to milliseconds since epoch for the API
+        if start_time:
+            if start_time.tzinfo is None:
+                start_time = start_time.replace(tzinfo=timezone.utc)
+            params['start_time'] = int(start_time.timestamp() * 1000)  
+            
+        if end_time:
+            if end_time.tzinfo is None:
+                end_time = end_time.replace(tzinfo=timezone.utc)
+            params['end_time'] = int(end_time.timestamp() * 1000)
+        
+        response = requests.get(f"{API_BASE_URL}/market/ohlcv", params=params)
+        response.raise_for_status()
+        
+        data = response.json()
+        print(f"Received response with {len(data) if data else 0} data points")
+        
+        if not data:
+            print("Warning: No data returned from API")
+            return pd.DataFrame()
+        
+        df = pd.DataFrame(data)
+        
+        datetime_columns = ['open_datetime', 'close_datetime']
+        for col in datetime_columns:
+            if col in df.columns:
+                df[col] = pd.to_datetime(df[col], utc=True)
+        
+        numeric_cols = ['open', 'high', 'low', 'close', 'volume', 'quote_asset_volume', 
+                       'number_of_trades', 'taker_buy_base_asset_volume', 
+                       'taker_buy_quote_asset_volume']
+        for col in numeric_cols:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce')
+        
+        if 'open_time' in df.columns:
+            df = df.sort_values('open_time')
+        elif 'open_datetime' in df.columns:
+            df = df.sort_values('open_datetime')
+            
         return df
-
-    # Convert timestamps and add helper / renamed columns if needed
-    if "close_time" in df.columns:
-        df["close_time"] = pd.to_datetime(df["close_time"], unit="ms")
-    if "open_time" in df.columns:
-        df["open_time"] = pd.to_datetime(df["open_time"], unit="ms")
-
-    # Ensure a uniform column identifying the trading pair
-    if "symbol" in df.columns:
-        df.rename(columns={"symbol": "trading_pair"}, inplace=True)
-    df["trading_pair"] = df.get("trading_pair", trading_pair)
-
-    print(f"Fetched {len(df)} records for {trading_pair if trading_pair else 'all pairs'} from '{collection_name}'.")
-    return df
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching data from API: {e}")
+        return pd.DataFrame()
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return pd.DataFrame()
