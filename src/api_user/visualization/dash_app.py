@@ -1,7 +1,7 @@
 import dash 
 from dash import html, dcc
 import dash_bootstrap_components as dbc
-from fetch_data import fetch_historical_data
+from fetch_data import fetch_historical_data, get_available_date_range
 from plots.lineplot import create_lineplot
 from plots.candlestickplot import create_candlestickplot
 from plots.volumeplot import create_volumeplot
@@ -18,7 +18,17 @@ from layout.theme import COLORS
 # BOOTSTRAP, CERULEAN, DARKLY, FLATLY, LITERA, LUX, MATERIA, MINTY, PULSE, SANDSTONE, SIMPLEX, SKETCHY, SLATE, SOLAR, SPACELAB, UNITED
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
 
+# Get the full date range first
+min_date, max_date = get_available_date_range()
+print(f"Available date range: {min_date} to {max_date}")
+
+# Then fetch the limited dataset for the dashboard
 df = fetch_historical_data()
+
+if not df.empty:
+    print("Sample data:")
+    print(df[['open_datetime', 'close_datetime', 'open', 'close']].head())
+
 # default trading pair
 TRADING_PAIR = 'BTCUSDT'
 
@@ -61,10 +71,10 @@ app.layout = html.Div(children=[
             'textAlign': 'right',
             'paddingRight': '20px'
         }, children=[
-            html.Div(f'Available Data: {len(df)} records', style={'margin': '5px 0'}),
-            html.Div(f'Earliest Data: {df["close_datetime"].min().strftime("%Y-%m-%d %H:%M:%S")}', 
-                   style={'margin': '5px 0'}),
-            html.Div(f'Latest Data: {df["close_datetime"].max().strftime("%Y-%m-%d %H:%M:%S")}', 
+            html.Div(f'Displaying: {len(df):,} records', style={'margin': '5px 0'}),
+            html.Div(f'Available Range: {min_date.strftime("%Y-%m-%d")} to {max_date.strftime("%Y-%m-%d")}', 
+                   style={'margin': '5px 0', 'color': COLORS["text"]}),
+            html.Div(f'Displaying: {df["close_datetime"].min().strftime("%Y-%m-%d")} to {df["close_datetime"].max().strftime("%Y-%m-%d")}', 
                    style={'margin': '5px 0'})
         ])
     ]),

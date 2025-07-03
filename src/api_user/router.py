@@ -100,7 +100,8 @@ async def inspect_all_data(sample_size: int = 3):
 @router.get("/market/range")
 async def get_date_range():
     """
-    Get the available date range from the database.
+    Get the complete available date range from the database.
+    This endpoint is not affected by any limit parameters.
     
     Returns:
         dict: Dictionary with min_date and max_date in ISO format
@@ -110,11 +111,21 @@ async def get_date_range():
         client = get_mongo_client()
         db = client.cryptobot
         
-        # Get the first and last record
-        first = db[COLLECTION].find_one(sort=[('open_datetime', 1)])
-        last = db[COLLECTION].find_one(sort=[('open_datetime', -1)])
+        # Use aggregation to get min and max in a single query
+        result = list(db[COLLECTION].aggregate([
+            {
+                "$group": {
+                    "_id": None,
+                    "min_time": {"$min": "$open_time"},
+                    "max_time": {"$max": "$open_time"}
+                }
+            }
+        ]))
         
-        if not first or not last:
+        if not result:
+            raise ValueError("No data found in the collection")
+        
+        if not result:
             # Default to last 7 days if no data is found
             end_date = datetime.now(timezone.utc)
             start_date = end_date - timedelta(days=7)
@@ -122,10 +133,14 @@ async def get_date_range():
                 'min_date': start_date.isoformat(),
                 'max_date': end_date.isoformat()
             }
+            
+        # Get the min and max timestamps from the aggregation result
+        min_time = result[0]['min_time']
+        max_time = result[0]['max_time']
         
         # Convert timestamps to datetime objects
-        min_date = datetime.fromtimestamp(first['open_time'] / 1000, tz=timezone.utc)
-        max_date = datetime.fromtimestamp(last['open_time'] / 1000, tz=timezone.utc)
+        min_date = datetime.fromtimestamp(min_time / 1000, tz=timezone.utc)
+        max_date = datetime.fromtimestamp(max_time / 1000, tz=timezone.utc)
             
         return {
             'min_date': min_date.isoformat(),
@@ -152,7 +167,8 @@ async def get_ohlcv(
     symbol: str,
     interval: str = "15m",
     start_time: Optional[int] = None,
-    end_time: Optional[int] = None
+    end_time: Optional[int] = None,
+    limit: Optional[int] = None
 ):
     """
     Get OHLCV data for a specific symbol and time range.
@@ -162,7 +178,7 @@ async def get_ohlcv(
         interval: Candle interval (e.g., '1d', '1h')
         start_time: Start time in milliseconds since epoch
         end_time: End time in milliseconds since epoch
-        limit: Maximum number of candles to return
+        limit: Optional maximum number of candles to return. If not specified, returns all matching records.
         
     Returns:
         List of OHLCV data points with datetime strings
@@ -185,10 +201,16 @@ async def get_ohlcv(
         if time_query:
             query["open_time"] = time_query
         
-        cursor = collection.find(query).sort("open_time", 1)
-        
-        data = list(cursor)
-        
+        # If limit is specified, get the most recent data by sorting in descending order
+        if limit is not None and limit > 0:
+            cursor = collection.find(query).sort("open_time", -1).limit(limit)
+            # Convert to list and reverse to maintain chronological order
+            data = list(cursor)[::-1]
+        else:
+            # No limit, get all data in chronological order
+            cursor = collection.find(query).sort("open_time", 1)
+            data = list(cursor)
+            
         if not data:
             return []
             

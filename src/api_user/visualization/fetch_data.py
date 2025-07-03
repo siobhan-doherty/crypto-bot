@@ -50,37 +50,39 @@ def fetch_historical_data(
         # Prepare query parameters
         params = {
             'symbol': trading_pair.upper(),
-            'interval': DEFAULT_INTERVAL
+            'interval': DEFAULT_INTERVAL,
+            # limit is optional to speed up the API call
+            'limit': 1000
         }
         
         # Convert datetime objects to milliseconds since epoch for the API
         if start_time:
             if start_time.tzinfo is None:
                 start_time = start_time.replace(tzinfo=timezone.utc)
-            params['start_time'] = int(start_time.timestamp() * 1000)  # Convert to milliseconds
+            params['start_time'] = int(start_time.timestamp() * 1000)  
             
         if end_time:
             if end_time.tzinfo is None:
                 end_time = end_time.replace(tzinfo=timezone.utc)
-            params['end_time'] = int(end_time.timestamp() * 1000)  # Convert to milliseconds
+            params['end_time'] = int(end_time.timestamp() * 1000)
         
         response = requests.get(f"{API_BASE_URL}/market/ohlcv", params=params)
         response.raise_for_status()
         
         data = response.json()
+        print(f"Received response with {len(data) if data else 0} data points")
         
         if not data:
+            print("Warning: No data returned from API")
             return pd.DataFrame()
         
         df = pd.DataFrame(data)
         
-        # Convert datetime strings to datetime objects
         datetime_columns = ['open_datetime', 'close_datetime']
         for col in datetime_columns:
             if col in df.columns:
                 df[col] = pd.to_datetime(df[col], utc=True)
         
-        # Ensure numeric columns are numeric
         numeric_cols = ['open', 'high', 'low', 'close', 'volume', 'quote_asset_volume', 
                        'number_of_trades', 'taker_buy_base_asset_volume', 
                        'taker_buy_quote_asset_volume']
@@ -88,7 +90,6 @@ def fetch_historical_data(
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors='coerce')
         
-        # Sort by open_time if it exists, otherwise by open_datetime
         if 'open_time' in df.columns:
             df = df.sort_values('open_time')
         elif 'open_datetime' in df.columns:
