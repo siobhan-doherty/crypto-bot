@@ -5,6 +5,7 @@ from typing import Optional, Tuple
 from datetime import datetime, timedelta, timezone
 
 API_BASE_URL = os.getenv('API_BASE_URL', 'http://crypto_fastapi:8000')
+DEFAULT_INTERVAL = '15m'
 
 def get_available_date_range() -> Tuple[datetime, datetime]:
     """
@@ -49,7 +50,7 @@ def fetch_historical_data(
         # Prepare query parameters
         params = {
             'symbol': trading_pair.upper(),
-            'interval': '1d'  # Default interval, adjust if needed
+            'interval': DEFAULT_INTERVAL
         }
         
         # Convert datetime objects to milliseconds since epoch for the API

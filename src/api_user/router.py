@@ -15,6 +15,7 @@ class OHLCVDataPoint(BaseModel):
     symbol: str
     interval: str
 
+COLLECTION = 'historical_data_15m'
 router = APIRouter()
 
 def get_mongo_client():
@@ -79,7 +80,7 @@ async def inspect_all_data(sample_size: int = 3):
             }
         
         return {
-            "collection": "historical_data",
+            "collection": COLLECTION,
             "total_documents": total_docs,
             "all_symbols": symbols,
             "all_intervals": intervals, 
@@ -110,8 +111,8 @@ async def get_date_range():
         db = client.cryptobot
         
         # Get the first and last record
-        first = db.historical_data.find_one(sort=[('open_time', 1)])
-        last = db.historical_data.find_one(sort=[('open_time', -1)])
+        first = db[COLLECTION].find_one(sort=[('open_datetime', 1)])
+        last = db[COLLECTION].find_one(sort=[('open_datetime', -1)])
         
         if not first or not last:
             # Default to last 7 days if no data is found
@@ -149,10 +150,9 @@ async def get_date_range():
 @router.get("/market/ohlcv")
 async def get_ohlcv(
     symbol: str,
-    interval: str = "1d",
+    interval: str = "15m",
     start_time: Optional[int] = None,
-    end_time: Optional[int] = None,
-    limit: int = 1000
+    end_time: Optional[int] = None
 ):
     """
     Get OHLCV data for a specific symbol and time range.
@@ -171,21 +171,21 @@ async def get_ohlcv(
     try:
         client = get_mongo_client()
         db = client.cryptobot
-        collection = db.historical_data
+        collection = db[COLLECTION]
         
         query = {"symbol": symbol.upper()}
         
-        if start_time is not None or end_time is not None:
-            time_query = {}
-            if start_time is not None:
-                start_dt = datetime.fromtimestamp(start_time/1000, tz=timezone.utc).isoformat()
-                time_query["$gte"] = start_dt
-            if end_time is not None:
-                end_dt = datetime.fromtimestamp(end_time/1000, tz=timezone.utc).isoformat()
-                time_query["$lte"] = end_dt
-            query["open_datetime"] = time_query
+        # Convert timestamp range to milliseconds for query
+        time_query = {}
+        if start_time is not None:
+            time_query["$gte"] = start_time
+        if end_time is not None:
+            time_query["$lte"] = end_time
+            
+        if time_query:
+            query["open_time"] = time_query
         
-        cursor = collection.find(query).sort("open_datetime", 1).limit(limit)
+        cursor = collection.find(query).sort("open_time", 1)
         
         data = list(cursor)
         
@@ -194,28 +194,33 @@ async def get_ohlcv(
             
         results = []
         for doc in data:
+            # Convert timestamps to ISO format
+            open_time = datetime.fromtimestamp(doc['open_time'] / 1000, tz=timezone.utc).isoformat()
+            close_time = datetime.fromtimestamp(doc['close_time'] / 1000, tz=timezone.utc).isoformat()
+            
             result = {
                 '_id': str(doc['_id']),
-                'open_datetime': doc.get('open_datetime'),
-                'close_datetime': doc.get('close_datetime'),
-                'open': doc.get('open'),
-                'high': doc.get('high'),
-                'low': doc.get('low'),
-                'close': doc.get('close'),
-                'volume': doc.get('volume'),
-                'symbol': doc.get('symbol', symbol.upper()),
-                'interval': doc.get('interval', interval)
+                'symbol': doc['symbol'],
+                'open_datetime': open_time,
+                'close_datetime': close_time,
+                'open': doc['open'],
+                'high': doc['high'],
+                'low': doc['low'],
+                'close': doc['close'],
+                'volume': doc['volume'],
+                'quote_volume': doc.get('quote_volume'),
+                'num_trades': doc.get('num_trades'),
+                'taker_base_volume': doc.get('taker_base_volume'),
+                'taker_quote_volume': doc.get('taker_quote_volume'),
+                'interval': interval
             }
             results.append(result)
         
         return results
         
     except Exception as e:
-        error_msg = f"Error in get_ohlcv: {str(e)}"
-        raise HTTPException(
-            status_code=500, 
-            detail=error_msg
-        )
+        print(f"Error in get_ohlcv: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
-        if 'client' in locals():
+        if client:
             client.close()

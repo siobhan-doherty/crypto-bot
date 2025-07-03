@@ -102,8 +102,8 @@ def create_date_range_slider(df, slider_id, min_date_col='close_datetime', max_d
 
 def create_trading_pair_dropdown(dropdown_id, multi=False, value=None):
     options=[
-        {'label': 'BTC/USDT', 'value': 'BTCUSDT'}
-        #{'label': 'ETH/USDT', 'value': 'ETHUSDT'}
+        {'label': 'BTC/USDT', 'value': 'BTCUSDT'},
+        {'label': 'ETH/USDT', 'value': 'ETHUSDT'}
     ]
     
     # Callback is now registered in the main app
