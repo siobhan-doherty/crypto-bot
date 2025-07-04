@@ -96,6 +96,12 @@ services:
         - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
         - LOG_LEVEL=debug            # Todo: remove in production
         - DEBUG=1                    # Todo: remove in production
+      healthcheck:
+        test: ["CMD", "python", "-c", "import http.client; exit(0 if http.client.HTTPConnection('localhost', 8000).request('GET', '/api/health') or True else 1)"]
+        interval: 30s
+        timeout: 10s
+        retries: 3
+        start_period: 10s
       networks: [crypto_network]
     
   dash:
