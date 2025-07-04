@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from pyspark.sql import SparkSession, Row
 import time, requests, findspark
-from api_admin.db.mongo_utils import save_to_collection
+from collection_admin.db.mongo_utils import save_to_collection
 
 findspark.init()
 load_dotenv(dotenv_path="/app/.env", override=True)

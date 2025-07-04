@@ -40,13 +40,13 @@ services:
   data_collector:
     build:
       context: .
-      dockerfile: src/api_admin/docker/Dockerfile.data_collector
+      dockerfile: src/collection_admin/docker/Dockerfile.data_collector
     image: crypto_data_collector
     container_name: crypto_data_collector
     env_file:
-      - ./src/api_admin/.env
+      - ./src/collection_admin/.env
     volumes:
-      - ./src/api_admin/.env:/app/.env:ro
+      - ./src/collection_admin/.env:/app/.env:ro
     depends_on:
       - mongodb
       - kafka
@@ -57,12 +57,12 @@ services:
     image: crypto_data_collector
     container_name: crypto_kafka_producer
     env_file:
-    - ./src/api_admin/.env
+    - ./src/collection_admin/.env
     volumes:
-      - ./src/api_admin/.env:/app/.env:ro
+      - ./src/collection_admin/.env:/app/.env:ro
     depends_on:
       - kafka
-    command: ["python", "/app/src/api_admin/data/kafka_producer.py"]
+    command: ["python", "/app/src/collection_admin/data/kafka_producer.py"]
     networks: [crypto_network]
 
   # reuse same image but override entrypoint to only run consumer
@@ -70,13 +70,13 @@ services:
     image: crypto_data_collector
     container_name: crypto_kafka_consumer
     env_file:
-      - ./src/api_admin/.env
+      - ./src/collection_admin/.env
     volumes:
-      - ./src/api_admin/.env:/app/.env:ro
+      - ./src/collection_admin/.env:/app/.env:ro
     depends_on:
       - mongodb
       - kafka
-    command: ["python", "/app/src/api_admin/data/kafka_consumer.py"]
+    command: ["python", "/app/src/collection_admin/data/kafka_consumer.py"]
     networks: [crypto_network]
 
   fastapi:
@@ -112,19 +112,6 @@ services:
     environment:
       - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@crypto_mongo:27017/
       - API_BASE_URL=http://crypto_fastapi:8000/api
-    networks: [crypto_network]
-
-  system_checker:
-    build:
-      context: .
-      dockerfile: src/system_checker/docker/Dockerfile.system_checker
-    container_name: crypto_system_checker
-    ports: ["5000:5000"]
-    env_file:
-      - ./src/system_checker/.env
-    depends_on: [mongodb]
-    environment:
-      - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@crypto_mongo:27017/
     networks: [crypto_network]
 
 volumes:

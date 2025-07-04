@@ -19,11 +19,10 @@ docker-compose up -d
 # Commands to launch kafka-streaming
 
 ## Execute in different terminals
-docker exec -it crypto_pyspark python3 src/api_admin/data/collect_historical_data.py
-docker exec -it crypto_pyspark python3 src/api_admin/data/kafka_producer.py
-docker exec -it crypto_pyspark python3 src/api_admin/data/kafka_consumer.py
+docker exec -it crypto_pyspark python3 src/collection_admin/data/initialize_historical_data.py
+docker exec -it crypto_pyspark python3 src/collection_admin/data/kafka_producer.py
+docker exec -it crypto_pyspark python3 src/collection_admin/data/kafka_consumer.py
 
-docker exec -it crypto_pyspark python3 src/system_checker/status_checker.py
 # launch dash
 docker exec -it crypto_dash python3 /app/src/api_user/visualization/dash_app.py
 
@@ -37,10 +36,10 @@ db.adminCommand('listDatabases')
 use cryptobot
 db.getCollectionNames()
 
-db.historical_data.findOne()
-db.historical_data.countDocuments()
-db.historical_data.findOne({ "symbol": "BTCUSDT" })
-db.historical_data.findOne({ "symbol": "ETHUSDT" })
+db.historical_data_15m.findOne()
+db.historical_data_15m.countDocuments()
+db.historical_data_15m.findOne({ "symbol": "BTCUSDT" })
+db.historical_data_15m.findOne({ "symbol": "ETHUSDT" })
 
 db.streaming_data.findOne()
 db.streaming_data.countDocuments()

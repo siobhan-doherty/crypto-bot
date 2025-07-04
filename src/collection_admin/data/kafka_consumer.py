@@ -1,7 +1,7 @@
 import os, json
 from dotenv import load_dotenv
 from kafka import KafkaConsumer
-from api_admin.db.mongo_utils import save_to_collection
+from collection_admin.db.mongo_utils import save_to_collection
 
 
 load_dotenv(dotenv_path="/app/.env", override=True)
