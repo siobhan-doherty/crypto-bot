@@ -121,4 +121,3 @@ networks:
   crypto_network:
     name: crypto_network
     driver: bridge
-    external: true
