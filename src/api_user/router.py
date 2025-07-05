@@ -33,9 +33,19 @@ def get_mongo_client():
         print(f"[ERROR] {error_msg}")
         raise HTTPException(status_code=500, detail=error_msg)
 
-@router.get("/test")
-async def test_endpoint():
-    return {"status": "API is working!"}
+@router.get("/health", tags=["health"])
+async def health_check():
+    """Health check endpoint for container orchestration"""
+    try:
+        # Test database connection
+        client = get_mongo_client()
+        client.server_info()
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"status": "unhealthy", "error": str(e)}
+        )
 
 @router.get("/market/inspect_data")
 async def inspect_all_data(sample_size: int = 3):
