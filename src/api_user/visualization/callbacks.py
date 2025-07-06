@@ -1,9 +1,9 @@
 import pandas as pd
 from dash.dependencies import Input, Output
-from plots.lineplot import create_lineplot
-from plots.candlestickplot import create_candlestickplot
-from plots.volumeplot import create_volumeplot
-from plots.volatilityplot import create_volatility_plot
+from .plots.lineplot import create_lineplot
+from .plots.candlestickplot import create_candlestickplot
+from .plots.volumeplot import create_volumeplot
+from .plots.volatilityplot import create_volatility_plot
 
 def register_callbacks(app, fetch_historical_data):
     @app.callback(
