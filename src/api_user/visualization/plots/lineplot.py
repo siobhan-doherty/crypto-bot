@@ -1,5 +1,5 @@
 import pandas as pd
-from layout.theme import PLOT_LAYOUT, COLORS
+from ..layout.theme import PLOT_LAYOUT, COLORS
 
 def calculate_ema(series, periods):
     """Calculate Exponential Moving Average"""

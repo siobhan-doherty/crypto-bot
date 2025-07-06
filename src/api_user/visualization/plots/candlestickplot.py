@@ -1,5 +1,5 @@
 from plotly.graph_objs import Figure, Candlestick
-from layout.theme import PLOT_LAYOUT, COLORS
+from ..layout.theme import PLOT_LAYOUT, COLORS
 
 def create_candlestickplot(df, trading_pair='BTCUSDT'):
     """
