@@ -6,7 +6,7 @@ Run daily (e.g. via Airflow).
 import time, requests
 from datetime import datetime, timezone
 from dotenv import load_dotenv
-from api_admin.db.mongo_utils import save_to_collection, get_mongo_collection
+from collection_admin.db.mongo_utils import save_to_collection, get_mongo_collection
 
 load_dotenv(dotenv_path="/app/.env", override=True)
 
