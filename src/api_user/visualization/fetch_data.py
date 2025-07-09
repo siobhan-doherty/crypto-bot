@@ -43,10 +43,10 @@ def fetch_historical_data(
     Args:
         trading_pair: The trading pair to fetch data for (e.g., 'BTCUSDT')
         start_time: Optional start time for the data range
-        end_time: Optional end time for the data range (defaults to latest available data)
+        end_time: Optional end time for the data range (defaults to latest available)
 
     Returns:
-        pd.DataFrame: DataFrame containing the historical OHLCV data with datetime columns
+        pd.DataFrame: DataFrame containing the historical OHLCV data with datetime
     """
     try:
         # Prepare query parameters

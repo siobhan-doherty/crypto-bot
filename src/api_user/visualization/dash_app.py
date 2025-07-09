@@ -44,7 +44,6 @@ def create_app():
     if not df.empty:
         print("Sample data:")
         print(df[["open_datetime", "close_datetime", "open", "close"]].head())
-    # BOOTSTRAP, CERULEAN, DARKLY, FLATLY, LITERA, LUX, MATERIA, MINTY, PULSE, SANDSTONE, SIMPLEX, SKETCHY, SLATE, SOLAR, SPACELAB, UNITED
     app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
 
     # Set the title of the app
@@ -109,11 +108,14 @@ def create_app():
                                 style={"margin": "5px 0"},
                             ),
                             html.Div(
-                                f"Available Range: {min_date.strftime('%Y-%m-%d')} to {max_date.strftime('%Y-%m-%d')}",
+                                "Available Range: "
+                                f"{min_date.strftime('%Y-%m-%d')} to {max_date.strftime('%Y-%m-%d')}",
                                 style={"margin": "5px 0", "color": COLORS["text"]},
                             ),
                             html.Div(
-                                f"Displaying: {df['close_datetime'].min().strftime('%Y-%m-%d')} to {df['close_datetime'].max().strftime('%Y-%m-%d')}",
+                                "Displaying: "
+                                f"{df['close_datetime'].min().strftime('%Y-%m-%d')} to "
+                                f"{df['close_datetime'].max().strftime('%Y-%m-%d')}",
                                 style={"margin": "5px 0"},
                             ),
                         ],
