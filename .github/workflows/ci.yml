@@ -60,8 +60,47 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker images
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Build FastAPI image with cache
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: src/api_user/docker/Dockerfile.fastapi
+          tags: my-app-fastapi:ci-build
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+
+      - name: Move cache
         run: |
-          docker build -t my-app-fastapi:ci-build -f src/api_user/docker/Dockerfile.fastapi .
-          docker build -t my-app-dash:ci-build -f src/api_user/docker/Dockerfile.dash .
-          docker build -t data-collector:ci-build -f src/collection_admin/docker/Dockerfile.data_collector .
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+      - name: Build Dash image with cache
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: src/api_user/docker/Dockerfile.dash
+          tags: my-app-dash:ci-build
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+      - name: Build Data Collector image with cache
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: src/collection_admin/docker/Dockerfile.data_collector
+          tags: data-collector:ci-build
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
