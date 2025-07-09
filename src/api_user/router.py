@@ -195,7 +195,7 @@ async def get_ohlcv(
         interval: Candle interval (e.g., '1d', '1h')
         start_time: Start time in milliseconds since epoch
         end_time: End time in milliseconds since epoch
-        limit: Optional maximum number of candles to return. 
+        limit: Optional maximum number of candles to return.
         If not specified, returns all matching records.
 
     Returns:

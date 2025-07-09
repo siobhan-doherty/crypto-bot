@@ -4,3 +4,4 @@ pytest
 httpx
 pymongo
 mongomock
+uvicorn

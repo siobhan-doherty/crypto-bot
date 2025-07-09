@@ -5,11 +5,12 @@ from pathlib import Path
 root_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(root_dir / "src"))
 
+# Now import other modules after path modification
 from fastapi.testclient import TestClient
 from fastapi import status
 from datetime import datetime, timedelta, timezone
 from unittest.mock import patch, MagicMock
-from api_user.main import app
+from api_user.main import app  # noqa: E402
 
 # Test client
 client = TestClient(app)
