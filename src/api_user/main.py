@@ -6,7 +6,7 @@ import uvicorn
 app = FastAPI(
     title="Crypto Dashboard API",
     description="API for serving cryptocurrency dashboard data",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # Configure CORS
@@ -20,13 +20,15 @@ app.add_middleware(
 
 app.include_router(api_router, prefix="/api")
 
+
 @app.get("/")
 async def root():
     return {
         "message": "Welcome to the Crypto Dashboard API",
         "docs": "/docs",
-        "redoc": "/redoc"
+        "redoc": "/redoc",
     }
+
 
 print("\nRegistered routes:")
 for route in app.routes:
