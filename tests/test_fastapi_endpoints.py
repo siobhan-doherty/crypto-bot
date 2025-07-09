@@ -1,15 +1,15 @@
+import sys
+from pathlib import Path
+
+# Add the src directory to the Python path before any imports
+root_dir = Path(__file__).parent.parent
+sys.path.insert(0, str(root_dir / "src"))
+
 from fastapi.testclient import TestClient
 from fastapi import status
 from datetime import datetime, timedelta, timezone
 from unittest.mock import patch, MagicMock
-import sys
-from pathlib import Path
 from api_user.main import app
-
-# Add the src directory to the Python path
-root_dir = Path(__file__).parent.parent
-sys.path.insert(0, str(root_dir / "src"))
-
 
 # Test client
 client = TestClient(app)
