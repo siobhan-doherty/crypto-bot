@@ -54,7 +54,7 @@ async def health_check():
 
 @router.get("/market/inspect_data")
 async def inspect_all_data(sample_size: int = 3):
-    """Get complete data inspection including symbols, date ranges, and sample documents"""
+    """Get data inspection including symbols, date ranges, and sample documents"""
     client = get_mongo_client()
     try:
         db = client["cryptobot"]
@@ -80,10 +80,13 @@ async def inspect_all_data(sample_size: int = 3):
         symbol_stats = {}
         for symbol in symbols:
             first = collection.find_one({"symbol": symbol}, sort=[("open_datetime", 1)])
-            last = collection.find_one({"symbol": symbol}, sort=[("open_datetime", -1)])
             count = collection.count_documents({"symbol": symbol})
-            dt1 = datetime.fromisoformat(first["open_datetime"].replace("Z", "+00:00"))
-            dt2 = datetime.fromisoformat(first["close_datetime"].replace("Z", "+00:00"))
+            dt1 = datetime.fromisoformat(
+                first["open_datetime"].replace("Z", "+00:00")
+            )
+            dt2 = datetime.fromisoformat(
+                first["close_datetime"].replace("Z", "+00:00")
+            )
 
             symbol_stats[symbol] = {
                 "data_points": count,
@@ -192,7 +195,8 @@ async def get_ohlcv(
         interval: Candle interval (e.g., '1d', '1h')
         start_time: Start time in milliseconds since epoch
         end_time: End time in milliseconds since epoch
-        limit: Optional maximum number of candles to return. If not specified, returns all matching records.
+        limit: Optional maximum number of candles to return. 
+        If not specified, returns all matching records.
 
     Returns:
         List of OHLCV data points with datetime strings

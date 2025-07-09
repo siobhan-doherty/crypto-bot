@@ -1,0 +1,3 @@
+# Dependencies for CI
+fastapi
+pytest

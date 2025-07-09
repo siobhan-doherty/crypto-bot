@@ -1,16 +1,19 @@
 import pandas as pd
 from dash import dcc, html
 
-def create_date_range_slider(df, slider_id, min_date_col='close_datetime', max_date_col='close_datetime'):
+
+def create_date_range_slider(
+    df, slider_id, min_date_col="close_datetime", max_date_col="close_datetime"
+):
     """
     Create a RangeSlider component with date-based configuration.
-    
+
     Args:
         df (pd.DataFrame): The dataframe containing the date columns
         slider_id (str): The ID for the RangeSlider component
         min_date_col (str): Column name for minimum date
         max_date_col (str): Column name for maximum date
-        
+
     Returns:
         html.Div: Container with RangeSlider or error message
     """
@@ -18,70 +21,66 @@ def create_date_range_slider(df, slider_id, min_date_col='close_datetime', max_d
     if df.empty or min_date_col not in df.columns or max_date_col not in df.columns:
         return html.Div(
             "Date range slider not available: No data or missing date columns.",
-            style={'color': '#ff6b6b', 'padding': '10px'}
+            style={"color": "#ff6b6b", "padding": "10px"},
         )
-    
+
     try:
         min_date = df[min_date_col].min()
         max_date = df[max_date_col].max()
-        
+
         min_timestamp = int(pd.Timestamp(min_date).timestamp())
         max_timestamp = int(pd.Timestamp(max_date).timestamp())
-        
+
         num_marks = min(10, len(df))
-        date_range = pd.date_range(
-            start=min_date,
-            end=max_date,
-            periods=num_marks
-        )
-        
+        date_range = pd.date_range(start=min_date, end=max_date, periods=num_marks)
+
         marks = {}
         for ts in date_range:
             ts_timestamp = int(ts.timestamp())
             if min_timestamp <= ts_timestamp <= max_timestamp:
                 marks[ts_timestamp] = {
-                    'label': ts.strftime('%b %d\n%H:%M'),
-                    'style': {
-                        'color': '#fff',
-                        'white-space': 'pre',
-                        'transform': 'translateX(-50%)',
-                        'text-align': 'center',
-                        'font-size': '12px',
-                        'margin-top': '5px'
-                    }
+                    "label": ts.strftime("%b %d\n%H:%M"),
+                    "style": {
+                        "color": "#fff",
+                        "white-space": "pre",
+                        "transform": "translateX(-50%)",
+                        "text-align": "center",
+                        "font-size": "12px",
+                        "margin-top": "5px",
+                    },
                 }
-        
+
         # Add marks for the start and end dates if they're not already included
         if min_timestamp not in marks:
             min_date_dt = pd.Timestamp(min_date)
             marks[min_timestamp] = {
-                'label': min_date_dt.strftime('%b %d\n%H:%M'),
-                'style': {
-                    'color': '#fff',
-                    'white-space': 'pre',
-                    'transform': 'translateX(0)',
-                    'text-align': 'left',
-                    'font-size': '12px',
-                    'margin-top': '5px'
-                }
+                "label": min_date_dt.strftime("%b %d\n%H:%M"),
+                "style": {
+                    "color": "#fff",
+                    "white-space": "pre",
+                    "transform": "translateX(0)",
+                    "text-align": "left",
+                    "font-size": "12px",
+                    "margin-top": "5px",
+                },
             }
         if max_timestamp not in marks:
             max_date_dt = pd.Timestamp(max_date)
             marks[max_timestamp] = {
-                'label': max_date_dt.strftime('%b %d\n%H:%M'),
-                'style': {
-                    'color': '#fff',
-                    'white-space': 'pre',
-                    'transform': 'translateX(-100%)',
-                    'text-align': 'right',
-                    'font-size': '12px',
-                    'margin-top': '5px'
-                }
+                "label": max_date_dt.strftime("%b %d\n%H:%M"),
+                "style": {
+                    "color": "#fff",
+                    "white-space": "pre",
+                    "transform": "translateX(-100%)",
+                    "text-align": "right",
+                    "font-size": "12px",
+                    "margin-top": "5px",
+                },
             }
-        
+
         # Set default value to full range
         value = [min_timestamp, max_timestamp]
-        
+
         return dcc.RangeSlider(
             id=slider_id,
             min=min_timestamp,
@@ -90,30 +89,31 @@ def create_date_range_slider(df, slider_id, min_date_col='close_datetime', max_d
             marks=marks,
             step=None,
             tooltip=None,
-            allowCross=False
+            allowCross=False,
         )
-        
+
     except Exception as e:
         print(f"Error creating date range slider: {str(e)}")
         return html.Div(
             f"Error creating date range slider: {str(e)}",
-            style={'color': '#ff6b6b', 'padding': '10px'}
+            style={"color": "#ff6b6b", "padding": "10px"},
         )
 
+
 def create_trading_pair_dropdown(dropdown_id, multi=False, value=None):
-    options=[
-        {'label': 'BTC/USDT', 'value': 'BTCUSDT'},
-        {'label': 'ETH/USDT', 'value': 'ETHUSDT'}
+    options = [
+        {"label": "BTC/USDT", "value": "BTCUSDT"},
+        {"label": "ETH/USDT", "value": "ETHUSDT"},
     ]
-    
+
     # Callback is now registered in the main app
-    
+
     if value is None:
-        value = 'BTCUSDT' if not multi else ['BTCUSDT', 'ETHUSDT']
-    
+        value = "BTCUSDT" if not multi else ["BTCUSDT", "ETHUSDT"]
+
     return dcc.Dropdown(
         id=dropdown_id,
-        className='custom-dropdown',
+        className="custom-dropdown",
         options=options,
         value=value,
         multi=multi,
@@ -121,38 +121,41 @@ def create_trading_pair_dropdown(dropdown_id, multi=False, value=None):
         searchable=False,
     )
 
+
 def create_atr_period_input(input_id, default_period=14):
     """
     Create a numeric input for ATR period selection.
-    
+
     Args:
         input_id (str): The ID for the input component
         default_period (int): Default ATR period (default: 14)
-        
+
     Returns:
         html.Div: Styled numeric input component
     """
-    return html.Div([
-        html.Label('Average True Range Period:', style={
-            'color': 'white',
-            'marginRight': '10px',
-            'fontSize': '14px'
-        }),
-        dcc.Input(
-            id=input_id,
-            type='number',
-            min=5,
-            max=50,
-            step=1,
-            value=default_period,
-            style={
-                'width': '60px',
-                'marginRight': '10px',
-                'backgroundColor': '#2d2d2d',
-                'color': 'white',
-                'border': '1px solid #00bc8c',
-                'borderRadius': '4px',
-                'padding': '4px 8px'
-            }
-        )
-    ], style={'display': 'flex', 'alignItems': 'center'})
+    return html.Div(
+        [
+            html.Label(
+                "Average True Range Period:",
+                style={"color": "white", "marginRight": "10px", "fontSize": "14px"},
+            ),
+            dcc.Input(
+                id=input_id,
+                type="number",
+                min=5,
+                max=50,
+                step=1,
+                value=default_period,
+                style={
+                    "width": "60px",
+                    "marginRight": "10px",
+                    "backgroundColor": "#2d2d2d",
+                    "color": "white",
+                    "border": "1px solid #00bc8c",
+                    "borderRadius": "4px",
+                    "padding": "4px 8px",
+                },
+            ),
+        ],
+        style={"display": "flex", "alignItems": "center"},
+    )
