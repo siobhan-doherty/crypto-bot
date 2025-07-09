@@ -31,7 +31,7 @@ def calculate_atr(df, period=14):
 
 def create_volatility_plot(df, period=14):
     """
-    Create a volatility plot using ATR (Average True Range) for BTCUSDT and ETHUSDT
+    Create a volatility plot using ATR (Average True Range)
 
     Args:
         df (dict): Dictionary of DataFrames keyed by trading pair

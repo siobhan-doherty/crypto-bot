@@ -4,12 +4,12 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import patch, MagicMock
 import sys
 from pathlib import Path
+from api_user.main import app
 
 # Add the src directory to the Python path
 root_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(root_dir / "src"))
 
-from api_user.main import app
 
 # Test client
 client = TestClient(app)

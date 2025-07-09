@@ -7,7 +7,7 @@ def create_candlestickplot(df, trading_pair="BTCUSDT"):
     Create a candlestick plot for the given OHLC data.
 
     Args:
-        df (pd.DataFrame): DataFrame containing OHLC data with 'close_datetime' column
+        df (pd.DataFrame): DataFrame containing OHLC data with 'close_datetime'
         trading_pair (str): Name of the trading pair for the title
 
     Returns:

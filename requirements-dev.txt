@@ -2,3 +2,5 @@
 fastapi
 pytest
 httpx
+pymongo
+mongomock

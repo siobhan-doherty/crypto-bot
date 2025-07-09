@@ -1,4 +1,3 @@
-import pandas as pd
 from ..layout.theme import PLOT_LAYOUT, COLORS
 
 

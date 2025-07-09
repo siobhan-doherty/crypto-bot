@@ -7,7 +7,7 @@ def create_volumeplot(df, trading_pair="BTCUSDT"):
     Create a volume plot with color-coded bars based on price movement.
 
     Args:
-        df (pd.DataFrame): DataFrame containing 'close_time', 'volume', 'close', and 'open' columns
+        df (pd.DataFrame): DataFrame
 
     Returns:
         dict: Plotly figure as a dictionary
