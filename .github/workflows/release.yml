@@ -33,21 +33,18 @@ jobs:
 
       - name: Tag and Push FastAPI Image
         run: |
-          docker pull crypto_fastapi:${{ env.BUILD_ID }}
           docker tag crypto_fastapi:${{ env.BUILD_ID }} ${{ secrets.DOCKERHUB_USERNAME }}/crypto_fastapi:latest
           docker tag crypto_fastapi:${{ env.BUILD_ID }} ${{ secrets.DOCKERHUB_USERNAME }}/crypto_fastapi:${{ github.sha }}
           docker push --all-tags ${{ secrets.DOCKERHUB_USERNAME }}/crypto_fastapi
 
       - name: Tag and Push Dash Image
         run: |
-          docker pull crypto_dash:${{ env.BUILD_ID }}
           docker tag crypto_dash:${{ env.BUILD_ID }} ${{ secrets.DOCKERHUB_USERNAME }}/crypto_dash:latest
           docker tag crypto_dash:${{ env.BUILD_ID }} ${{ secrets.DOCKERHUB_USERNAME }}/crypto_dash:${{ github.sha }}
           docker push --all-tags ${{ secrets.DOCKERHUB_USERNAME }}/crypto_dash
 
       - name: Tag and Push Data Collector Image
         run: |
-          docker pull crypto_data_collector:${{ env.BUILD_ID }}
           docker tag crypto_data_collector:${{ env.BUILD_ID }} ${{ secrets.DOCKERHUB_USERNAME }}/crypto_data_collector:latest
           docker tag crypto_data_collector:${{ env.BUILD_ID }} ${{ secrets.DOCKERHUB_USERNAME }}/crypto_data_collector:${{ github.sha }}
           docker push --all-tags ${{ secrets.DOCKERHUB_USERNAME }}/crypto_data_collector
