@@ -1,51 +1,22 @@
 name: Release Workflow
 
 on:
-  workflow_run:
-    workflows: ["Build Workflow"]
-    types:
-      - completed
-  workflow_dispatch:  # Allow manual triggering
+  push:
+    branches: ['**']  # Run on any branch for testing
 
 jobs:
+  # First run the build and test workflow
+  build-and-test:
+    uses: ./.github/workflows/build-and-test.yml
+
+  # Then run the release steps
   release:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    needs: [build-and-test.build]  # Only depend on the build job for the moment
     runs-on: ubuntu-latest
-    
+    env:
+      BUILD_ID: ${{ needs.build-and-test.outputs.build-id }}
+
     steps:
-      - name: Get build ID
-        uses: actions/github-script@v6
-        id: set-build-id
-        with:
-          script: |
-            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: context.payload.workflow_run.id,
-            });
-            const match = artifacts.data.artifacts.find((art) => art.name === 'build-artifacts');
-            const download = await github.rest.actions.downloadArtifact({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              artifact_id: match.id,
-              archive_format: 'zip',
-            });
-            return download.data.toString('base64');
-          result-encoding: string
-
-      - name: Extract build ID
-        run: |
-          echo "${{ steps.set-build-id.outputs.result }}" > artifact.zip
-          unzip artifact.zip
-          BUILD_ID=$(cat build_id.txt)
-          echo "BUILD_ID=${BUILD_ID}" >> $GITHUB_ENV
-
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Docker
-        run: docker --version
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -55,12 +26,23 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Tag and Push Images
+      - name: Tag and Push FastAPI Image
         run: |
-          # Pull, tag, and push each image
-          for image in fastapi dash data_collector; do
-            docker pull crypto_${image}:${{ env.BUILD_ID }}
-            docker tag crypto_${image}:${{ env.BUILD_ID }} ${{ secrets.DOCKERHUB_USERNAME }}/crypto_${image}:latest
-            docker tag crypto_${image}:${{ env.BUILD_ID }} ${{ secrets.DOCKERHUB_USERNAME }}/crypto_${image}:${{ github.sha }}
-            docker push --all-tags ${{ secrets.DOCKERHUB_USERNAME }}/crypto_${image}
-          done
+          docker pull crypto_fastapi:${{ env.BUILD_ID }}
+          docker tag crypto_fastapi:${{ env.BUILD_ID }} ${{ secrets.DOCKERHUB_USERNAME }}/crypto_fastapi:latest
+          docker tag crypto_fastapi:${{ env.BUILD_ID }} ${{ secrets.DOCKERHUB_USERNAME }}/crypto_fastapi:${{ github.sha }}
+          docker push --all-tags ${{ secrets.DOCKERHUB_USERNAME }}/crypto_fastapi
+
+      - name: Tag and Push Dash Image
+        run: |
+          docker pull crypto_dash:${{ env.BUILD_ID }}
+          docker tag crypto_dash:${{ env.BUILD_ID }} ${{ secrets.DOCKERHUB_USERNAME }}/crypto_dash:latest
+          docker tag crypto_dash:${{ env.BUILD_ID }} ${{ secrets.DOCKERHUB_USERNAME }}/crypto_dash:${{ github.sha }}
+          docker push --all-tags ${{ secrets.DOCKERHUB_USERNAME }}/crypto_dash
+
+      - name: Tag and Push Data Collector Image
+        run: |
+          docker pull crypto_data_collector:${{ env.BUILD_ID }}
+          docker tag crypto_data_collector:${{ env.BUILD_ID }} ${{ secrets.DOCKERHUB_USERNAME }}/crypto_data_collector:latest
+          docker tag crypto_data_collector:${{ env.BUILD_ID }} ${{ secrets.DOCKERHUB_USERNAME }}/crypto_data_collector:${{ github.sha }}
+          docker push --all-tags ${{ secrets.DOCKERHUB_USERNAME }}/crypto_data_collector
