@@ -14,7 +14,7 @@ jobs:
     
     steps:
       - name: Get build ID
-        uses: actions/github-script@v7
+        uses: actions/github-script@v6
         id: set-build-id
         with:
           script: |
@@ -41,7 +41,7 @@ jobs:
           echo "BUILD_ID=${BUILD_ID}" >> $GITHUB_ENV
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Set up Docker
         run: docker --version
