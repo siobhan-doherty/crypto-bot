@@ -1,4 +1,4 @@
-name: CI - Feature Branch Workflow
+name: CI Lint and Test Workflow
 
 on:
   push:
@@ -6,5 +6,43 @@ on:
       - 'master'   # run this workflow on all other branches
 
 jobs:
-  build-and-test:
-    uses: ./.github/workflows/build-and-test.yml
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8
+
+    - name: Run linter
+      run: |
+        flake8 src tests
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install pytest
+
+      - name: Run tests
+        run: |
+          pytest tests/
