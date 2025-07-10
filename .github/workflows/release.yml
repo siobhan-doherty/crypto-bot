@@ -15,8 +15,13 @@ jobs:
     runs-on: ubuntu-latest
     env:
       BUILD_ID: ${{ needs.build-and-test.outputs.build-id }}
-
+    
     steps:
+      - name: Debug build ID
+        run: |
+          echo "Build ID: ${{ env.BUILD_ID }}"
+          echo "Git SHA: ${{ github.sha }}"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 

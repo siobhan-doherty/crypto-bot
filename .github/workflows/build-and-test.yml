@@ -3,8 +3,21 @@ name: Build and Test
 on:
   workflow_call:
     # This makes it a reusable workflow
+    outputs:
+      build-id:
+        description: "The build ID generated during the workflow"
+        value: ${{ jobs.build.outputs.build-id }}
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      build-id: ${{ steps.set-build-id.outputs.build-id }}
+    steps:
+      - name: Set build ID
+        id: set-build-id
+        run: echo "build-id=$(date +%s)" >> $GITHUB_OUTPUT
+
   # lint:
   #   runs-on: ubuntu-latest
   #   steps:
