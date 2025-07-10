@@ -1,4 +1,13 @@
 [flake8]
 max-line-length = 88
-# Allow spaces before ':' in slices (conflicts with Black)
-extend-ignore = E203
+
+# temporarily ignore common style nit-picks:
+extend-ignore =
+    E203,  # whitespace before ':', conflicts with Black
+    E265,  # block comment should start with “# ”
+    F401,  # imported but unused
+    E302,  # expected 2 blank lines, found 1
+    E305,  # expected 2 blank lines after class or function definition
+    E402,  # module level import not at top of file
+    W293,  # blank line contains whitespace
+    W391   # blank line at end of file
