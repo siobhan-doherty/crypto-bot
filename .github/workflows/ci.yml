@@ -2,8 +2,7 @@ name: CI - Feature Branch Workflow
 
 on:
   push:
-    branches-ignore:
-      - 'master'   # run this workflow on all other branches
+    branches: ['master']  # run only on master branch
 
 jobs:
   build-and-test:
