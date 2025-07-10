@@ -80,19 +80,19 @@ docker ps
 ## Running Data Collector Scripts 
 Seed 3–6 months of 15m data: 
 ```bash
-docker exec -it crypto_data_collector python /app/src/api_admin/data/initialize_historical_data.py
+docker exec -it crypto_data_collector python /app/src/collection_admin/data/initialize_historical_data.py
 ```
 Pull only new 15m candles:
 ```bash
-docker exec -it crypto_data_collector python /app/src/api_admin/data/update_historical_data.py
+docker exec -it crypto_data_collector python /app/src/collection_admin/data/update_historical_data.py
 ```
 Start 1-minute Kafka producer:
 ```bash
-docker exec -it crypto_data_collector python /app/src/api_admin/data/kafka_producer.py
+docker exec -it crypto_data_collector python /app/src/collection_admin/data/kafka_producer.py
 ```
 Start Kafka consumer:
 ```bash
-docker exec -it crypto_data_collector python /app/src/api_admin/data/kafka_consumer.py
+docker exec -it crypto_data_collector python /app/src/collection_admin/data/kafka_consumer.py
 ``````
 
 
@@ -123,7 +123,7 @@ MONGO_INITDB_ROOT_USERNAME=your_user
 MONGO_INITDB_ROOT_PASSWORD=your_pass
 ```
 
-Create a `.env` file in src/api_admin directory:
+Create a `.env` file in src/collection_admin directory:
 ```dotenv
 MONGO_INITDB_ROOT_USERNAME=your_user
 MONGO_INITDB_ROOT_PASSWORD=your_pass
