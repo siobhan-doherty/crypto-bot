@@ -1,4 +1,4 @@
-name: Build Workflow
+name: Build Workflow - Docker Images
 
 on:
   push:
@@ -16,14 +16,14 @@ jobs:
         run: echo "build-id=$(date +%s)" >> $GITHUB_OUTPUT
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Docker
         run: |
           docker --version
 
       - name: Cache Docker layers
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /tmp/docker-cache
           key: ${{ runner.os }}-docker-${{ hashFiles('**/Dockerfile*') }}
@@ -53,7 +53,7 @@ jobs:
         run: echo "${{ steps.set-build-id.outputs.build-id }}" > build_id.txt
       
       - name: Upload build ID
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
           path: build_id.txt
