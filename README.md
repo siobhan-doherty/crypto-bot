@@ -1,25 +1,25 @@
 # Crypto Data Pipeline Project
 
  1. **The project**:
-This project provides a modular and containerized architecture for collecting, storing, streaming, and visualizing cryptocurrency data using tools like **PySpark**, **Kafka**, **MongoDB**, **Dash**, and **Jupyter** (optional).
+This project provides a modular and containerized architecture for collecting, storing, streaming, and visualizing cryptocurrency data using tools like **PySpark**, **Kafka**, **MongoDB**, **Dash**, and **Jupyter** (Optional).
 
 ---
 
 ## Features
 
 -  **Data Collection**:
-  - Batch ingestion of historical data using PySpark.
-  - Real-time streaming with Kafka from Binance API (planned).
+    - Batch ingestion of historical data using PySpark.
+    - Real-time streaming with Kafka from Binance API (planned).
   
 -  **Data Storage**:
-  - NoSQL storage using MongoDB for fast document-based querying.
+    - NoSQL storage using MongoDB for fast document-based querying.
 
 -  **Data Visualization**:
-  - Interactive dashboards built with Plotly Dash.
-  - Jupyter Notebooks (optional) for exploration and development.
+    - Interactive dashboards built with Plotly Dash.
+    - Jupyter Notebooks (Optional) for exploration and development.
 
 -  **Dockerized Architecture**:
-  - All services run in isolated containers managed by Docker Compose.
+    - All services run in isolated containers managed by Docker Compose.
 
 ---
 
@@ -39,7 +39,7 @@ pr25_bde_int_opa_team_a
 │   ├── Repo Structure Tutorial.md
 │   └── Step 1.md
 └── src
-    ├── api_admin
+    ├── collection_admin
     │   ├── data
     │   │   ├── initialize_historical_data.py
     │   │   ├── update_historical_data.py
@@ -107,7 +107,7 @@ docker exec -it crypto_dash python3 src/api_user/visualization/dash_app.py
 
 | Service             | Description                   | Port  |
 | -----------         | ----------------------------- | ----- |
-| `jupyter` (legacy)  | PySpark + Jupyter Notebook    | 8888  |
+| `jupyter` (Legacy)  | PySpark + Jupyter Notebook    | 8888  |
 | `kafka`             | Kafka broker                  | 9092  |
 | `zookeeper`         | Manages Kafka                 | 2181  |
 | `mongo`             | NoSQL document DB             | 27017 |
@@ -145,7 +145,14 @@ MONGO_URI=mongodb://your_user:your_pass@crypto_mongo:27017/cryptobot?authSource=
 * MongoDB
 * Dash (Plotly)
 * Docker & Docker Compose
-
+* FastAPI
+* Pytest
+* Binance API
+* Flake8
+* GitHub Actions
+* Cron Job
+* REST API
+* WebSocket
 
 ## Authors
 
