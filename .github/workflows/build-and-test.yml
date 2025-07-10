@@ -27,7 +27,6 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    needs: lint
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -49,8 +48,13 @@ jobs:
   
   build:
     runs-on: ubuntu-latest
-    needs: test
+    outputs:
+      build-id: ${{ steps.set-build-id.outputs.build-id }}
     steps:
+      - name: Set build ID
+        id: set-build-id
+        run: echo "build-id=$(date +%s)" >> $GITHUB_OUTPUT
+
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -64,29 +68,29 @@ jobs:
           path: /tmp/docker-cache
           key: ${{ runner.os }}-docker-${{ hashFiles('**/Dockerfile*') }}
 
-      - name: Build FastAPI image
+      - name: Build and tag FastAPI image
         run: |
           docker build \
             --cache-from=type=local,src=/tmp/docker-cache \
-            --tag my-app-fastapi:ci-build \
+            --tag crypto_fastapi:${{ steps.set-build-id.outputs.build-id }} \
             --file src/api_user/docker/Dockerfile.fastapi \
             --progress=plain \
             .
 
-      - name: Build Dash image
+      - name: Build and tag Dash image
         run: |
           docker build \
             --cache-from=type=local,src=/tmp/docker-cache \
-            --tag my-app-dash:ci-build \
+            --tag crypto_dash:${{ steps.set-build-id.outputs.build-id }} \
             --file src/api_user/docker/Dockerfile.dash \
             --progress=plain \
             .
 
-      - name: Build Data Collector image
+      - name: Build and tag Data Collector image
         run: |
           docker build \
             --cache-from=type=local,src=/tmp/docker-cache \
-            --tag data-collector:ci-build \
+            --tag crypto_data_collector:${{ steps.set-build-id.outputs.build-id }} \
             --file src/collection_admin/docker/Dockerfile.data_collector \
             --progress=plain \
             .
