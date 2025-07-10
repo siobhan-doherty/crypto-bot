@@ -1,4 +1,4 @@
-name: Build Workflow - Docker Images
+name: Build Workflow
 
 on:
   push:
