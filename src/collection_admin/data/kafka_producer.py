@@ -1,76 +1,88 @@
-import os, time, json
+import os
+import json
+import time
 from dotenv import load_dotenv
-from binance.client import Client
+from binance import ThreadedWebsocketManager
 from kafka import KafkaProducer
 from datetime import datetime, timezone
 from pathlib import Path
 
-
-# load .env
-load_dotenv(dotenv_path = Path(__file__).resolve().parents[2] / ".env")
-
-api_key = os.getenv('BINANCE_API_KEY')
-secret_key = os.getenv('BINANCE_SECRET_KEY')
-client = Client(api_key, secret_key)
+# Load .env
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / ".env")
 
 # Kafka producer config
 producer = KafkaProducer(
-    bootstrap_servers = 'kafka:9092',
-    value_serializer = lambda v: json.dumps(v).encode('utf-8')
+    bootstrap_servers='kafka:9092',
+    value_serializer=lambda v: json.dumps(v).encode('utf-8')
 )
 
 symbols_to_send = ['BTCUSDT', 'ETHUSDT']
-interval = Client.KLINE_INTERVAL_1MINUTE
+interval = '1m'  # WebSocket interval format
 
-print("Producer started. Streaming klines every minute...")
+print("WebSocket Producer started. Streaming real-time klines...")
 
 def get_iso_timestamp():
     """Return current UTC time in ISO 8601 format with milliseconds"""
-    return datetime.now(timezone.utc).isoformat(timespec = 'milliseconds')
+    return datetime.now(timezone.utc).isoformat(timespec='milliseconds')
 
-def process_kline(symbol, kline_data):
-    """Process raw kline data into standardized format"""
+def process_kline(msg):
+    """Process WebSocket kline message into standardized format """
+    k = msg['k']
     return {
-        "symbol": symbol,
-        "open_time": int(kline_data[0]),
-        "open": float(kline_data[1]),
-        "high": float(kline_data[2]),
-        "low": float(kline_data[3]),
-        "close": float(kline_data[4]),
-        "volume": float(kline_data[5]),
-        "close_time": int(kline_data[6]),
-        "quote_volume": float(kline_data[7]),
-        "num_trades": int(kline_data[8]),  # int (no Long)
-        "taker_base_volume": float(kline_data[9]),
-        "taker_quote_volume": float(kline_data[10]),
-        # Additional fields calculated for consistency
-        "open_datetime": datetime.fromtimestamp(int(kline_data[0] / 1000), tz=timezone.utc).isoformat(),
-        "close_datetime": datetime.fromtimestamp(int(kline_data[6] / 1000), tz=timezone.utc).isoformat(),
-        "price_change": float(kline_data[4]) - float(kline_data[1]),
-        "price_change_pct": round((float(kline_data[4]) - float(kline_data[1])) / float(kline_data[1]) * 100, 4),
-        "high_low_spread": float(kline_data[2]) - float(kline_data[3]),
-        "high_low_spread_pct": round((float(kline_data[2]) - float(kline_data[3])) / float(kline_data[3]) * 100, 4),
-        "ts": get_iso_timestamp()  # Date ISO 8601 standard
+        "symbol": msg['s'],
+        "open_time": k['t'],
+        "open": float(k['o']),
+        "high": float(k['h']),
+        "low": float(k['l']),
+        "close": float(k['c']),
+        "volume": float(k['v']),
+        "close_time": k['T'],
+        "quote_volume": float(k['q']),
+        "num_trades": k['n'],
+        "taker_base_volume": float(k['V']),
+        "taker_quote_volume": float(k['Q']),
+        # Additional fields calculated for consistency 
+        "open_datetime": datetime.fromtimestamp(k['t']/1000, tz=timezone.utc).isoformat(),
+        "close_datetime": datetime.fromtimestamp(k['T']/1000, tz=timezone.utc).isoformat(),
+        "price_change": float(k['c']) - float(k['o']),
+        "price_change_pct": round((float(k['c']) - float(k['o'])) / float(k['o']) * 100, 4),
+        "high_low_spread": float(k['h']) - float(k['l']),
+        "high_low_spread_pct": round((float(k['h']) - float(k['l'])) / float(k['l']) * 100, 4),
+        "ts": get_iso_timestamp(),
+        # aditional field for closed kline
+        "is_closed": k['x']
     }
 
-print("Kafka Producer started...")
-
-while True:
+def handle_socket_message(msg):
+    """Handle incoming WebSocket messages"""
     try:
-        current_ts = get_iso_timestamp()
-        for symbol in symbols_to_send:
-            klines = client.get_klines(symbol = symbol, interval = interval, limit = 1)
-            if not klines:
-                print(f"No klines received for {symbol}")
-                continue
-            time.sleep(2)  # 2 sec delay per symbol
-            msg = process_kline(symbol, klines[0])
-            producer.send('binance_prices', msg)
-            print(f"Sent kline for {symbol} at {current_ts}")
-            
-        producer.flush()
-        time.sleep(60)  # API rate limit (Binance could ban) and reduce system load
-
+        if msg['e'] == 'kline' and msg['k']['x']:  # just process closed klines
+            processed_msg = process_kline(msg)
+            producer.send('binance_prices', processed_msg)
+            print(f"Sent kline for {msg['s']} at {processed_msg['ts']}")
     except Exception as e:
-        print(f"Error: {e}")
-        time.sleep(60)  # Wait before retrying to avoid spamming the API
+        print(f"Error processing message: {e}")
+
+# Start WebSocket
+twm = ThreadedWebsocketManager(
+    api_key=os.getenv('BINANCE_API_KEY'),
+    api_secret=os.getenv('BINANCE_SECRET_KEY')
+)
+twm.start()
+
+# Subscribe to klines for each symbol
+for symbol in symbols_to_send:
+    twm.start_kline_socket(
+        callback=handle_socket_message,
+        symbol=symbol,
+        interval=interval
+    )
+
+# Keep the connection alive
+try:
+    while True:
+        time.sleep(10)  # keep the main thread alive
+except KeyboardInterrupt:
+    print("Shutting down...")
+    twm.stop()
+    producer.flush()
