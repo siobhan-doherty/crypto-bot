@@ -25,23 +25,9 @@ jobs:
         run: |
           docker --version
 
-      - name: Set up Docker cache
-        run: |
-          mkdir -p /tmp/docker-cache
-          echo "{}" > /tmp/docker-cache/index.json
-
-      - name: Cache Docker layers
-        uses: actions/cache@v3
-        with:
-          path: /tmp/docker-cache
-          key: ${{ runner.os }}-docker-${{ hashFiles('**/Dockerfile*') }}
-          restore-keys: |
-            ${{ runner.os }}-docker-
-
       - name: Build and tag FastAPI image
         run: |
           docker build \
-            --cache-from=type=local,src=/tmp/docker-cache \
             --tag crypto_fastapi:${{ steps.set-build-id.outputs.build-id }} \
             --file src/api_user/docker/Dockerfile.fastapi \
             --progress=plain \
@@ -50,7 +36,6 @@ jobs:
       - name: Build and tag Dash image
         run: |
           docker build \
-            --cache-from=type=local,src=/tmp/docker-cache \
             --tag crypto_dash:${{ steps.set-build-id.outputs.build-id }} \
             --file src/api_user/docker/Dockerfile.dash \
             --progress=plain \
@@ -59,10 +44,10 @@ jobs:
       - name: Build and tag Data Collector image
         run: |
           docker build \
-            --cache-from=type=local,src=/tmp/docker-cache \
             --tag crypto_data_collector:${{ steps.set-build-id.outputs.build-id }} \
             --file src/collection_admin/docker/Dockerfile.data_collector \
-            --progress=plain \n            .
+            --progress=plain \
+            .
 
       - name: Save Docker images
         run: |
