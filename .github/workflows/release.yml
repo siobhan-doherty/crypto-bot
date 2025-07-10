@@ -2,14 +2,12 @@ name: Release Workflow
 
 on:
   push:
-    branches: ['**']  # Run on any branch for testing
+    branches: ['master']
 
 jobs:
-  # First run the build and test workflow
   build-and-test:
     uses: ./.github/workflows/build-and-test.yml
 
-  # Then run the release steps
   release:
     needs: build-and-test
     runs-on: ubuntu-latest
