@@ -22,6 +22,18 @@ jobs:
           echo "Build ID: ${{ env.BUILD_ID }}"
           echo "Git SHA: ${{ github.sha }}"
 
+      - name: Download Docker images
+        uses: actions/download-artifact@v3
+        with:
+          name: docker-images
+          path: docker-images
+
+      - name: Load Docker images
+        run: |
+          docker load -i docker-images/fastapi.tar
+          docker load -i docker-images/dash.tar
+          docker load -i docker-images/data-collector.tar
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 

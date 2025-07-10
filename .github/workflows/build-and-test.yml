@@ -25,11 +25,18 @@ jobs:
         run: |
           docker --version
 
+      - name: Set up Docker cache
+        run: |
+          mkdir -p /tmp/docker-cache
+          echo "{}" > /tmp/docker-cache/index.json
+
       - name: Cache Docker layers
         uses: actions/cache@v3
         with:
           path: /tmp/docker-cache
           key: ${{ runner.os }}-docker-${{ hashFiles('**/Dockerfile*') }}
+          restore-keys: |
+            ${{ runner.os }}-docker-
 
       - name: Build and tag FastAPI image
         run: |
@@ -55,8 +62,20 @@ jobs:
             --cache-from=type=local,src=/tmp/docker-cache \
             --tag crypto_data_collector:${{ steps.set-build-id.outputs.build-id }} \
             --file src/collection_admin/docker/Dockerfile.data_collector \
-            --progress=plain \
-            .
+            --progress=plain \n            .
+
+      - name: Save Docker images
+        run: |
+          mkdir -p docker-images
+          docker save -o docker-images/fastapi.tar crypto_fastapi:${{ steps.set-build-id.outputs.build-id }}
+          docker save -o docker-images/dash.tar crypto_dash:${{ steps.set-build-id.outputs.build-id }}
+          docker save -o docker-images/data-collector.tar crypto_data_collector:${{ steps.set-build-id.outputs.build-id }}
+
+      - name: Upload Docker images
+        uses: actions/upload-artifact@v3
+        with:
+          name: docker-images
+          path: docker-images/*.tar
 #
   #lint:
   #  runs-on: ubuntu-latest
