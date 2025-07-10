@@ -2,7 +2,7 @@ name: CI - Feature Branch Workflow
 
 on:
   push:
-    branches: ['master']  # run only on master branch
+    branches: ['master']  # run only on master branch. Change to ignore master branch
 
 jobs:
   build-and-test:
