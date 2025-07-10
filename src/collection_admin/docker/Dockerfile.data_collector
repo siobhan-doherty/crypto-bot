@@ -2,7 +2,7 @@ FROM python:3.9-slim
 
 USER root
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends default-jdk-headless curl \
+    && apt-get install -y --no-install-recommends default-jdk-headless cron curl \
     && rm -rf /var/lib/apt/lists/*
 
 ENV SPARK_VERSION=3.4.2 \
@@ -10,27 +10,28 @@ ENV SPARK_VERSION=3.4.2 \
     JAVA_HOME=/usr/lib/jvm/default-java \
     PATH=$SPARK_HOME/bin:$PATH
 
-# Fetch Spark
+# fetch Spark
 RUN curl -fsSL \
-    https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz \
+    https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz \ 
     | tar -xz -C /opt/ \
     && mv /opt/spark-${SPARK_VERSION}-bin-hadoop3 /opt/spark
 
-# Make sure "python" points to python3
+# ensure python -> python3
 RUN ln -sf /usr/bin/python3 /usr/bin/python
 
-# Install your Python deps
+# install Python dependencies
 COPY src/collection_admin/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-# Copy in your four scripts + mongo_utils + our entrypoint
+# copy code and entrypoint
 WORKDIR /app
 COPY src/collection_admin/data       /app/src/collection_admin/data
 COPY src/collection_admin/db         /app/src/collection_admin/db
 COPY src/collection_admin/docker/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
-# Allow 'from collection_admin.db.mongo_utils import ...' to work
+# allow imports from /app/src
 ENV PYTHONPATH=/app/src
 
 ENTRYPOINT ["/app/entrypoint.sh"]
+
