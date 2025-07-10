@@ -11,7 +11,7 @@ jobs:
 
   # Then run the release steps
   release:
-    needs: [build-and-test.build]  # Only depend on the build job for the moment
+    needs: build-and-test
     runs-on: ubuntu-latest
     env:
       BUILD_ID: ${{ needs.build-and-test.outputs.build-id }}
