@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api_user.router import router as api_router
+from api_user.streaming import router as streaming_router
 import uvicorn
 
 app = FastAPI(
@@ -19,6 +20,7 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix="/api")
+app.include_router(streaming_router)
 
 
 @app.get("/")

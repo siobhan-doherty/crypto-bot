@@ -9,58 +9,58 @@ on:
         value: ${{ jobs.build.outputs.build-id }}
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    outputs:
-      build-id: ${{ steps.set-build-id.outputs.build-id }}
-    steps:
-      - name: Set build ID
-        id: set-build-id
-        run: echo "build-id=$(date +%s)" >> $GITHUB_OUTPUT
-
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Docker
-        run: |
-          docker --version
-
-      - name: Build and tag FastAPI image
-        run: |
-          docker build \
-            --tag crypto_fastapi:${{ steps.set-build-id.outputs.build-id }} \
-            --file src/api_user/docker/Dockerfile.fastapi \
-            --progress=plain \
-            .
-
-      - name: Build and tag Dash image
-        run: |
-          docker build \
-            --tag crypto_dash:${{ steps.set-build-id.outputs.build-id }} \
-            --file src/api_user/docker/Dockerfile.dash \
-            --progress=plain \
-            .
-
-      - name: Build and tag Data Collector image
-        run: |
-          docker build \
-            --tag crypto_data_collector:${{ steps.set-build-id.outputs.build-id }} \
-            --file src/collection_admin/docker/Dockerfile.data_collector \
-            --progress=plain \
-            .
-
-      - name: Save Docker images
-        run: |
-          mkdir -p docker-images
-          docker save -o docker-images/fastapi.tar crypto_fastapi:${{ steps.set-build-id.outputs.build-id }}
-          docker save -o docker-images/dash.tar crypto_dash:${{ steps.set-build-id.outputs.build-id }}
-          docker save -o docker-images/data-collector.tar crypto_data_collector:${{ steps.set-build-id.outputs.build-id }}
-
-      - name: Upload Docker images
-        uses: actions/upload-artifact@v4
-        with:
-          name: docker-images
-          path: docker-images/*.tar
+  #build:
+  #  runs-on: ubuntu-latest
+  #  outputs:
+  #    build-id: ${{ steps.set-build-id.outputs.build-id }}
+  #  steps:
+  #    - name: Set build ID
+  #      id: set-build-id
+  #      run: echo "build-id=$(date +%s)" >> $GITHUB_OUTPUT
+#
+  #    - name: Checkout code
+  #      uses: actions/checkout@v3
+#
+  #    - name: Set up Docker
+  #      run: |
+  #        docker --version
+#
+  #    - name: Build and tag FastAPI image
+  #      run: |
+  #        docker build \
+  #          --tag crypto_fastapi:${{ steps.set-build-id.outputs.build-id }} \
+  #          --file src/api_user/docker/Dockerfile.fastapi \
+  #          --progress=plain \
+  #          .
+#
+  #    - name: Build and tag Dash image
+  #      run: |
+  #        docker build \
+  #          --tag crypto_dash:${{ steps.set-build-id.outputs.build-id }} \
+  #          --file src/api_user/docker/Dockerfile.dash \
+  #          --progress=plain \
+  #          .
+#
+  #    - name: Build and tag Data Collector image
+  #      run: |
+  #        docker build \
+  #          --tag crypto_data_collector:${{ steps.set-build-id.outputs.build-id }} \
+  #          --file src/collection_admin/docker/Dockerfile.data_collector \
+  #          --progress=plain \
+  #          .
+#
+  #    - name: Save Docker images
+  #      run: |
+  #        mkdir -p docker-images
+  #        docker save -o docker-images/fastapi.tar crypto_fastapi:${{ steps.set-build-id.outputs.build-id }}
+  #        docker save -o docker-images/dash.tar crypto_dash:${{ steps.set-build-id.outputs.build-id }}
+  #        docker save -o docker-images/data-collector.tar crypto_data_collector:${{ steps.set-build-id.outputs.build-id }}
+#
+  #    - name: Upload Docker images
+  #      uses: actions/upload-artifact@v4
+  #      with:
+  #        name: docker-images
+  #        path: docker-images/*.tar
 
   lint:
    runs-on: ubuntu-latest
