@@ -21,9 +21,11 @@ interval = '1m'  # WebSocket interval format
 
 print("WebSocket Producer started. Streaming real-time klines...")
 
+
 def get_iso_timestamp():
     """Return current UTC time in ISO 8601 format with milliseconds"""
     return datetime.now(timezone.utc).isoformat(timespec='milliseconds')
+
 
 def process_kline(msg):
     """Process WebSocket kline message into standardized format """
@@ -41,17 +43,26 @@ def process_kline(msg):
         "num_trades": k['n'],
         "taker_base_volume": float(k['V']),
         "taker_quote_volume": float(k['Q']),
-        # Additional fields calculated for consistency 
-        "open_datetime": datetime.fromtimestamp(k['t']/1000, tz=timezone.utc).isoformat(),
-        "close_datetime": datetime.fromtimestamp(k['T']/1000, tz=timezone.utc).isoformat(),
+        # aditional field calculated from kline data
+        "open_datetime": datetime.fromtimestamp(
+            k['t']/1000, tz=timezone.utc
+        ).isoformat(),
+        "close_datetime": datetime.fromtimestamp(
+            k['T']/1000, tz=timezone.utc
+        ).isoformat(),
         "price_change": float(k['c']) - float(k['o']),
-        "price_change_pct": round((float(k['c']) - float(k['o'])) / float(k['o']) * 100, 4),
+        "price_change_pct": round(
+            (float(k['c']) - float(k['o'])) / float(k['o']) * 100, 4
+        ),
         "high_low_spread": float(k['h']) - float(k['l']),
-        "high_low_spread_pct": round((float(k['h']) - float(k['l'])) / float(k['l']) * 100, 4),
+        "high_low_spread_pct": round(
+            (float(k['h']) - float(k['l'])) / float(k['l']) * 100, 4
+        ),
         "ts": get_iso_timestamp(),
         # aditional field for closed kline
         "is_closed": k['x']
     }
+
 
 def handle_socket_message(msg):
     """Handle incoming WebSocket messages"""
@@ -63,12 +74,14 @@ def handle_socket_message(msg):
     except Exception as e:
         print(f"Error processing message: {e}")
 
+
 # Start WebSocket
 twm = ThreadedWebsocketManager(
     api_key=os.getenv('BINANCE_API_KEY'),
     api_secret=os.getenv('BINANCE_SECRET_KEY')
 )
 twm.start()
+
 
 # Subscribe to klines for each symbol
 for symbol in symbols_to_send:
@@ -77,6 +90,7 @@ for symbol in symbols_to_send:
         symbol=symbol,
         interval=interval
     )
+
 
 # Keep the connection alive
 try:

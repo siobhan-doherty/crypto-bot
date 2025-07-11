@@ -109,7 +109,8 @@ def create_app():
                             ),
                             html.Div(
                                 "Available Range: "
-                                f"{min_date.strftime('%Y-%m-%d')} to {max_date.strftime('%Y-%m-%d')}",
+                                f"{min_date.strftime('%Y-%m-%d')} "
+                                f"to {max_date.strftime('%Y-%m-%d')}",
                                 style={"margin": "5px 0", "color": COLORS["text"]},
                             ),
                             html.Div(

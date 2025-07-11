@@ -1,4 +1,4 @@
-#/plots
+# /plots
 """
 Visualization package for the crypto dashboard.
 
@@ -28,9 +28,10 @@ from .layout.controls import (
 from .dash_app import create_app
 app = create_app()
 
+
 def init_app():
     """Initialize and return the Dash application.
-    
+
     This function ensures the app is properly initialized and can be used
     as the main entry point for running the application.
     """
