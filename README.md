@@ -84,7 +84,8 @@ flowchart TD
 
 ##  Project Overview
 ### 1. Project Structure:
-**apr25_bde_int_opa_team_a**
+```markdown
+apr25_bde_int_opa_team_a
 ├── docker-compose.yml
 ├── LICENSE
 ├── notebooks
@@ -123,7 +124,7 @@ flowchart TD
             ├── dash_app.py
             ├── dash_stream.py
             └── __init__.py
-
+```
 
 ### 2. Set up the project
 
