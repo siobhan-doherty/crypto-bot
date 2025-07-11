@@ -1,4 +1,4 @@
-# CryptoBot Project
+# Binance Crypto Bot Project
 
 Welcome!
 We’re excited to present **CryptoBot**, our capstone project for the Data Engineer Bootcamp at DataScientest. Our solution applies data engineering best practices, incorporates team agreements, and is tailored to fit the assignment timeline.
