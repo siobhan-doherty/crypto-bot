@@ -1,5 +1,11 @@
+import os
 import sys
 from pathlib import Path
+
+# Add the project root to the Python path
+project_root = Path(__file__).parent.parent.parent.parent
+sys.path.insert(0, str(project_root))
+
 from src.api_user.visualization import (
     # Core components
     register_callbacks,
@@ -13,18 +19,15 @@ from src.api_user.visualization import (
     create_volatility_plot,
     # Layout components
     COLORS,
-    # PLOT_LAYOUT,
+    PLOT_LAYOUT,
     create_date_range_slider,
     create_trading_pair_dropdown,
     create_atr_period_input,
 )
+
 import dash
 from dash import html, dcc
 import dash_bootstrap_components as dbc
-
-# Add the project root to the Python path
-project_root = Path(__file__).parent.parent.parent.parent
-sys.path.insert(0, str(project_root))
 
 
 def create_app():

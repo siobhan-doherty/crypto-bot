@@ -24,10 +24,6 @@ docker exec -it crypto_data_collector python3 src/collection_admin/data/update_h
 docker exec -it crypto_kafka_producer python3 src/collection_admin/data/kafka_producer.py
 docker exec -it crypto_kafka_consumer python3 src/collection_admin/data/kafka_consumer.py
 
-# launch dash
-docker exec -it crypto_dash python3 /app/src/api_user/visualization/dash_app.py
-
-
 docker volume inspect apr25_bde_int_opa_team_a_mongo_data
 
 ## Check data in MongoDB
