@@ -120,29 +120,6 @@ services:
       - API_BASE_URL=http://crypto_fastapi:8000/api
     networks: [crypto_network]
 
-  airflow:
-    image: apache/airflow:2.9.1
-    container_name: crypto_airflow
-    restart: always
-    depends_on:
-      - mongodb
-    environment:
-      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-      - AIRFLOW__CORE__FERNET_KEY=your_fernet_key_here
-      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
-      - AIRFLOW__CORE__LOAD_EXAMPLES=False
-      - AIRFLOW_UID=50000
-    volumes:
-      - ./airflow/dags:/opt/airflow/dags
-      - ./src/collection_admin/data:/app/data   # Airflow can access to data collector scripts
-      - ./airflow/logs:/opt/airflow/logs
-      - ./airflow/plugins:/opt/airflow/plugins
-    ports:
-      - "8080:8080"
-    command: standalone
-    networks:
-      - crypto_network
-
 volumes:
   mongo_data: # named volume for MongoDB data persistence
 
