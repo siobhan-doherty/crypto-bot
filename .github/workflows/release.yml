@@ -1,0 +1,60 @@
+name: Release Workflow
+
+on:
+  push:
+    branches: ['master']
+
+jobs:
+  build-and-test:
+    uses: ./.github/workflows/build-and-test.yml
+
+  release:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    env:
+      BUILD_ID: ${{ needs.build-and-test.outputs.build-id }}
+    
+    steps:
+      - name: Debug build ID
+        run: |
+          echo "Build ID: ${{ env.BUILD_ID }}"
+          echo "Git SHA: ${{ github.sha }}"
+
+      - name: Download Docker images
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-images
+          path: docker-images
+
+      - name: Load Docker images
+        run: |
+          docker load -i docker-images/fastapi.tar
+          docker load -i docker-images/dash.tar
+          docker load -i docker-images/data-collector.tar
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Tag and Push FastAPI Image
+        run: |
+          docker tag crypto_fastapi:${{ env.BUILD_ID }} ${{ secrets.DOCKERHUB_USERNAME }}/crypto_fastapi:latest
+          docker tag crypto_fastapi:${{ env.BUILD_ID }} ${{ secrets.DOCKERHUB_USERNAME }}/crypto_fastapi:${{ github.sha }}
+          docker push --all-tags ${{ secrets.DOCKERHUB_USERNAME }}/crypto_fastapi
+
+      - name: Tag and Push Dash Image
+        run: |
+          docker tag crypto_dash:${{ env.BUILD_ID }} ${{ secrets.DOCKERHUB_USERNAME }}/crypto_dash:latest
+          docker tag crypto_dash:${{ env.BUILD_ID }} ${{ secrets.DOCKERHUB_USERNAME }}/crypto_dash:${{ github.sha }}
+          docker push --all-tags ${{ secrets.DOCKERHUB_USERNAME }}/crypto_dash
+
+      - name: Tag and Push Data Collector Image
+        run: |
+          docker tag crypto_data_collector:${{ env.BUILD_ID }} ${{ secrets.DOCKERHUB_USERNAME }}/crypto_data_collector:latest
+          docker tag crypto_data_collector:${{ env.BUILD_ID }} ${{ secrets.DOCKERHUB_USERNAME }}/crypto_data_collector:${{ github.sha }}
+          docker push --all-tags ${{ secrets.DOCKERHUB_USERNAME }}/crypto_data_collector

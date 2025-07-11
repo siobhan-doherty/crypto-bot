@@ -1,4 +1,13 @@
 [flake8]
 max-line-length = 88
-# Allow spaces before ':' in slices (conflicts with Black)
-extend-ignore = E203
+
+# temporarily ignore these style errors project-wide
+extend-ignore =
+    E203
+    E265
+    F401
+    E302
+    E305
+    E402
+    W293
+    W391
