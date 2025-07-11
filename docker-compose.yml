@@ -134,9 +134,11 @@ services:
       - AIRFLOW_UID=50000
     volumes:
       - ./airflow/dags:/opt/airflow/dags
-      - ./src/collection_admin/data:/app/data   # Airflow can access to data collector scripts
       - ./airflow/logs:/opt/airflow/logs
-      - ./airflow/plugins:/opt/airflow/plugins
+      - ./airflow/plugins:/opt/airflow/plugins      
+      - ./src/collection_admin/data:/app/data   # Airflow can access to data collector scripts
+      - /var/run/docker.sock:/var/run/docker.sock
+
     ports:
       - "8080:8080"
     command: standalone

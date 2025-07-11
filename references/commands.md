@@ -49,3 +49,17 @@ db.streaming_data.drop()
 db.historical_data.drop()
 docker-compose down -v
 docker-compose up --build --force-recreate
+
+
+# Airflow implementation
+## Create folder
+```bash
+mkdir -p airflow/dags
+mkdir -p airflow/logs
+mkdir -p airflow/plugins
+```
+
+## Give them permissions
+```bash
+sudo chown -R 50000:0 airflow/logs
+```

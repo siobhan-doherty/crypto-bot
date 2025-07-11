@@ -4,36 +4,40 @@ from datetime import datetime
 
 default_args = {
     'owner': 'airflow',
-    'start_date': datetime(2025, 7, 10),
-    'retries': 2,
+    'start_date': datetime(2025, 7, 11),
+    'retries': 1,
 }
 
-dag = DAG(
-    dag_id='crypto_pipeline',
+# One-off task for initialization
+with DAG(
+    dag_id='initialize_historical_data',
     default_args=default_args,
-    schedule_interval=None,  # Manual trigger for initialize
+    schedule_interval=None,    # Run manually
     catchup=False,
     tags=['cryptobot'],
-)
+) as dag_init:
 
-# One-time task (run manually in UI): initialize historical data
-initialize = BashOperator(
-    task_id='initialize_historical_data',
-    bash_command='python /app/data/initialize_historical_data.py',
-    dag=dag,
-)
+    initialize = BashOperator(
+        task_id='initialize_historical_data',
+        bash_command=(
+            "docker exec -i crypto_data_collector "
+            "python3 /app/data/initialize_historical_data.py"
+        )
+    )
 
-# Scheduled daily task: update historical data
-update_dag = DAG(
+# Daily update task
+with DAG(
     dag_id='update_historical_data',
     default_args=default_args,
-    schedule_interval='0 0 * * *',  # Every day at midnight
+    schedule_interval="0 0 * * *",   # Every day at midnight
     catchup=False,
     tags=['cryptobot'],
-)
+) as dag_update:
 
-update = BashOperator(
-    task_id='update_historical_data',
-    bash_command='python /app/data/update_historical_data.py',
-    dag=update_dag,
-)
+    update = BashOperator(
+        task_id='update_historical_data',
+        bash_command=(
+            "docker exec -i crypto_data_collector "
+            "python3 /app/data/update_historical_data.py"
+        )
+    )
