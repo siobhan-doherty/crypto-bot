@@ -1,30 +1,91 @@
-# Crypto Data Pipeline Project
+# Binance Crypto Bot Project
 
- 1. **The project**:
-This project provides a modular and containerized architecture for collecting, storing, streaming, and visualizing cryptocurrency data using tools like **PySpark**, **Kafka**, **MongoDB**, **Dash**, and **Jupyter** (Optional).
+Welcome!
+We’re excited to present **CryptoBot**, our capstone project for the Data Engineer Bootcamp at DataScientest. Our solution applies data engineering best practices, incorporates team agreements, and is tailored to fit the assignment timeline.
 
----
-
-## Features
-
--  **Data Collection**:
-    - Batch ingestion of historical data using PySpark.
-    - Real-time streaming with Kafka from Binance API (planned).
-  
--  **Data Storage**:
-    - NoSQL storage using MongoDB for fast document-based querying.
-
--  **Data Visualization**:
-    - Interactive dashboards built with Plotly Dash.
-    - Jupyter Notebooks (Optional) for exploration and development.
-
--  **Dockerized Architecture**:
-    - All services run in isolated containers managed by Docker Compose.
+Below, we’ll outline our project’s objectives, main features, and quick setup instructions so you can get started easily.
 
 ---
 
-##  Project Structure
-pr25_bde_int_opa_team_a
+## 🚀 Project Overview
+
+**CryptoBot** is a scalable, microservices-based platform designed to collect, store, process, and analyze both historical and real-time cryptocurrency data from Binance. The system delivers processed metrics and visual analytics through a unified API layer and interactive Dash dashboard.
+
+### What is Binance?
+
+[Binance](https://www.binance.com/) is one of the world’s top cryptocurrency exchanges, ranking in the global top 3 by trading volume.
+For this project, we focused on the two most liquid trading pairs:
+
+* **BTC/USDT** (Bitcoin)
+* **ETH/USDT** (Ethereum)
+
+---
+
+## 🛠️ Key Features
+
+### **Data Extraction**
+
+* **Historical Data:**
+  Collects 6 months of 15-minute interval price data using the Binance REST API.
+* **Real-Time Data:**
+  Streams live market data using the Binance WebSocket API.
+* **Incremental Extraction:**
+  Automatically fetches only the latest 15-minute intervals each day.
+
+### **Data Pipeline**
+
+* **Batch Extraction:** PySpark for efficient historical data ingestion.
+* **Streaming:** Kafka for real-time event streaming.
+* **Storage:** MongoDB, with separate collections for historical (`historical_data_15m`) and streaming (`streaming_data_1m`) data.
+
+### **Processing**
+
+* **Analysis:** Jupyter Notebooks for data exploration and initial analysis.
+* **Streaming Processing:** Python scripts to manage and process live data.
+
+### **Visualization**
+
+* **Dashboard:** Dash application for interactive, real-time, and historical charts.
+
+### **API Layer**
+
+* **FastAPI:** Provides an interface for the Dash dashboard to retrieve processed historical data directly from MongoDB.
+
+### **Automation & Deployment**
+
+* **Containerization:** All components are Dockerized and orchestrated using Docker Compose.
+* **Scheduling:** Cron jobs automate regular historical data extraction tasks.
+
+### **CI/CD**
+
+* **GitHub Actions:**
+
+  * Linting, testing, and Docker image builds for each commit (`ci.yaml`)
+  * Automatic deployment of Docker images to DockerHub on release (`release.yaml`)
+
+### **Data Achitecture**
+
+```mermaid
+flowchart TD
+    A[Binance REST API] --> B[PySpark Extraction]
+    B --> C[Preprocessing]
+    C --> D[MongoDB<br>historical_data]
+    E[Binance WebSocket API] --> F[Kafka Streaming]
+    F --> G[Preprocessing]
+    G --> H[MongoDB<br>streaming_data]
+    D --> I[Processing]
+    H --> I
+    I --> J[Dashboards]
+```
+![](./references/ArchichectureProjectOPA.png)
+
+
+---
+
+##  Project Overview
+### 1. Project Structure:
+```markdown
+apr25_bde_int_opa_team_a
 ├── docker-compose.yml
 ├── LICENSE
 ├── notebooks
@@ -63,58 +124,11 @@ pr25_bde_int_opa_team_a
             ├── dash_app.py
             ├── dash_stream.py
             └── __init__.py
-
-2. **Check container status**:
-
-```bash
-docker ps
 ```
 
-3. **Access services**:
+### 2. Set up the project
 
-* Jupyter (Optional): [http://localhost:8888](http://localhost:8888)
-* Dash app: [http://localhost:8050](http://localhost:8050)
-* MongoDB (from containers): `crypto_mongo:27017`
----
-
-## Running Data Collector Scripts 
-Seed 3–6 months of 15m data: 
-```bash
-docker exec -it crypto_data_collector python /app/src/collection_admin/data/initialize_historical_data.py
-```
-Pull only new 15m candles:
-```bash
-docker exec -it crypto_data_collector python /app/src/collection_admin/data/update_historical_data.py
-```
-Start 1-minute Kafka producer:
-```bash
-docker exec -it crypto_data_collector python /app/src/collection_admin/data/kafka_producer.py
-```
-Start Kafka consumer:
-```bash
-docker exec -it crypto_data_collector python /app/src/collection_admin/data/kafka_consumer.py
-``````
-
-
-## Running Dash Apps
-
-```bash
-docker exec -it crypto_dash python3 src/api_user/visualization/dash_app.py
-```
-
-
-## Services Overview
-
-| Service             | Description                   | Port  |
-| -----------         | ----------------------------- | ----- |
-| `jupyter` (Legacy)  | PySpark + Jupyter Notebook    | 8888  |
-| `kafka`             | Kafka broker                  | 9092  |
-| `zookeeper`         | Manages Kafka                 | 2181  |
-| `mongo`             | NoSQL document DB             | 27017 |
-| `dash`              | Dash dashboard                | 8050  |
-
-
-## Environment Variables
+#### 2.1 Environment Variables
 
 Create a `.env` file in the root directory:
 
@@ -137,6 +151,64 @@ Create a `.env` file in src/api_user directory:
 ```dotenv
 MONGO_URI=mongodb://your_user:your_pass@crypto_mongo:27017/cryptobot?authSource=admin
 ```
+#### 2.2 **Launch containers**:
+
+  ```bash
+  docker-compose build
+  docker-compose up -d
+  # It will display 8 containers
+  docker ps
+  ```
+  ![](./references/docker_ps.png)
+
+
+#### 2.3 Running Data Collector Scripts 
+
+  Seed 3–6 months of 15m data: 
+  ```bash
+  docker exec -it crypto_data_collector python /app/src/collection_admin/data/initialize_historical_data.py
+  ```
+  Pull only new 15m candles:
+  ```bash
+  docker exec -it crypto_data_collector python /app/src/collection_admin/data/update_historical_data.py
+  ```
+  Start 1-minute Kafka producer:
+  ```bash
+  docker exec -it crypto_data_collector python /app/src/collection_admin/data/kafka_producer.py
+  ```
+  Start Kafka consumer:
+  ```bash
+  docker exec -it crypto_data_collector python /app/src/collection_admin/data/kafka_consumer.py
+  ```
+
+  ### Services Overview
+
+  | Service             | Description                   | Port  |
+  | -----------         | ----------------------------- | ----- |
+  | `jupyter` (Legacy)  | PySpark + Jupyter Notebook    | 8888  |
+  | `kafka`             | Kafka broker                  | 9092  |
+  | `fastapi`           | Dash dashboard                | 8000  |
+  | `zookeeper`         | Manages Kafka                 | 2181  |
+  | `mongo`             | NoSQL document DB             | 27017 |
+  | `dash`              | Dash dashboard                | 8050  |
+
+
+  ### Data Sources Identified
+
+  | Source                | Access Method             | Data Type                            |
+  | --------------------- | ------------------------- | ------------------------------------ |
+  | Binance REST API      | `https://api.binance.com` | Market data (prices, trades, klines) |
+  | Binance WebSocket API | Real-time JSON stream     | Live market changes                  |
+
+---
+#### 2.4 Access services:
+
+* Dash app: [http://localhost:8050](http://localhost:8050)
+![](/references/historical_dashboard.png)
+
+* MongoDB (from containers): `crypto_mongo:27017`
+
+
 ## Tools Used
 
 * Python 3.9
@@ -160,7 +232,6 @@ MONGO_URI=mongodb://your_user:your_pass@crypto_mongo:27017/cryptobot?authSource=
   * Indira Burga 
   * Katharina Klat
   * Siobhan Doherty
-
 
 ---
 
