@@ -120,32 +120,83 @@ services:
       - API_BASE_URL=http://crypto_fastapi:8000/api
     networks: [crypto_network]
 
-  airflow:
-    image: apache/airflow:2.9.1
-    container_name: crypto_airflow
-    restart: always
-    depends_on:
-      - mongodb
+  # Postgres for Airflow
+  postgres:
+    image: postgres:15
+    container_name: crypto_postgres
     environment:
-      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-      - AIRFLOW__CORE__FERNET_KEY=your_fernet_key_here
-      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
-      - AIRFLOW__CORE__LOAD_EXAMPLES=False
-      - AIRFLOW_UID=50000
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - crypto_network
+  
+  # Airflow services
+  airflow-init:
+    image: apache/airflow:2.9.1
+    container_name: crypto_airflow_init
+    depends_on:
+      - postgres
+    env_file:
+      - .env
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
-      - ./airflow/plugins:/opt/airflow/plugins      
-      - ./src/collection_admin/data:/app/data   # Airflow can access to data collector scripts
-      - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db init
+        airflow users create \
+          --username $AIRFLOW_ADMIN_USERNAME \
+          --password $AIRFLOW_ADMIN_PASSWORD \
+          --firstname $AIRFLOW_ADMIN_FIRSTNAME \
+          --lastname $AIRFLOW_ADMIN_LASTNAME \
+          --role Admin \
+          --email $AIRFLOW_ADMIN_EMAIL
+    networks:
+      - crypto_network
 
-    ports:
-      - "8080:8080"
-    command: standalone
+  airflow:
+      image: apache/airflow:2.9.1
+      container_name: crypto_airflow
+      user: root
+      depends_on:
+        - airflow-init
+        - postgres
+      env_file:
+        - .env
+      volumes:
+        - ./airflow/dags:/opt/airflow/dags
+        - ./airflow/logs:/opt/airflow/logs  
+        - ./src/collection_admin/data:/app/data   # Airflow can access to data collector scripts
+        - /var/run/docker.sock:/var/run/docker.sock
+      ports:
+        - "8080:8080"
+      command: webserver
+      networks:
+        - crypto_network
+        
+  airflow-scheduler:
+    image: apache/airflow:2.9.1
+    container_name: crypto_airflow_scheduler
+    user: root
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: scheduler
     networks:
       - crypto_network
 
 volumes:
+  postgres_data: # named volume for Postgres data persistence
   mongo_data: # named volume for MongoDB data persistence
 
 networks:

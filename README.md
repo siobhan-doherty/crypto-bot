@@ -205,7 +205,8 @@ MONGO_URI=mongodb://your_user:your_pass@crypto_mongo:27017/cryptobot?authSource=
 
 * Dash app: [http://localhost:8050](http://localhost:8050)
 ![](/references/historical_dashboard.png)
-
+* FastAPI [http://localhost:8000/docs](http://localhost:8000/docs)
+![](/references/FastAPI_api_user.png)
 * MongoDB (from containers): `crypto_mongo:27017`
 
 
