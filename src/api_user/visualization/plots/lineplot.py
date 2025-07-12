@@ -6,13 +6,14 @@ def calculate_ema(series, periods):
     return series.ewm(span=periods, min_periods=periods, adjust=False).mean()
 
 
-def create_lineplot(df, trading_pair="BTCUSDT"):
+def create_lineplot(df, trading_pair="BTCUSDT", show_emas=True):
     """
-    Create a line plot of the close price over time with EMA indicators.
+    Create a line plot of the close price over time with optional EMA indicators.
 
     Args:
         df (pd.DataFrame): DataFrame containing time series data
         trading_pair (str): The trading pair being displayed (e.g., 'BTCUSDT')
+        show_emas (bool): Whether to show EMA indicators (default: True)
 
     Returns:
         dict: Plotly figure as a dictionary
@@ -22,16 +23,23 @@ def create_lineplot(df, trading_pair="BTCUSDT"):
         print("Error: Missing 'close' column in DataFrame")
         return {"data": [], "layout": {}}
 
-    # Calculate EMAs with different periods
-    ema_periods = [9, 21, 50, 200]
-    for period in ema_periods:
-        df[f"ema_{period}"] = calculate_ema(df["close"], period)
-
+    # Calculate EMAs with different periods if enabled
+    if show_emas:
+        ema_periods = [9, 21, 50, 200]
+        ema_colors = {
+            9: "#FF9800",  # Orange
+            21: "#E91E63",  # Pink
+            50: "#9C27B0",  # Purple
+            200: "#2196F3",  # Blue
+        }
+        for period in ema_periods:
+            df[f"ema_{period}"] = calculate_ema(df["close"], period)
+    
     layout = PLOT_LAYOUT.copy()
 
     title_config = PLOT_LAYOUT.get("title", {}).copy()
     title_config["text"] = (
-        f"{trading_pair} Close Price with Exponential Moving Averages"
+        f"{trading_pair} Close Price" + (" with Exponential Moving Averages" if show_emas else "")
     )
 
     layout.update(
@@ -52,29 +60,25 @@ def create_lineplot(df, trading_pair="BTCUSDT"):
 
     traces = []
 
-    ema_colors = {
-        9: "#FF9800",  # Orange
-        21: "#E91E63",  # Pink
-        50: "#9C27B0",  # Purple
-        200: "#2196F3",  # Blue
-    }
+    # Add EMA traces if enabled
+    if show_emas:
+        for period in ema_periods:
+            traces.append(
+                {
+                    "x": df["close_datetime"],
+                    "y": df[f"ema_{period}"],
+                    "type": "line",
+                    "name": f"EMA {period}",
+                    "line": {
+                        "color": ema_colors[period],
+                        "width": 1.5 if period != 200 else 2,
+                        "dash": "dot" if period in [9, 21] else "solid",
+                    },
+                    "opacity": 0.9,
+                }
+            )
 
-    for period in ema_periods:
-        traces.append(
-            {
-                "x": df["close_datetime"],
-                "y": df[f"ema_{period}"],
-                "type": "line",
-                "name": f"EMA {period}",
-                "line": {
-                    "color": ema_colors[period],
-                    "width": 1.5 if period != 200 else 2,
-                    "dash": "dot" if period in [9, 21] else "solid",
-                },
-                "opacity": 0.9,
-            }
-        )
-
+    # Always add the main price line
     traces.append(
         {
             "type": "scatter",
