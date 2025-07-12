@@ -1,5 +1,35 @@
 import pandas as pd
 from dash import dcc, html
+from .theme import COLORS
+
+
+def get_range_selector_config(colors=None):
+    """
+    Returns the configuration for the range selector buttons in time series plots.
+    
+    Args:
+        colors (dict, optional): Color configuration dictionary. If None, uses default COLORS.
+            Should contain 'panel', 'primary', and 'border' keys.
+            
+    Returns:
+        dict: Range selector configuration for Plotly
+    """
+    if colors is None:
+        colors = COLORS
+        
+    return {
+        'buttons': [
+            {'count': 15, 'label': '15m', 'step': 'minute', 'stepmode': 'backward'},
+            {'count': 1, 'label': '1h', 'step': 'hour', 'stepmode': 'backward'},
+            {'count': 6, 'label': '6h', 'step': 'hour', 'stepmode': 'backward'},
+            {'count': 1, 'label': '1d', 'step': 'day', 'stepmode': 'backward'},
+            {'step': 'all'}
+        ],
+        'bgcolor': colors['panel'],
+        'activecolor': colors['primary'],
+        'bordercolor': colors['border']
+    }
+
 
 
 def create_date_range_slider(
