@@ -6,7 +6,7 @@ from .plots.lineplot import create_lineplot
 from .plots.candlestickplot import create_candlestickplot
 from .plots.volumeplot import create_volumeplot
 from .plots.volatilityplot import create_volatility_plot
-from .layout.theme import COLORS, PLOT_LAYOUT
+from .layout.controls import create_range_selector
 
 
 def register_callbacks(app, fetch_historical_data):
@@ -46,23 +46,25 @@ def register_callbacks(app, fetch_historical_data):
          
             plot_df = df[['close_time', y_col]].copy()
             plot_df.columns = ['close_datetime', 'close']  # Rename to match expected column name
+        
+            fig = create_lineplot(plot_df, show_emas=False)
             
-            # Create the line plot without EMAs
-            return create_lineplot(plot_df, 
-                                   trading_pair=message.get('symbol', 'CRYPTO'),
-                                   show_emas=False)
+            # Update layout with range selector configuration
+            fig['layout'].update(create_range_selector(y_col))
+            
+            return fig
         
         except Exception as e:
             print(f"Error in update_real_time: {str(e)}")
             return dash.no_update
 
 
-    @app.callback(
-        Output("close-price-graph", "figure"),
-        Input("trading-pair-dropdown", "value"),
-        Input("lineplot-time-slider", "value"),
-        prevent_initial_call=True,
-    )
+    #@app.callback(
+    #    Output("close-price-graph", "figure"),
+    #    Input("trading-pair-dropdown", "value"),
+    #    Input("lineplot-time-slider", "value"),
+    #    prevent_initial_call=True,
+    #)
     def update_lineplot(trading_pair, date_range):
         trading_pair = trading_pair or "BTCUSDT"
         df = fetch_historical_data(trading_pair)
@@ -96,12 +98,12 @@ def register_callbacks(app, fetch_historical_data):
         # Create the line plot
         return create_lineplot(df, trading_pair)
 
-    Register other callbacks but keep them simple for now
-    @app.callback(
-        Output("candlestick-graph", "figure"),
-        Input("candlestick-time-slider", "value"),
-        Input("trading-pair-dropdown", "value"),
-    )
+    # Register other callbacks but keep them simple for now
+    #@app.callback(
+    #    Output("candlestick-graph", "figure"),
+    #    Input("candlestick-time-slider", "value"),
+    #    Input("trading-pair-dropdown", "value"),
+    #)
     def update_candlestick(date_range, trading_pair):
         trading_pair = trading_pair or "BTCUSDT"
         df = fetch_historical_data(trading_pair)
@@ -125,11 +127,11 @@ def register_callbacks(app, fetch_historical_data):
             ]
 
             return create_candlestickplot(df, trading_pair)
-    @app.callback(
-        Output("volume-graph", "figure"),
-        Input("volume-time-slider", "value"),
-        Input("trading-pair-dropdown", "value"),
-    )
+    #@app.callback(
+    #    Output("volume-graph", "figure"),
+    #    Input("volume-time-slider", "value"),
+    #    Input("trading-pair-dropdown", "value"),
+    #)
     def update_volume(date_range, trading_pair):
         trading_pair = trading_pair or "BTCUSDT"
         df = fetch_historical_data(trading_pair)
@@ -153,41 +155,42 @@ def register_callbacks(app, fetch_historical_data):
             ]
 
             return create_volumeplot(df, trading_pair)
-#@app.callback(
-#    Output("volatility-graph", "figure"),
-#    Input("volatility-time-slider", "value"),
-#    Input("atr-period-input", "value"),
-#)
-#def update_volatility(date_range, atr_period):
-#    atr_period = atr_period or 14
 
-#    selected_pairs = ["BTCUSDT", "ETHUSDT"]
-#    data = {}
+    #@app.callback(
+    #    Output("volatility-graph", "figure"),
+    #    Input("volatility-time-slider", "value"),
+    #    Input("atr-period-input", "value"),
+    #)
+    def update_volatility(date_range, atr_period):
+        atr_period = atr_period or 14
 
-#    # Fetch data for both trading pairs
-#    for pair in selected_pairs:
-#        df = fetch_historical_data(pair)
-#        if not df.empty:
-#            if not pd.api.types.is_datetime64_any_dtype(df["close_datetime"]):
-#                df["close_datetime"] = pd.to_datetime(
-#                    df["close_datetime"], unit="ms", utc=True
-#                )
+        selected_pairs = ["BTCUSDT", "ETHUSDT"]
+        data = {}
 
-#            df = df.sort_values("close_datetime")
+        # Fetch data for both trading pairs
+        for pair in selected_pairs:
+            df = fetch_historical_data(pair)
+            if not df.empty:
+                if not pd.api.types.is_datetime64_any_dtype(df["close_datetime"]):
+                    df["close_datetime"] = pd.to_datetime(
+                        df["close_datetime"], unit="ms", utc=True
+                    )
 
-#            # Apply date range filter if provided
-#            if date_range:
-#                start_ts, end_ts = date_range
-#                start_date = pd.to_datetime(start_ts, unit="s", utc=True)
-#                end_date = pd.to_datetime(end_ts, unit="s", utc=True)
-#                df = df[
-#                    (df["close_datetime"] >= start_date)
-#                    & (df["close_datetime"] <= end_date)
-#                ]
+                df = df.sort_values("close_datetime")
 
-#            data[pair] = df
+                # Apply date range filter if provided
+                if date_range:
+                    start_ts, end_ts = date_range
+                    start_date = pd.to_datetime(start_ts, unit="s", utc=True)
+                    end_date = pd.to_datetime(end_ts, unit="s", utc=True)
+                    df = df[
+                        (df["close_datetime"] >= start_date)
+                        & (df["close_datetime"] <= end_date)
+                    ]
 
-#    if not data:
-#        return {"data": [], "layout": {}}
+                data[pair] = df
 
-#    return create_volatility_plot(data, atr_period)
+        if not data:
+            return {"data": [], "layout": {}}
+
+        return create_volatility_plot(data, atr_period)

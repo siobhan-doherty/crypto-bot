@@ -3,34 +3,33 @@ from dash import dcc, html
 from .theme import COLORS
 
 
-def get_range_selector_config(colors=None):
+def create_range_selector(y_axis_title):
     """
-    Returns the configuration for the range selector buttons in time series plots.
+    Creates a range selector layout configuration for Plotly figures.
     
     Args:
-        colors (dict, optional): Color configuration dictionary. If None, uses default COLORS.
-            Should contain 'panel', 'primary', and 'border' keys.
-            
+        y_axis_title (str): Title for the y-axis
+    
     Returns:
-        dict: Range selector configuration for Plotly
+        dict: Plotly layout configuration with range selector
     """
-    if colors is None:
-        colors = COLORS
-        
     return {
-        'buttons': [
-            {'count': 15, 'label': '15m', 'step': 'minute', 'stepmode': 'backward'},
-            {'count': 1, 'label': '1h', 'step': 'hour', 'stepmode': 'backward'},
-            {'count': 6, 'label': '6h', 'step': 'hour', 'stepmode': 'backward'},
-            {'count': 1, 'label': '1d', 'step': 'day', 'stepmode': 'backward'},
-            {'step': 'all'}
-        ],
-        'bgcolor': colors['panel'],
-        'activecolor': colors['primary'],
-        'bordercolor': colors['border']
+        'xaxis': {
+            'type': 'date',
+            'tickformat': '%H:%M:%S',
+            'rangeslider': {'visible': True},
+            'rangeselector': {
+                'buttons': [
+                    {'count': 15, 'label': '15m', 'step': 'minute', 'stepmode': 'backward'},
+                    {'count': 1, 'label': '1h', 'step': 'hour', 'stepmode': 'backward'},
+                    {'count': 6, 'label': '6h', 'step': 'hour', 'stepmode': 'backward'},
+                    {'count': 1, 'label': '1d', 'step': 'day', 'stepmode': 'backward'},
+                    {'step': 'all'}
+                ]
+            }
+        },
+        'yaxis': {'title': y_axis_title}
     }
-
-
 
 def create_date_range_slider(
     df, slider_id, min_date_col="close_datetime", max_date_col="close_datetime"
@@ -135,8 +134,6 @@ def create_trading_pair_dropdown(dropdown_id, multi=False, value=None):
         {"label": "BTC/USDT", "value": "BTCUSDT"},
         {"label": "ETH/USDT", "value": "ETHUSDT"},
     ]
-
-    # Callback is now registered in the main app
 
     if value is None:
         value = "BTCUSDT" if not multi else ["BTCUSDT", "ETHUSDT"]
