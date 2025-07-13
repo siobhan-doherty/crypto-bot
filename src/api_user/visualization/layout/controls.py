@@ -17,7 +17,7 @@ def create_range_selector(y_axis_title):
         'xaxis': {
             'type': 'date',
             'tickformat': '%H:%M:%S',
-            'rangeslider': {'visible': True},
+            'rangeslider': {'visible': False},
             'rangeselector': {
                 'buttons': [
                     {'count': 15, 'label': '15m', 'step': 'minute', 'stepmode': 'backward'},
@@ -25,7 +25,10 @@ def create_range_selector(y_axis_title):
                     {'count': 6, 'label': '6h', 'step': 'hour', 'stepmode': 'backward'},
                     {'count': 1, 'label': '1d', 'step': 'day', 'stepmode': 'backward'},
                     {'step': 'all'}
-                ]
+                ],
+                'bgcolor': COLORS['background'],
+                'activecolor': COLORS['primary'],    
+                'font': {'color': COLORS['text']}  
             }
         },
         'yaxis': {'title': y_axis_title}
