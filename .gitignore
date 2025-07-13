@@ -93,3 +93,12 @@ target/
 
 # Mypy cache
 .mypy_cache/
+
+# Airflow runtime logs and meta-data
+airflow/logs/
+airflow/airflow-webserver.pid
+airflow/airflow.cfg
+airflow/unittests.cfg
+# Optional: Exclude Airflow SQLite DB if present
+airflow/airflow.db
+airflow/airflow.db-journal
