@@ -1,15 +1,13 @@
 # Binance Crypto Bot Project
 
 Welcome!
-We’re excited to present **CryptoBot**, our capstone project for the Data Engineer Bootcamp at DataScientest. Our solution applies data engineering best practices, incorporates team agreements, and is tailored to fit the assignment timeline.
-
-Below, we’ll outline our project’s objectives, main features, and quick setup instructions so you can get started easily.
+We’re excited to present CryptoBot, our capstone project for the Data Engineer Bootcamp at DataScientest. Our solution applies best practices in data engineering, implements robust monitoring, and leverages workflow automation tools to provide a scalable, production-like pipeline for cryptocurrency data.
 
 ---
 
-## 🚀 Project Overview
+## Project Overview
 
-**CryptoBot** is a scalable, microservices-based platform designed to collect, store, process, and analyze both historical and real-time cryptocurrency data from Binance. The system delivers processed metrics and visual analytics through a unified API layer and interactive Dash dashboard.
+CryptoBot is a microservices-based platform designed to collect, process, and visualize both historical and real-time cryptocurrency data from Binance. The project demonstrates full-lifecycle data engineering, from raw data ingestion to dashboard analytics, using containerized services and orchestration with Docker Compose and Apache Airflow.
 
 ### What is Binance?
 
@@ -19,42 +17,75 @@ For this project, we focused on the two most liquid trading pairs:
 * **BTC/USDT** (Bitcoin)
 * **ETH/USDT** (Ethereum)
 
+### Data Sources Identified
+
+  | Source                | Access Method             | Data Type                            |
+  | --------------------- | ------------------------- | ------------------------------------ |
+  | Binance REST API      | `https://api.binance.com` | Market data (prices, trades, klines) |
+  | Binance WebSocket API | Real-time JSON stream     | Live market changes                  |
+
+---
+## Architecture & Components
+
+### **Main Services:**
+
+| Service                    | Description                      | Port  | Healthcheck     |
+| -------------------------- | -------------------------------- | ----- | --------------- |
+| `zookeeper`                | Kafka manager                    | 2181  | ✔️              |
+| `kafka`                    | Kafka broker                     | 9092  | ✔️              |
+| `mongodb`                  | Data warehouse for all events    | 27017 | ✔️              |
+| `crypto_data_collector`    | Spark, batch & streaming scripts |       | (manual launch) |
+| `kafka_producer`           | Real-time data producer          |       | ✔️              |
+| `kafka_consumer`           | Real-time data consumer          |       | ✔️              |
+| `fastapi`                  | REST API for analytics           | 8000  | ✔️              |
+| `dash`                     | Dash analytics web dashboard     | 8050  | ✔️              |
+| `crypto_postgres`          | PostgreSQL for Airflow metadata  | 5432  | ✔️              |
+| `crypto_airflow_init`      | Airflow DB/user initialization   |       |                 |
+| `crypto_airflow`           | Airflow Web UI                   | 8080  | ✔️              |
+| `crypto_airflow_scheduler` | Airflow Scheduler                |       | ✔️              |
+
 ---
 
-## 🛠️ Key Features
+## Key Features
 
 ### **Data Extraction**
 
 * **Historical Data:**
-  Collects 6 months of 15-minute interval price data using the Binance REST API.
+  6 months of 15-minute interval price data via Binance REST API, ingested with PySpark.
 * **Real-Time Data:**
-  Streams live market data using the Binance WebSocket API.
+  Streams 1-minute market data from Binance WebSocket, routed through Kafka and stored in MongoDB.
 * **Incremental Extraction:**
-  Automatically fetches only the latest 15-minute intervals each day.
+  Automatically fetches every 15-minute interval that has occurred since the last successful extraction, typically covering all intervals from the previous day.
 
-### **Data Pipeline**
+### **Automation & Scheduling**
 
-* **Batch Extraction:** PySpark for efficient historical data ingestion.
-* **Streaming:** Kafka for real-time event streaming.
-* **Storage:** MongoDB, with separate collections for historical (`historical_data_15m`) and streaming (`streaming_data_1m`) data.
+* **Airflow Orchestration:**
 
-### **Processing**
+  * **DAG: `initialize_historical_data`** (manual, one-off) – loads historical data at project start.
+  * **DAG: `update_historical_data`** (scheduled daily) – pulls new data automatically.
+* **Docker Compose:** All services are managed and monitored as containers.
+* **Healthchecks:** All containers except `crypto_data_collector` are monitored for uptime using Docker healthchecks.
+Note: Due to time constraints, we deployed a minimal viable version (MVP) of Airflow for initial implementation
 
-* **Analysis:** Jupyter Notebooks for data exploration and initial analysis.
-* **Streaming Processing:** Python scripts to manage and process live data.
+### **Processing & Storage**
 
-### **Visualization**
+* **MongoDB:** Stores both historical and streaming data in separate collections for historical (`historical_data_15m`) and streaming (`streaming_data_1m`) data.
+* **PySpark:** Efficient ETL for historical ingestion.
 
-* **Dashboard:** Dash application for interactive, real-time, and historical charts.
+### **Streaming Pipeline**
 
-### **API Layer**
+* **Kafka Producer:** Publishes real-time data to a topic.
+* **Kafka Consumer:** Consumes and persists real-time messages to MongoDB.
+* **Automatic Restart:** Kafka producer/consumer containers auto-restart if they crash.
 
+### **API & Visualization**
+
+* **Dashboard:** Dash application for interactive with historical charts.
 * **FastAPI:** Provides an interface for the Dash dashboard to retrieve processed historical data directly from MongoDB.
 
 ### **Automation & Deployment**
 
 * **Containerization:** All components are Dockerized and orchestrated using Docker Compose.
-* **Scheduling:** Cron jobs automate regular historical data extraction tasks.
 
 ### **CI/CD**
 
@@ -63,19 +94,21 @@ For this project, we focused on the two most liquid trading pairs:
   * Linting, testing, and Docker image builds for each commit (`ci.yaml`)
   * Automatic deployment of Docker images to DockerHub on release (`release.yaml`)
 
+Note : For demo purposes, the streaming data was reset to ensure a consistent real-time view.
+
 ### **Data Achitecture**
 
 ```mermaid
 flowchart TD
     A[Binance REST API] --> B[PySpark Extraction]
     B --> C[Preprocessing]
-    C --> D[MongoDB<br>historical_data]
+    C --> D[MongoDB<br>historical_data_15m]
     E[Binance WebSocket API] --> F[Kafka Streaming]
     F --> G[Preprocessing]
-    G --> H[MongoDB<br>streaming_data]
+    G --> H[MongoDB<br>streaming_data_1m]
     D --> I[Processing]
     H --> I
-    I --> J[Dashboards]
+    I --> J[Dash/REST API]
 ```
 ![](./references/ArchichectureProjectOPA.png)
 
@@ -86,44 +119,70 @@ flowchart TD
 ### 1. Project Structure:
 ```markdown
 apr25_bde_int_opa_team_a
+├── airflow
+│   └── dags
+│       ├── initialize_historical_data.py
+│       └── update_historical_data.py
 ├── docker-compose.yml
 ├── LICENSE
 ├── notebooks
-│   ├── Check Mongodb.ipynb
-│   ├── Historical_data.ipynb
-│   ├── Historical_data_mit_api_sd_v1.ipynb
-│   └── Kafka.ipynb
+│   ├── Check Mongodb.ipynb
+│   ├── Historical_data.ipynb
+│   ├── Historical_data_mit_api_sd_v1.ipynb
+│   └── Kafka.ipynb
+├── README_1.md
 ├── README.md
 ├── references
-│   ├── API explanation.md
-│   ├── command.md
-│   ├── Repo Structure Tutorial.md
-│   └── Step 1.md
-└── src
-    ├── collection_admin
-    │   ├── data
-    │   │   ├── initialize_historical_data.py
-    │   │   ├── update_historical_data.py
-    │   │   ├── __init__.py
-    │   │   ├── kafka_consumer.py
-    │   │   └── kafka_producer.py
-    │   ├── db
-    │   │   ├── __init__.py
-    │   │   └── mongo_utils.py
-    │   ├── docker
-    │   │   └── Dockerfile.data_collector
-    │   │   └── entrypoint.sh
-    │   ├── __init__.py
-    │   └── requirements.txt
-    └── api_user
-        ├── docker
-        │   └── Dockerfile.dash
-        ├── __init__.py
-        ├── requirements.txt
-        └── visualization
-            ├── dash_app.py
-            ├── dash_stream.py
-            └── __init__.py
+│   ├── API explanation.md
+│   ├── ArchichectureProjectOPA.png
+│   ├── commands.md
+│   ├── commands_mongoDB.md
+│   ├── docker_ps.png
+│   ├── FastAPI_api_user.png
+│   └── historical_dashboard.png
+├── requirements-dev.txt
+├── run_api.py
+├── src
+│   ├── api_user
+│   │   ├── docker
+│   │   │   ├── Dockerfile.dash
+│   │   │   └── Dockerfile.fastapi
+│   │   ├── __init__.py
+│   │   ├── main.py
+│   │   ├── requirements.txt
+│   │   ├── router.py
+│   │   └── visualization
+│   │       ├── assets
+│   │       │   └── style.css
+│   │       ├── callbacks.py
+│   │       ├── dash_app.py
+│   │       ├── fetch_data.py
+│   │       ├── __init__.py
+│   │       ├── layout
+│   │       │   ├── controls.py
+│   │       │   └── theme.py
+│   │       └── plots
+│   │           ├── candlestickplot.py
+│   │           ├── lineplot.py
+│   │           ├── volatilityplot.py
+│   │           └── volumeplot.py
+│   └── collection_admin
+│       ├── data
+│       │   ├── initialize_historical_data.py
+│       │   ├── __init__.py
+│       │   ├── kafka_consumer.py
+│       │   ├── kafka_producer.py
+│       │   └── update_historical_data.py
+│       ├── db
+│       │   ├── __init__.py
+│       │   └── mongo_utils.py
+│       ├── docker
+│       │   └── Dockerfile.data_collector
+│       ├── __init__.py
+│       └── requirements.txt
+└── tests
+    ├── __init__.py
+    └── test_fastapi_endpoints.py
 ```
 
 ### 2. Set up the project
@@ -161,8 +220,22 @@ MONGO_URI=mongodb://your_user:your_pass@crypto_mongo:27017/cryptobot?authSource=
   ```
   ![](./references/docker_ps.png)
 
+#### 2.3. **Running Batch and Streaming Jobs**
 
-#### 2.3 Running Data Collector Scripts 
+* **One-time historical data:**
+
+  * Trigger Airflow DAG `initialize_historical_data` from the Airflow UI.
+
+* **Daily historical update:**
+
+  * Airflow DAG `update_historical_data` runs every midnight (can be triggered manually).
+
+* **Streaming (real-time):**
+
+  * Kafka producer and consumer start **automatically** with Docker Compose.
+  * Use `docker logs crypto_kafka_producer` or `docker logs crypto_kafka_consumer` to monitor live activity.
+  * 
+#### 2.4 Running Data Collector Scripts for testing outside the airflow
 
   Seed 3–6 months of 15m data: 
   ```bash
@@ -181,51 +254,29 @@ MONGO_URI=mongodb://your_user:your_pass@crypto_mongo:27017/cryptobot?authSource=
   docker exec -it crypto_data_collector python /app/src/collection_admin/data/kafka_consumer.py
   ```
 
-  ### Services Overview
-
-  | Service             | Description                   | Port  |
-  | -----------         | ----------------------------- | ----- |
-  | `jupyter` (Legacy)  | PySpark + Jupyter Notebook    | 8888  |
-  | `kafka`             | Kafka broker                  | 9092  |
-  | `fastapi`           | Dash dashboard                | 8000  |
-  | `zookeeper`         | Manages Kafka                 | 2181  |
-  | `mongo`             | NoSQL document DB             | 27017 |
-  | `dash`              | Dash dashboard                | 8050  |
-
-
-  ### Data Sources Identified
-
-  | Source                | Access Method             | Data Type                            |
-  | --------------------- | ------------------------- | ------------------------------------ |
-  | Binance REST API      | `https://api.binance.com` | Market data (prices, trades, klines) |
-  | Binance WebSocket API | Real-time JSON stream     | Live market changes                  |
 
 ---
 #### 2.4 Access services:
 
-* Dash app: [http://localhost:8050](http://localhost:8050)
-![](/references/historical_dashboard.png)
-* FastAPI [http://localhost:8000/docs](http://localhost:8000/docs)
-![](/references/FastAPI_api_user.png)
-* MongoDB (from containers): `crypto_mongo:27017`
+* `crypto_airflow` (Web UI) at [http://localhost:8080](http://localhost:8080)
+  ![](/references/airflow_home.png)
+* `crypto_dash` (dashboard) at [http://localhost:8050](http://localhost:8050)
+  ![](/references/historical_dashboard.png)
+* `crypto_fastapi` (API) at [http://localhost:8000/docs](http://localhost:8000/docs)
+  ![](/references/FastAPI_api_user.png)
 
+## Notes & MVP Scope
 
-## Tools Used
+* **Airflow is used as the workflow orchestrator** (MVP: runs batch ETL scripts; future work could expand to full data pipeline monitoring and alerting).
+* **Healthchecks** allow robust Docker restarts and easier debugging of failing containers.
+* **Logs, DAG output, and temporary files are excluded from version control.**
+  Additions to `.gitignore`:
 
-* Python 3.9
-* PySpark
-* Kafka (Bitnami images)
-* MongoDB
-* Dash (Plotly)
-* Docker & Docker Compose
-* FastAPI
-* Pytest
-* Binance API
-* Flake8
-* GitHub Actions
-* Cron Job
-* REST API
-* WebSocket
+  ```
+  airflow/logs/
+  ```
+* **Demo Data Reset:** For demo purposes, streaming collections may be cleared to guarantee a fresh, consistent real-time view.
+
 
 ## Authors
 
@@ -233,6 +284,8 @@ MONGO_URI=mongodb://your_user:your_pass@crypto_mongo:27017/cryptobot?authSource=
   * Indira Burga 
   * Katharina Klat
   * Siobhan Doherty
+
+Data Engineer Bootcamp | DataScientest (April 2025)
 
 ---
 
