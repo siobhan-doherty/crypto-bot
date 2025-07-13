@@ -49,7 +49,7 @@ def fetch_15m(symbol="BTCUSDT", months=6):
         for r in batch:
             rows.append(Row(
                 symbol=symbol,
-                open_time=int(r[0]), 
+                open_time=int(r[0]),
                 open=float(r[1]),
                 high=float(r[2]),
                 low=float(r[3]),
