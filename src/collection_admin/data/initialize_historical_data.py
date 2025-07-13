@@ -49,11 +49,18 @@ def fetch_15m(symbol="BTCUSDT", months=6):
         for r in batch:
             rows.append(Row(
                 symbol=symbol,
-                open_time=int(r[0]), open=float(r[1]), high=float(r[2]),
-                low=float(r[3]), close=float(r[4]), volume=float(r[5]),
-                close_time=int(r[6]), quote_volume=float(r[7]),
-                num_trades=int(r[8]), taker_base_volume=float(r[9]),
-                taker_quote_volume=float(r[10]), ignore=r[11]
+                open_time=int(r[0]), 
+                open=float(r[1]),
+                high=float(r[2]),
+                low=float(r[3]),
+                close=float(r[4]),
+                volume=float(r[5]),
+                close_time=int(r[6]),
+                quote_volume=float(r[7]),
+                num_trades=int(r[8]),
+                taker_base_volume=float(r[9]),
+                taker_quote_volume=float(r[10]),
+                ignore=r[11]
             ))
         start_ms = batch[-1][6] + 1
         time.sleep(0.2)

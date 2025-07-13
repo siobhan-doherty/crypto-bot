@@ -3,6 +3,8 @@ from dotenv import load_dotenv
 from kafka import KafkaConsumer
 from collection_admin.db.mongo_utils import save_to_collection
 import logging
+import socket
+import time
 
 logging.basicConfig(
     level=logging.INFO,
@@ -11,7 +13,22 @@ logging.basicConfig(
 )
 
 
+def wait_for_kafka(host, port, timeout=60):
+    logging.info(f"Waiting for Kafka at {host}:{port} ...")
+    start = time.time()
+    while True:
+        try:
+            with socket.create_connection((host, port), timeout=2):
+                logging.info("Kafka is ready!")
+                return
+        except Exception:
+            if time.time() - start > timeout:
+                logging.info("Timeout waiting for Kafka")
+                raise
+            time.sleep(2)
+
 load_dotenv(dotenv_path="/app/.env", override=True)
+wait_for_kafka('kafka', 9092)
 
 consumer = KafkaConsumer(
     'binance_prices',

@@ -1,6 +1,6 @@
 # Useful Docker & Project Commands
 
-A collection of commands for managing and troubleshooting the CryptoBot data architecture, including Docker services, volumes, Kafka streaming, and MongoDB data checks.
+A collection of commands for managing and troubleshooting the CryptoBot data architecture, including Docker services, volumes, Kafka streaming.
 
 ---
 
@@ -41,7 +41,7 @@ docker-compose up -d
 
 ---
 
-## 🔄 Kafka Streaming: Launch Scripts
+## 🔄 Launch Scripts for test (kafka and pyspark)
 
 > **Note:** Run these commands in different terminals as needed.
 
@@ -61,49 +61,17 @@ docker exec -it crypto_kafka_consumer python3 src/collection_admin/data/kafka_co
 
 ---
 
-## 📦 Manage Docker Volumes
+## Manage Docker Volumes
 
 ```bash
 # Inspect MongoDB data volume
 docker volume inspect apr25_bde_int_opa_team_a_mongo_data
-```
+docker logs crypto_kafka_producer
+docker logs crypto_kafka_consumer
 
----
-
-## 📊 Check Data in MongoDB
-
-```bash
-# Access MongoDB shell inside the container
-docker exec -it crypto_mongo mongosh -u <USER_NAME> -p <PASSWORD> --authenticationDatabase admin
-
-# List databases
-db.adminCommand('listDatabases')
-
-# Switch to 'cryptobot' database
-use cryptobot
-
-# List collections
-db.getCollectionNames()
-
-# Rename collection
-db.streaming_data.renameCollection('streaming_data_1m')
-
-# Sample data inspection
-db.historical_data_15m.findOne()
-db.historical_data_15m.countDocuments()
-db.historical_data_15m.findOne({ "symbol": "BTCUSDT" })
-db.historical_data_15m.findOne({ "symbol": "ETHUSDT" })
-
-db.streaming_data_1m.findOne()
-db.streaming_data_1m.countDocuments()
-db.streaming_data_1m.countDocuments({ "symbol": "BTCUSDT" })
-db.streaming_data_1m.countDocuments({ "symbol": "ETHUSDT" })
-db.streaming_data_1m.findOne({ "symbol": "BTCUSDT" })
-db.streaming_data_1m.findOne({ "symbol": "ETHUSDT" })
-
-# Drop collections (use with caution)
-db.streaming_data.drop()
-db.historical_data.drop()
+#  Check Process List
+docker exec -it crypto_kafka_producer ps aux
+docker exec -it crypto_kafka_consumer ps aux
 ```
 
 ---
@@ -113,7 +81,7 @@ db.historical_data.drop()
 ```bash
 docker-compose down -v
 docker-compose up --build --force-recreate
-
+```
 
 ## Airflow implementation
 ### Create folder
@@ -128,5 +96,3 @@ mkdir -p airflow/plugins
 sudo chown -R 50000:0 airflow/logs
 ```
 
-**Tip:**
-Replace `<USER_NAME>` and `<PASSWORD>` with your actual MongoDB credentials.

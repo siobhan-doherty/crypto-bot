@@ -6,6 +6,11 @@ services:
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
     networks: [crypto_network]
+    healthcheck:
+      test: ["CMD", "echo", "ruok", "|", "nc", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   kafka:
     image: bitnami/kafka:3.7
@@ -20,6 +25,11 @@ services:
       ALLOW_PLAINTEXT_LISTENER: yes
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     networks: [crypto_network]
+    healthcheck:
+      test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
 
   mongodb:
     image: mongo:7.0
@@ -56,19 +66,26 @@ services:
   kafka_producer:
     image: crypto_data_collector
     container_name: crypto_kafka_producer
+    restart: unless-stopped
     env_file:
     - ./src/collection_admin/.env
     volumes:
       - ./src/collection_admin/.env:/app/.env:ro
     depends_on:
       - kafka
-    command: ["python", "/app/src/collection_admin/data/kafka_producer.py"]
+    command: ["python3", "/app/src/collection_admin/data/kafka_producer.py"]
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -fa kafka_producer.py"]
+      interval: 30s
+      timeout: 10s
+      retries: 3    
     networks: [crypto_network]
 
   # reuse same image but override entrypoint to only run consumer
   kafka_consumer:
     image: crypto_data_collector
     container_name: crypto_kafka_consumer
+    restart: unless-stopped
     env_file:
       - ./src/collection_admin/.env
     volumes:
@@ -76,7 +93,12 @@ services:
     depends_on:
       - mongodb
       - kafka
-    command: ["python", "/app/src/collection_admin/data/kafka_consumer.py"]
+    command: ["python3", "/app/src/collection_admin/data/kafka_consumer.py"]
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -fa kafka_consumer.py"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks: [crypto_network]
 
   fastapi:

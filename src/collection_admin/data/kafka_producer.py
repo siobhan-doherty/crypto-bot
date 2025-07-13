@@ -6,9 +6,35 @@ from binance import ThreadedWebsocketManager
 from kafka import KafkaProducer
 from datetime import datetime, timezone
 from pathlib import Path
+import socket
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(message)s',
+    handlers=[logging.StreamHandler()]
+)
+
 
 # Load .env
 load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / ".env")
+
+
+def wait_for_kafka(host, port, timeout=60):
+    logging.info(f"Waiting for Kafka at {host}:{port} ...")
+    start = time.time()
+    while True:
+        try:
+            with socket.create_connection((host, port), timeout=2):
+                logging.info("Kafka is ready!")
+                return
+        except Exception:
+            if time.time() - start > timeout:
+                logging.info("Timeout waiting for Kafka")
+                raise
+            time.sleep(2)
+
+wait_for_kafka('kafka', 9092)
 
 # Kafka producer config
 producer = KafkaProducer(
@@ -19,7 +45,7 @@ producer = KafkaProducer(
 symbols_to_send = ['BTCUSDT', 'ETHUSDT']
 interval = '1m'  # WebSocket interval format
 
-print("WebSocket Producer started. Streaming real-time klines...")
+logging.info("WebSocket Producer started. Streaming real-time klines...")
 
 
 def get_iso_timestamp():
@@ -70,9 +96,9 @@ def handle_socket_message(msg):
         if msg['e'] == 'kline' and msg['k']['x']:  # just process closed klines
             processed_msg = process_kline(msg)
             producer.send('binance_prices', processed_msg)
-            print(f"Sent kline for {msg['s']} at {processed_msg['ts']}")
+            logging.info(f"Sent kline for {msg['s']} at {processed_msg['ts']}")
     except Exception as e:
-        print(f"Error processing message: {e}")
+        logging.info(f"Error processing message: {e}")
 
 
 # Start WebSocket
@@ -97,6 +123,6 @@ try:
     while True:
         time.sleep(10)  # keep the main thread alive
 except KeyboardInterrupt:
-    print("Shutting down...")
+    logging.info("Shutting down...")
     twm.stop()
     producer.flush()

@@ -2,7 +2,7 @@ FROM python:3.9-slim
 
 USER root
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends default-jdk-headless curl \
+    && apt-get install -y --no-install-recommends default-jdk-headless curl procps \
     && rm -rf /var/lib/apt/lists/*
 
 ENV SPARK_VERSION=3.4.2 \
