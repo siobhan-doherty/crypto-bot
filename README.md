@@ -1,13 +1,13 @@
 # Binance Crypto Bot Project
 
 Welcome!
-We’re excited to present CryptoBot, our capstone project for the Data Engineer Bootcamp at DataScientest. Our solution applies best practices in data engineering, implements robust monitoring, and leverages workflow automation tools to provide a scalable, production-like pipeline for cryptocurrency data.
+We’re excited to present Binance CryptoBot, our capstone project for the Data Engineer Bootcamp at DataScientest. Our solution applies best practices in data engineering, implements robust monitoring, and leverages workflow automation tools to provide a scalable, production-like pipeline for cryptocurrency data.
 
 ---
 
 ## Project Overview
 
-CryptoBot is a microservices-based platform designed to collect, process, and visualize both historical and real-time cryptocurrency data from Binance. The project demonstrates full-lifecycle data engineering, from raw data ingestion to dashboard analytics, using containerized services and orchestration with Docker Compose and Apache Airflow.
+Binance CryptoBot is a microservices-based platform designed to collect, process, and visualize both historical and real-time cryptocurrency data from Binance. The project demonstrates full-lifecycle data engineering, from raw data ingestion to dashboard analytics, using containerized services and orchestration with Docker Compose and Apache Airflow.
 
 ### What is Binance?
 
@@ -86,6 +86,7 @@ Note: Due to time constraints, we deployed a minimal viable version (MVP) of Air
 ### **Automation & Deployment**
 
 * **Containerization:** All components are Dockerized and orchestrated using Docker Compose.
+* **Scheduling (legacy):** Cron jobs automate regular historical data extraction tasks.
 
 ### **CI/CD**
 
