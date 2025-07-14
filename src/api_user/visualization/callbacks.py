@@ -10,64 +10,87 @@ from .layout.controls import create_range_selector
 from .data_store import prepare_data
 from .utils import filter_df
 
-def register_callbacks(app):
-    print("Pumpkin Registering callbacks...")
-    
-    # Get the full data initially
+def register_callbacks(app):    
     full_df = prepare_data()
 
     @app.callback(
+        Output("trading-pair-title", "children"),
+        Input("trading-pair-dropdown", "value")
+    )
+    def update_trading_pair_title(trading_pair):
+        return f"{trading_pair} Real-time Price"
+
+    @app.callback(
         [Output("real-time", "figure"),
-         Output("ws-data-store", "data"),
-         Output("ws-status", "children"),
-         Output("data-status", "children")],
+         Output("ws-status", "children")],
         [Input("ws", "message"),
-         Input("ws-data-store", "data")],
+         Input("trading-pair-dropdown", "value")],
         prevent_initial_call=True
     )
-    def update_real_time(ws_message, stored_data):
-        # Log WebSocket connection status
+    def update_real_time(ws_message, trading_pair):
+        if 'stored_data' not in update_real_time.__dict__:
+            update_real_time.stored_data = {}
+
         if not ws_message:
-            return dash.no_update, dash.no_update, "WebSocket not connected", "WebSocket not connected"
+            return dash.no_update, "WebSocket not connected"
 
         try:
-            # Parse the data as JSON
             message = json.loads(ws_message["data"])
+
             if "error" in message:
-                return dash.no_update
+                return dash.no_update, "WebSocket error: " + str(message['error'])
 
             if not isinstance(message.get("data"), list):
-                return dash.no_update
+                return dash.no_update, "Invalid data format"
 
             data = message["data"]
             if not data:
-                return dash.no_update
+                return dash.no_update, "No data received"
 
             df = pd.DataFrame(data)
+            if not df.empty:
+                df['close_datetime'] = pd.to_datetime(df['close_datetime']).dt.tz_convert('Europe/Berlin')
+            
 
-            # Find the first numeric column that's not a timestamp
+            symbol = df.iloc[0]['symbol'] if not df.empty else None
+            if not symbol:
+                return dash.no_update, "No symbol found"
             numeric_cols = [col for col in df.select_dtypes(include=['number']).columns 
-                          if col not in ['timestamp', 'close_time']]
-
+                          if col not in ['timestamp', 'close_time', 'close_datetime']]
             if not numeric_cols:
-                return dash.no_update
-
+                return dash.no_update, "No numeric data"
             y_col = numeric_cols[0]
 
-            plot_df = df[['close_time', y_col]].copy()
-            plot_df.columns = ['close_datetime', 'close']  # Rename to match expected column name
+            update_real_time.stored_data[symbol] = df.to_dict('records')
 
-            fig = create_lineplot(plot_df, show_emas=False)
-            fig['layout'].update(create_range_selector(y_col))
-            # Update status
-            ws_status = "WebSocket connected"
-            data_status = f"Received {len(data)} data points"
+            try:
+                if not isinstance(update_real_time.stored_data, dict):
+                    return dash.no_update, "Invalid data structure"
 
-            return fig, plot_df.to_dict('records'), ws_status, data_status
+                if trading_pair in update_real_time.stored_data:
+                    df = pd.DataFrame(update_real_time.stored_data[trading_pair])
+                    if not df.empty:
+                        plot_df = df[['close_datetime', y_col]].copy()
+                        plot_df.columns = ['close_datetime', 'close']
+                        
+                        plot_df = plot_df.sort_values('close_datetime')
+                        plot_df = plot_df.drop_duplicates(subset='close_datetime', keep='last')
 
+                        try:
+                            fig = create_lineplot(plot_df, trading_pair=trading_pair, show_emas=False)
+                            fig['layout'].update(create_range_selector(y_col))
+                            ws_status = "WebSocket connected"
+                            return fig, ws_status
+                        except Exception as e:
+                            return dash.no_update, "Error creating plot"
+                    else:
+                        return dash.no_update, "WebSocket connected"
+                else:
+                    return dash.no_update, "WebSocket connected"
+            except Exception as e:
+                return dash.no_update, "Error creating plot"
         except Exception as e:
-            return dash.no_update, dash.no_update, f"Error: {str(e)}", f"Error: {str(e)}"
-
+            return dash.no_update, "Error: " + str(e)
 
     @app.callback( 
         Output("historical-lineplot", "figure"),

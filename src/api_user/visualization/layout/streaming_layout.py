@@ -14,7 +14,7 @@ def create_streaming_layout(trading_pair="BTCUSDT"):
     """
     ws_component = WebSocket(
         id="ws",
-        url=f'ws://localhost:8000/ws/stream/{trading_pair}'
+        url=f'ws://localhost:8000/ws/stream'
     )
 
     graph_component = dcc.Graph(
@@ -33,12 +33,12 @@ def create_streaming_layout(trading_pair="BTCUSDT"):
     )
 
     # Add a store component to maintain data state
-    data_store = dcc.Store(id="ws-data-store", data=[])
+    data_store = dcc.Store(id="ws-data-store", data={})
 
     return html.Div(
         children=[
             html.H2(
-                f"{trading_pair} Real-time Price",
+                id="trading-pair-title",
                 style={
                     'color': COLORS['text'],
                     'textAlign': 'center',
