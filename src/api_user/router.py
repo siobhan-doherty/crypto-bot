@@ -181,7 +181,6 @@ async def get_date_range():
 
 @router.get("/market/ohlcv")
 async def get_ohlcv(
-    symbol: str,
     interval: str = "15m",
     start_time: Optional[int] = None,
     end_time: Optional[int] = None,
@@ -207,8 +206,8 @@ async def get_ohlcv(
         db = client.cryptobot
         collection = db[COLLECTION]
 
-        query = {"symbol": symbol.upper()}
-
+        #query = {"symbol": symbol.upper()}
+        query = {}
         # Convert timestamp range to milliseconds for query
         time_query = {}
         if start_time is not None:

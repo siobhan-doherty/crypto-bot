@@ -33,15 +33,13 @@ def get_available_date_range() -> Tuple[datetime, datetime]:
 
 
 def fetch_historical_data(
-    trading_pair: str = "BTCUSDT",
     start_time: Optional[datetime] = None,
     end_time: Optional[datetime] = None,
 ) -> pd.DataFrame:
     """
-    Fetch historical data for a specific trading pair from the FastAPI endpoint.
+    Fetch historical data from the FastAPI endpoint.
 
     Args:
-        trading_pair: The trading pair to fetch data for (e.g., 'BTCUSDT')
         start_time: Optional start time for the data range
         end_time: Optional end time for the data range (defaults to latest available)
 
@@ -49,13 +47,11 @@ def fetch_historical_data(
         pd.DataFrame: DataFrame containing the historical OHLCV data with datetime
     """
     try:
-        # Prepare query parameters
-        params = {
-            "symbol": trading_pair.upper(),
+        # Prepare query parameters  
+        params = {            
             "interval": DEFAULT_INTERVAL,
             # limit is optional to speed up the API call
-            "limit": 1000,
-        }
+            "limit": 10000,        }
 
         # Convert datetime objects to milliseconds since epoch for the API
         if start_time:

@@ -35,14 +35,14 @@ def create_range_selector(y_axis_title):
     }
 
 def create_date_range_slider(
-    df, slider_id, min_date_col="close_datetime", max_date_col="close_datetime"
+    df, id=None, min_date_col="close_datetime", max_date_col="close_datetime"
 ):
     """
     Create a RangeSlider component with date-based configuration.
 
     Args:
         df (pd.DataFrame): The dataframe containing the date columns
-        slider_id (str): The ID for the RangeSlider component
+        id (str): The ID for the RangeSlider component
         min_date_col (str): Column name for minimum date
         max_date_col (str): Column name for maximum date
 
@@ -114,7 +114,7 @@ def create_date_range_slider(
         value = [min_timestamp, max_timestamp]
 
         return dcc.RangeSlider(
-            id=slider_id,
+            id=id,
             min=min_timestamp,
             max=max_timestamp,
             value=value,
@@ -132,7 +132,7 @@ def create_date_range_slider(
         )
 
 
-def create_trading_pair_dropdown(dropdown_id, multi=False, value=None):
+def create_trading_pair_dropdown(dropdown_id, id=None, multi=False, value=None):
     options = [
         {"label": "BTC/USDT", "value": "BTCUSDT"},
         {"label": "ETH/USDT", "value": "ETHUSDT"},
@@ -152,12 +152,12 @@ def create_trading_pair_dropdown(dropdown_id, multi=False, value=None):
     )
 
 
-def create_atr_period_input(input_id, default_period=14):
+def create_atr_period_input(id=None, default_period=14):
     """
     Create a numeric input for ATR period selection.
 
     Args:
-        input_id (str): The ID for the input component
+        id (str): The ID for the input component
         default_period (int): Default ATR period (default: 14)
 
     Returns:
@@ -170,7 +170,7 @@ def create_atr_period_input(input_id, default_period=14):
                 style={"color": "white", "marginRight": "10px", "fontSize": "14px"},
             ),
             dcc.Input(
-                id=input_id,
+                id=id,
                 type="number",
                 min=5,
                 max=50,
