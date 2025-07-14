@@ -110,7 +110,7 @@ flowchart TD
     H --> I
     I --> J[Dash/REST API]
 ```
-![](./references/ArchichectureProjectOPA.png)
+![](./references/ArchichectureProjectOPA_v2.png)
 
 
 ---
@@ -194,6 +194,31 @@ Create a `.env` file in the root directory:
 ```dotenv
 MONGO_INITDB_ROOT_USERNAME=your_user
 MONGO_INITDB_ROOT_PASSWORD=your_pass
+
+# airflow configuration
+AIRFLOW__CORE__EXECUTOR=LocalExecutor
+AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+AIRFLOW__CORE__FERNET_KEY=your_fernet_key
+AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
+AIRFLOW__CORE__LOAD_EXAMPLES=False
+AIRFLOW_UID=50000
+# admin credentials
+AIRFLOW_ADMIN_USERNAME=your_user
+AIRFLOW_ADMIN_PASSWORD=your_pass
+AIRFLOW_ADMIN_FIRSTNAME=your_firsname
+AIRFLOW_ADMIN_LASTNAME=your_lastname
+AIRFLOW_ADMIN_EMAIL=your_email
+```
+
+You can generete the Fernet key by running in Python:
+```python
+from cryptography.fernet import Fernet
+print(Fernet.generate_key().decode())
+```
+Or from the terminal (if you have Airflow installed):
+```bash
+airflow generate-fernet-key
+
 ```
 
 Create a `.env` file in src/collection_admin directory:
