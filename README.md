@@ -80,8 +80,13 @@ Note: Due to time constraints, we deployed a minimal viable version (MVP) of Air
 
 ### **API & Visualization**
 
-* **Dashboard:** Dash application for interactive with historical charts.
-* **FastAPI:** Provides an interface for the Dash dashboard to retrieve processed historical data directly from MongoDB.
+* **Dashboard:** Dash application with interactive charts for historical and streaming data.
+* **FastAPI:** Provides an interface for the Dash dashboard to retrieve historical and streaming data directly from MongoDB.
+
+* For development purposes, the API and dashboard can be run outside of containers:
+	* launch the data collector containers: `docker compose up data_collector`
+	* in the root folder, execute `python3 run_api.py all` to run fastapi and dash in separated processes
+	* access the dashboard at `localhost:8050`
 
 ### **Automation & Deployment**
 
