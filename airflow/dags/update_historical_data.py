@@ -11,7 +11,7 @@ default_args = {
 with DAG(
     dag_id='update_historical_data',
     default_args=default_args,
-    schedule_interval="* 0 * * *",   # Daily at midnight
+    schedule_interval="0 0 * * *",   # Daily at midnight
     catchup=False,
     tags=['cryptobot'],
 ) as dag:
