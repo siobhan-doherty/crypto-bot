@@ -5,4 +5,4 @@ pymongo==4.6.1
 python-dotenv==1.0.0
 fastapi==0.109.0
 uvicorn[standard]==0.27.0
-dash-extensions==2.0.4
+dash-extensions

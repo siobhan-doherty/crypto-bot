@@ -1,10 +1,11 @@
 import sys
 from pathlib import Path
-from .layout.main_layout import layout
 
 # Add the project root to the Python path
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
+
+from src.api_user.visualization.layout.main_layout import layout
 import dash
 import dash_bootstrap_components as dbc
 
