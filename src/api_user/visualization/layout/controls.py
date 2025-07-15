@@ -6,33 +6,39 @@ from .theme import COLORS
 def create_range_selector(y_axis_title):
     """
     Creates a range selector layout configuration for Plotly figures.
-    
+
     Args:
         y_axis_title (str): Title for the y-axis
-    
+
     Returns:
         dict: Plotly layout configuration with range selector
     """
     return {
-        'xaxis': {
-            'type': 'date',
-            'tickformat': '%H:%M:%S',
-            'rangeslider': {'visible': False},
-            'rangeselector': {
-                'buttons': [
-                    {'count': 15, 'label': '15m', 'step': 'minute', 'stepmode': 'backward'},
-                    {'count': 1, 'label': '1h', 'step': 'hour', 'stepmode': 'backward'},
-                    {'count': 6, 'label': '6h', 'step': 'hour', 'stepmode': 'backward'},
-                    {'count': 1, 'label': '1d', 'step': 'day', 'stepmode': 'backward'},
-                    {'step': 'all'}
+        "xaxis": {
+            "type": "date",
+            "tickformat": "%H:%M:%S",
+            "rangeslider": {"visible": False},
+            "rangeselector": {
+                "buttons": [
+                    {
+                        "count": 15,
+                        "label": "15m",
+                        "step": "minute",
+                        "stepmode": "backward",
+                    },
+                    {"count": 1, "label": "1h", "step": "hour", "stepmode": "backward"},
+                    {"count": 6, "label": "6h", "step": "hour", "stepmode": "backward"},
+                    {"count": 1, "label": "1d", "step": "day", "stepmode": "backward"},
+                    {"step": "all"},
                 ],
-                'bgcolor': COLORS['background'],
-                'activecolor': COLORS['primary'],    
-                'font': {'color': COLORS['text']}  
-            }
+                "bgcolor": COLORS["background"],
+                "activecolor": COLORS["primary"],
+                "font": {"color": COLORS["text"]},
+            },
         },
-        'yaxis': {'title': y_axis_title}
+        "yaxis": {"title": y_axis_title},
     }
+
 
 def create_date_range_slider(
     df, id=None, min_date_col="close_datetime", max_date_col="close_datetime"

@@ -34,12 +34,12 @@ def create_lineplot(df, trading_pair="BTCUSDT", show_emas=True):
         }
         for period in ema_periods:
             df[f"ema_{period}"] = calculate_ema(df["close"], period)
-    
+
     layout = PLOT_LAYOUT.copy()
 
     title_config = PLOT_LAYOUT.get("title", {}).copy()
-    title_config["text"] = (
-        f"{trading_pair} Close Price" + (" with Exponential Moving Averages" if show_emas else "")
+    title_config["text"] = f"{trading_pair} Close Price" + (
+        " with Exponential Moving Averages" if show_emas else ""
     )
 
     layout.update(

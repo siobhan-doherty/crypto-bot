@@ -8,11 +8,13 @@ sys.path.insert(0, str(project_root))
 import dash
 import dash_bootstrap_components as dbc
 
+
 def create_app():
     """Create and configure the Dash application."""
-    app = dash.Dash(__name__, 
+    app = dash.Dash(
+        __name__,
         external_stylesheets=[dbc.themes.DARKLY],
-        suppress_callback_exceptions=True
+        suppress_callback_exceptions=True,
     )
 
     app.title = "Crypto Dashboard"
@@ -20,9 +22,11 @@ def create_app():
 
     # Import and register callbacks
     from .callbacks import register_callbacks
+
     register_callbacks(app)
 
     return app
+
 
 if __name__ == "__main__":
     # This block runs when the script is executed directly

@@ -47,11 +47,12 @@ def fetch_historical_data(
         pd.DataFrame: DataFrame containing the historical OHLCV data with datetime
     """
     try:
-        # Prepare query parameters  
-        params = {            
+        # Prepare query parameters
+        params = {
             "interval": DEFAULT_INTERVAL,
             # limit is optional to speed up the API call
-            "limit": 10000,        }
+            "limit": 10000,
+        }
 
         # Convert datetime objects to milliseconds since epoch for the API
         if start_time:

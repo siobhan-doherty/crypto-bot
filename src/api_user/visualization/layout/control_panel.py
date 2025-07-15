@@ -3,18 +3,19 @@ from .theme import COLORS
 from .controls import create_trading_pair_dropdown
 from ..fetch_data import get_available_date_range
 
+
 def create_control_panel(df=None):
     """
     Create the control panel component with trading pair selector and data info.
-    
+
     Args:
         df: Optional DataFrame containing the data for displaying record count
-        
+
     Returns:
         dash.html.Div: The control panel component
     """
     min_date, max_date = get_available_date_range()
-    
+
     return html.Div(
         style={
             "display": "flex",
@@ -41,7 +42,9 @@ def create_control_panel(df=None):
                             "paddingLeft": "10px",
                         },
                     ),
-                    create_trading_pair_dropdown("trading-pair-dropdown",id="trading-pair-dropdown"),
+                    create_trading_pair_dropdown(
+                        "trading-pair-dropdown", id="trading-pair-dropdown"
+                    ),
                 ],
             ),
             html.Div(
@@ -56,7 +59,9 @@ def create_control_panel(df=None):
                         style={"margin": "5px 0"},
                     ),
                     html.Div(
-                        f"From: {min_date.strftime('%Y-%m-%d')}" if min_date else "No data available",
+                        f"From: {min_date.strftime('%Y-%m-%d')}"
+                        if min_date
+                        else "No data available",
                         style={"margin": "5px 0"},
                     ),
                     html.Div(

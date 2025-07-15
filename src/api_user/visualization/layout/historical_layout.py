@@ -11,22 +11,21 @@ from src.api_user.visualization import (
     create_candlestickplot,
     create_volumeplot,
     create_volatility_plot,
-
     COLORS,
     create_date_range_slider,
     create_atr_period_input,
 )
 from ..data_store import prepare_data
 from ..utils import filter_df
-from dash import dcc, html
+
 
 def create_historical_layout(COLORS=COLORS):
     """
     Create the layout for the historical data view of the dashboard
-    
+
     Args:
         COLORS: Dictionary of color values for the theme
-        
+
     Returns:
         dash.html.Div: The layout component
     """
@@ -39,16 +38,17 @@ def create_historical_layout(COLORS=COLORS):
         "backgroundColor": COLORS["panel"],
         "boxShadow": "0 2px 4px rgba(0,0,0,0.1)",
     }
-    
+
     full_df = prepare_data()
     # use data filtered by symbol for all plots but volatility
     filtered_df = filter_df(full_df)
     # Add hidden input to trigger initial data load
     data_init_trigger = html.Div(id="data-init-trigger", style={"display": "none"})
-    
+
     layout = html.Div(
         style={"maxWidth": "1400px", "margin": "0 auto", "padding": "0 20px"},
-        children=[data_init_trigger,
+        children=[
+            data_init_trigger,
             # Line Plot Container
             html.Div(
                 style=chart_container_style,
@@ -69,12 +69,10 @@ def create_historical_layout(COLORS=COLORS):
                                     "fontWeight": "bold",
                                 },
                             ),
-                            create_date_range_slider(
-                                filtered_df, id="line-slider"
-                            ),
+                            create_date_range_slider(filtered_df, id="line-slider"),
                         ],
                     ),
-                ]
+                ],
             ),
             # Candlestick Plot Container
             html.Div(
@@ -96,12 +94,10 @@ def create_historical_layout(COLORS=COLORS):
                                     "fontWeight": "bold",
                                 },
                             ),
-                            create_date_range_slider(
-                                filtered_df, id="candle-slider"
-                            ),
+                            create_date_range_slider(filtered_df, id="candle-slider"),
                         ],
                     ),
-                ]
+                ],
             ),
             # Volume Plot Container
             html.Div(
@@ -123,18 +119,16 @@ def create_historical_layout(COLORS=COLORS):
                                     "fontWeight": "bold",
                                 },
                             ),
-                            create_date_range_slider(
-                                filtered_df, id="volume-slider"
-                            ),
+                            create_date_range_slider(filtered_df, id="volume-slider"),
                         ],
                     ),
-                ]
+                ],
             ),
             # Volatility Plot Container
             html.Div(
                 style=chart_container_style,
                 children=[
-                     html.Div(
+                    html.Div(
                         style={
                             "display": "flex",
                             "justifyContent": "flex-end",
@@ -159,14 +153,12 @@ def create_historical_layout(COLORS=COLORS):
                                     "fontWeight": "bold",
                                 },
                             ),
-                            create_date_range_slider(
-                                full_df, id="volatility-slider"
-                            ),
+                            create_date_range_slider(full_df, id="volatility-slider"),
                         ],
                     ),
-                ]
-            )
-        ]
+                ],
+            ),
+        ],
     )
 
     return layout
