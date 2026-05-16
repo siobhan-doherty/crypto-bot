@@ -1,52 +1,51 @@
 services:
   zookeeper:
-    image: bitnami/zookeeper:3.9
+    image: confluentinc/cp-zookeeper:7.4.0
     container_name: crypto_zookeeper
-    ports: ["2181:2181"]
     environment:
-      - ALLOW_ANONYMOUS_LOGIN=yes
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
     networks: [crypto_network]
-    healthcheck:
-      test: ["CMD", "echo", "ruok", "|", "nc", "localhost", "2181"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   kafka:
-    image: bitnami/kafka:3.7
+    image: confluentinc/cp-kafka:7.4.0
     container_name: crypto_kafka
-    hostname: kafka
-    ports: ["9092:9092"]
-    depends_on: [zookeeper]
+    depends_on:
+      - zookeeper
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      ALLOW_PLAINTEXT_LISTENER: yes
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
     networks: [crypto_network]
     healthcheck:
-      test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
       interval: 10s
       timeout: 10s
-      retries: 5
+      retries: 10
 
   mongodb:
     image: mongo:7.0
     container_name: crypto_mongo
-    ports: ["27017:27017"]
-    volumes: [mongo_data:/data/db] # persistent storage for MongoDB
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
     networks: [crypto_network]
 
-  # build one image that has Spark + 4 python scripts + mongo_utils + entrypoint.sh
   data_collector:
     build:
       context: .
@@ -58,30 +57,31 @@ services:
     volumes:
       - ./src/collection_admin/.env:/app/.env:ro
     depends_on:
-      - mongodb
-      - kafka
+      mongodb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
     networks: [crypto_network]
 
-  # reuse same image but override entrypoint to only run producer
   kafka_producer:
     image: crypto_data_collector
     container_name: crypto_kafka_producer
     restart: unless-stopped
     env_file:
-    - ./src/collection_admin/.env
+      - ./src/collection_admin/.env
     volumes:
       - ./src/collection_admin/.env:/app/.env:ro
     depends_on:
-      - kafka
-    command: ["python3", "/app/src/collection_admin/data/kafka_producer.py"]
+      kafka:
+        condition: service_healthy
+    command: ["python", "/app/src/collection_admin/data/kafka_producer.py"]
     healthcheck:
-      test: ["CMD-SHELL", "pgrep -fa kafka_producer.py"]
+      test: ["CMD-SHELL", "pgrep -fa kafka_producer.py >/dev/null"]
       interval: 30s
       timeout: 10s
-      retries: 3    
+      retries: 3
     networks: [crypto_network]
 
-  # reuse same image but override entrypoint to only run consumer
   kafka_consumer:
     image: crypto_data_collector
     container_name: crypto_kafka_consumer
@@ -91,11 +91,13 @@ services:
     volumes:
       - ./src/collection_admin/.env:/app/.env:ro
     depends_on:
-      - mongodb
-      - kafka
-    command: ["python3", "/app/src/collection_admin/data/kafka_consumer.py"]
+      mongodb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    command: ["python", "/app/src/collection_admin/data/kafka_consumer.py"]
     healthcheck:
-      test: ["CMD-SHELL", "pgrep -fa kafka_consumer.py"]
+      test: ["CMD-SHELL", "pgrep -fa kafka_consumer.py >/dev/null"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -111,19 +113,21 @@ services:
     env_file:
       - ./src/api_user/.env
     depends_on:
-      - mongodb
-      - kafka
+      mongodb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
     environment:
-      - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@crypto_mongo:27017/
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-      - LOG_LEVEL=debug            # Todo: remove in production
-      - DEBUG=1                    # Todo: remove in production
+      MONGO_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/cryptobot?authSource=admin
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      LOG_LEVEL: debug
+      DEBUG: "1"
     healthcheck:
-      test: ["CMD", "python", "-c", "import http.client; exit(0 if http.client.HTTPConnection('localhost', 8000).request('GET', '/api/health') or True else 1)"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/api/health >/dev/null || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
+      start_period: 15s
     networks: [crypto_network]
     
   dash:
@@ -131,15 +135,18 @@ services:
       context: .
       dockerfile: src/api_user/docker/Dockerfile.dash
     container_name: crypto_dash
-    ports: ["8050:8050"]
+    ports:
+      - "8050:8050"
     env_file:
       - ./src/api_user/.env
     depends_on:
-      - mongodb
-      - fastapi
+      mongodb:
+        condition: service_healthy
+      fastapi:
+        condition: service_healthy
     environment:
-      - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@crypto_mongo:27017/
-      - API_BASE_URL=http://crypto_fastapi:8000/api
+      MONGO_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/cryptobot?authSource=admin
+      API_BASE_URL: http://fastapi:8000/api
     networks: [crypto_network]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8050/"]
@@ -147,7 +154,6 @@ services:
       timeout: 10s
       retries: 3
 
-  # Postgres for Airflow
   postgres:
     image: postgres:15
     container_name: crypto_postgres
@@ -165,9 +171,8 @@ services:
       timeout: 5s
       retries: 5
   
-  # Airflow services
   airflow-init:
-    image: apache/airflow:2.9.1
+    image: apache/airflow:2.9.1-python3.11
     container_name: crypto_airflow_init
     depends_on:
       - postgres
@@ -192,7 +197,7 @@ services:
       - crypto_network
 
   airflow:
-      image: apache/airflow:2.9.1
+      image: apache/airflow:2.9.1-python3.11
       container_name: crypto_airflow
       user: root
       depends_on:
@@ -203,7 +208,7 @@ services:
       volumes:
         - ./airflow/dags:/opt/airflow/dags
         - ./airflow/logs:/opt/airflow/logs  
-        - ./src/collection_admin/data:/app/data   # Airflow can access to data collector scripts
+        - ./src/collection_admin/data:/app/data
         - /var/run/docker.sock:/var/run/docker.sock
       ports:
         - "8080:8080"
@@ -217,7 +222,7 @@ services:
         retries: 5
         
   airflow-scheduler:
-    image: apache/airflow:2.9.1
+    image: apache/airflow:2.9.1-python3.11
     container_name: crypto_airflow_scheduler
     user: root
     depends_on:
@@ -238,8 +243,8 @@ services:
       retries: 5
 
 volumes:
-  postgres_data: # named volume for Postgres data persistence
-  mongo_data: # named volume for MongoDB data persistence
+  postgres_data:  # named volume for Postgres data persistence
+  mongo_data:  # named volume for MongoDB data persistence
 
 networks:
   crypto_network:
