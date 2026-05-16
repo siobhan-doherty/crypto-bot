@@ -1,36 +1,34 @@
-FROM python:3.9-slim
+FROM eclipse-temurin:17-jdk
 
-USER root
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends default-jdk-headless curl procps \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    python3-venv \
+    curl \
+    procps \
     && rm -rf /var/lib/apt/lists/*
+
+RUN ln -sf /usr/bin/python3 /usr/bin/python
 
 ENV SPARK_VERSION=3.4.2 \
     SPARK_HOME=/opt/spark \
-    JAVA_HOME=/usr/lib/jvm/default-java \
-    PATH=$SPARK_HOME/bin:$PATH
+    VIRTUAL_ENV=/opt/venv \
+    PATH=/opt/venv/bin:/opt/spark/bin:$PATH \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app/src
 
-# fetch Spark
-RUN curl -fsSL \
-    https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz \ 
+RUN curl -fsSL https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz \
     | tar -xz -C /opt/ \
     && mv /opt/spark-${SPARK_VERSION}-bin-hadoop3 /opt/spark
 
-# ensure python -> python3
-RUN ln -sf /usr/bin/python3 /usr/bin/python
+RUN python3 -m venv "${VIRTUAL_ENV}"
 
-# install Python dependencies
-COPY src/collection_admin/requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
-
-# copy code and entrypoint
 WORKDIR /app
-COPY src/collection_admin/data       /app/src/collection_admin/data
-COPY src/collection_admin/db         /app/src/collection_admin/db
 
-# allow imports from /app/src
-ENV PYTHONPATH=/app/src
+COPY src/collection_admin/requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r /app/requirements.txt
 
-# container just waits for Airflow to run scripts
+COPY src/ /app/src/
+
 CMD ["sleep", "infinity"]
-
