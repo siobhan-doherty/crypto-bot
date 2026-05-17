@@ -29,7 +29,7 @@ def test_invalid_endpoint() -> None:
 
 
 class TestMarketEndpoints:
-    @patch("api_user.router.get_mongo_client")
+    @patch("src.api_user.routes.market.get_mongo_client")
     def test_get_ohlcv_filters_by_symbol(
         self, mock_get_mongo_client: MagicMock
     ) -> None:
@@ -85,7 +85,7 @@ class TestMarketEndpoints:
 
         mock_collection.find.assert_called_once_with({"symbol": "BTCUSDT"})
 
-    @patch("api_user.router.get_mongo_client")
+    @patch("src.api_user.routes.market.get_mongo_client")
     def test_get_ohlcv_with_limit_returns_chronological_order(
         self, mock_get_mongo_client: MagicMock
     ) -> None:
@@ -136,7 +136,7 @@ class TestMarketEndpoints:
         assert [item["_id"] for item in response.json()] == ["older", "newer"]
 
 
-    @patch("api_user.router.get_mongo_client")
+    @patch("src.api_user.routes.market.get_mongo_client")
     def test_get_date_range(self, mock_get_mongo_client: MagicMock) -> None:
         mock_client = MagicMock()
         mock_db = MagicMock()
