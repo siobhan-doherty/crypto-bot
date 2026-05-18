@@ -1,13 +1,22 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from src.api_user.routes.health import router as health_router
 from src.api_user.routes.market import router as market_router
-from api_user.streaming import router as streaming_router
+from .streaming import router as streaming_router
+from .dependencies import get_db_client
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    client = get_db_client()
+    yield
+    client.close()
 
 app = FastAPI(
     title = "Crypto Dashboard API",
     description = "API for serving cryptocurrency dashboard data",
     version = "1.0.0",
+    lifespan = lifespan,
 )
 
 app.add_middleware(
@@ -35,7 +44,7 @@ async def root():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
-        "src.main:app", 
+        "src.api_user.main:app", 
         host = "0.0.0.0", 
         port = 8000, 
         reload = True
