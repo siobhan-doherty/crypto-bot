@@ -1,11 +1,10 @@
-import os
 from pymongo import MongoClient
+from api_user.config import settings
 
 
 def get_mongo_client() -> MongoClient:
     """Return Mongodb client. raises ValueError if MONGO_URI is not set."""
-    mongo_uri = os.getenv("MONGO_URI")
-    if not mongo_uri:
+    if not settings.MONGO_URI:
         raise ValueError("MONGO_URI is not set")
     
-    return MongoClient(mongo_uri, serverSelectionTimeoutMS = 5000)
+    return MongoClient(settings.MONGO_URI, serverSelectionTimeoutMS = 5000)
