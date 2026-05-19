@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -6,11 +6,10 @@ class Settings(BaseSettings):
     KAFKA_BOOTSTRAP_SERVERS: str = "kafka:9092"
     LOG_LEVEL: str = "info"
     DEBUG: bool = False
+    API_BASE_URL: str = "hpp://fastapi:8000/api"
 
-    model_config = SettingsConfigDict(
-        env_file = ".env",
-        extra = "ignore",
-    )
-
+    class Config:
+        env_file = ".env"
+        extra = "ignore"
 
 settings = Settings()

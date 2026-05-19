@@ -1,8 +1,7 @@
 from __future__ import annotations
-from src.api_user.visualization.fetch_data import fetch_historical_data
+from .fetch_data import fetch_historical_data
 import pandas as pd
 import logging
-
 
 logger = logging.getLogger(__name__)
 
@@ -16,11 +15,10 @@ def _normalize_datetime_columns(df: pd.DataFrame) -> pd.DataFrame:
     for column in _TIME_COLUMNS:
         if column in normalized.columns:
             normalized[column] = pd.to_datetime(
-                    normalized[column],
-                    utc = True,
-                    errors = "coerce",
+                normalized[column],
+                utc = True,
+                errors = "coerce",
             )
-    
     return normalized
 
 
@@ -28,7 +26,6 @@ def _resolve_time_column(df: pd.DataFrame) -> str | None:
     for column in _TIME_COLUMNS:
         if column in df.columns:
             return column
-
     return None
 
 
@@ -53,9 +50,9 @@ def prepare_data() -> pd.DataFrame:
         )
         return normalized.reset_index(drop = True)
 
-    normalized = (
-        normalized.sort_values(time_column, kind = "stable").reset_index(drop = True)
-    )
+    normalized = normalized.sort_values(
+        time_column, kind = "stable"
+    ).reset_index(drop = True)
 
     logger.info(
         "Prepared historical dataset with %d rows using time column '%s'.",
