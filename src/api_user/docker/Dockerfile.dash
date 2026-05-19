@@ -2,18 +2,22 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y gcc curl && \
-    rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY src/api_user/requirements.txt .
+COPY src/api_user/requirements.txt /app/requirements.txt
 RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -r /app/requirements.txt
 
-COPY src/api_user/ /app/src/api_user/
+COPY src/ /app/src/
 
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app/src
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app/src
 
-WORKDIR /app/src/api_user/visualization
+WORKDIR /app/src
 
-CMD ["python", "dash_app.py"]
+EXPOSE 8050
+
+CMD ["python", "-m", "api_user.visualization.dash_app"]
