@@ -1,29 +1,65 @@
+from __future__ import annotations
+from src.api_user.visualization.fetch_data import fetch_historical_data
 import pandas as pd
-from .fetch_data import fetch_historical_data
+import logging
 
 
-def prepare_data():
-    """
-    Shared function to prepare data for all historical plots
+logger = logging.getLogger(__name__)
 
-    Returns:
-        DataFrame: Prepared data with datetime columns and sorted by datetime
-    """
-    full_df = fetch_historical_data()
+_OPEN_DATETIME_COL = "open_datetime"
+_CLOSE_DATETIME_COL = "close_datetime"
+_TIME_COLUMNS = (_OPEN_DATETIME_COL, _CLOSE_DATETIME_COL)
 
-    if full_df.empty:
-        return None
 
-    # Convert timestamp columns to datetime
-    if "open_datetime" in full_df.columns:
-        full_df["open_datetime"] = pd.to_datetime(full_df["open_datetime"], utc=True)
-    if "close_datetime" in full_df.columns:
-        full_df["close_datetime"] = pd.to_datetime(full_df["close_datetime"], utc=True)
+def _normalize_datetime_columns(df: pd.DataFrame) -> pd.DataFrame:
+    normalized = df.copy()
+    for column in _TIME_COLUMNS:
+        if column in normalized.columns:
+            normalized[column] = pd.to_datetime(
+                    normalized[column],
+                    utc = True,
+                    errors = "coerce",
+            )
+    
+    return normalized
 
-    # Sort by datetime
-    time_col = (
-        "open_datetime" if "open_datetime" in full_df.columns else "close_datetime"
+
+def _resolve_time_column(df: pd.DataFrame) -> str | None:
+    for column in _TIME_COLUMNS:
+        if column in df.columns:
+            return column
+
+    return None
+
+
+def prepare_data() -> pd.DataFrame:
+    try:
+        df = fetch_historical_data()
+    except Exception:
+        logger.exception("Failed to fetch historical data for visualization.")
+        return pd.DataFrame()
+    
+    if df is None or df.empty:
+        logger.warning("Historical dataset is empty.")
+        return pd.DataFrame()
+    
+    normalized = _normalize_datetime_columns(df)
+    time_column = _resolve_time_column(normalized)
+
+    if time_column is None:
+        logger.warning(
+            "Historical dataset does not contain a supported time column. Columns=%s",
+            list(normalized.columns),
+        )
+        return normalized.reset_index(drop = True)
+
+    normalized = (
+        normalized.sort_values(time_column, kind = "stable").reset_index(drop = True)
     )
-    full_df = full_df.sort_values(time_col)
 
-    return full_df
+    logger.info(
+        "Prepared historical dataset with %d rows using time column '%s'.",
+        len(normalized),
+        time_column,
+    )
+    return normalized
