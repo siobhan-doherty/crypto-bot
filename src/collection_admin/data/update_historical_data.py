@@ -2,13 +2,19 @@
 Fetch only new 15-minute candles since last stored timestamp.
 Run daily (e.g. via Airflow).
 """
+import time
 import requests
+import logging
 from datetime import datetime, timezone
-from dotenv import load_dotenv
+from collection_admin.config import settings
 from collection_admin.db.mongo_utils import save_to_collection, get_mongo_collection
 
-
-load_dotenv(dotenv_path="/app/.env", override=True)
+# config logging for script
+logging.basicConfig(
+    level = getattr(logging, settings.LOG_LEVEL.upper()),
+    format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 DB = "cryptobot"
 COLL = "historical_data_15m"
@@ -20,8 +26,7 @@ def get_last_ts(symbol):
     return next(doc, {}).get("open_time")
 
 
-def get_klines(symbol, interval, start_ms, end_ms, limit=1000):
-    """Public (no-signature) Binance klines endpoint."""
+def get_klines(symbol, interval, start_ms, end_ms, limit = 1000):
     url = "https://api.binance.com/api/v3/klines"
     params = {
         "symbol": symbol,
@@ -30,9 +35,8 @@ def get_klines(symbol, interval, start_ms, end_ms, limit=1000):
         "endTime": int(end_ms),
         "limit": min(limit, 1000)
     }
-    r = requests.get(url, params=params)
+    r = requests.get(url, params = params)
     r.raise_for_status()
-
     return r.json()
 
 
@@ -40,9 +44,9 @@ def main():
     now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
     for sym in ["BTCUSDT", "ETHUSDT"]:
         last = get_last_ts(sym) or (now_ms - 1000*60*15)
-        print(f"Updating {sym} from {last}")
+        logger.info(f"Updating {sym} from {last}")
         batch = get_klines(sym, "15m", last+1, now_ms)
-        print(f"got {len(batch)} new candles")
+        logger.info(f"Got {len(batch)} new candles")
         for r in batch:
             rec = {
                 "symbol": sym,
@@ -54,9 +58,8 @@ def main():
                 "taker_quote_volume": float(r[10]), "ignore": r[11]
             }
             save_to_collection(DB, COLL, rec)
-        print(f"finished {sym}")
+        logger.info(f"Finished {sym}")
 
 
 if __name__ == "__main__":
     main()
-
