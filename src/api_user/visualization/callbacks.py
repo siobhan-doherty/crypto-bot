@@ -24,6 +24,7 @@ VOLATILITY_TRADING_PAIRS = ("BTCUSDT", "ETHUSDT")
 
 
 def _empty_figure(title: str, message: str) -> go.Figure:
+    """Create a plotly figure with a centered message and no axes."""
     figure = go.Figure()
     figure.update_layout(
         title = title,
@@ -47,7 +48,7 @@ def _empty_figure(title: str, message: str) -> go.Figure:
 
 
 def _missing_columns(dataframe: pd.DataFrame, required_columns: Sequence[str]) -> list[str]:
-    return [column for column in required_columns if column not in dataframe.columns]
+    return [col for col in required_columns if col not in dataframe.columns]
 
 
 def _coerce_datetime_column(
@@ -70,12 +71,11 @@ def _coerce_datetime_column(
 
 def _first_available_numeric_column(dataframe: pd.DataFrame) -> Optional[str]:
     excluded_columns = {"timestamp", "close_time", "close_datetime"}
-    numeric_columns = [
-        column
-        for column in dataframe.select_dtypes(include=["number"]).columns
-        if column not in excluded_columns
+    numeric_cols = [
+        col for col in dataframe.select_dtypes(include = ["number"]).columns
+        if col not in excluded_columns
     ]
-    return numeric_columns[0] if numeric_columns else None
+    return numeric_cols[0] if numeric_cols else None
 
 
 def _extract_ws_records(ws_message: Mapping[str, Any]) -> Tuple[Optional[list[dict[str, Any]]], str]:
@@ -106,62 +106,59 @@ def _extract_ws_records(ws_message: Mapping[str, Any]) -> Tuple[Optional[list[di
 
 
 def _build_realtime_dataframe(records: Sequence[Mapping[str, Any]]) -> Tuple[pd.DataFrame, Optional[str], Optional[str]]:
-    dataframe = pd.DataFrame(records)
-    if dataframe.empty:
-        return dataframe, None, "No realtime rows available"
+    df = pd.DataFrame(records)
+    if df.empty:
+        return df, None, "No realtime rows available"
     
-    missing_columns = _missing_columns(dataframe, REALTIME_REQUIRED_COLUMNS)
-    if missing_columns:
-        return dataframe, None, f"Missing realtime columns: {', '.join(missing_columns)}"
+    missing = _missing_columns(df, REALTIME_REQUIRED_COLUMNS)
+    if missing:
+        return df, None, f"Missing realtime columns: {', '.join(missing)}"
 
-    dataframe = _coerce_datetime_column(dataframe, "close_datetime")
-    if dataframe.empty:
-        return dataframe, None, "Realtime timestamps could not be parsed"
+    df = _coerce_datetime_column(df, "close_datetime")
+    if df.empty:
+        return df, None, "Realtime timestamps could not be parsed"
 
-    symbol = dataframe.iloc[0].get("symbol")
+    symbol = df.iloc[0].get("symbol")
     if not symbol:
-        return dataframe, None, "Realtime symbol missing"
+        return df, None, "Realtime symbol missing"
     
-    y_column = _first_available_numeric_column(dataframe)
-    if not y_column:
-        return dataframe, None, "No numeric realtime field available"
+    y_col = _first_available_numeric_column(df)
+    if not y_col:
+        return df, None, "No numeric realtime field available"
     
-    dataframe = dataframe.sort_values("close_datetime").drop_duplicates(
+    df = df.sort_values("close_datetime").drop_duplicates(
         subset = "close_datetime",
         keep = "last",
     )
-    return dataframe, y_column, None
+    return df, y_col, None
 
 
-def _build_realtime_plot(dataframe: pd.DataFrame, trading_pair: str, y_column: str) -> go.Figure:
-    plot_dataframe = dataframe.loc[:, ["close_datetime", y_column]].copy()
-    plot_dataframe.columns = ["close_datetime", "close"]
-
-    figure = create_lineplot(plot_dataframe, trading_pair = trading_pair, show_emas = False)
-    figure["layout"].update(create_range_selector(y_column))
-    return figure
+def _build_realtime_plot(df: pd.DataFrame, trading_pair: str, y_col: str) -> go.Figure:
+    plot_df = df[["close_datetime", y_col]].copy()
+    plot_df.columns = ["close_datetime", "close"]
+    fig = create_lineplot(plot_df, trading_pair = trading_pair, show_emas = False)
+    fig["layout"].update(create_range_selector(y_col))
+    return fig
 
 
 def _filtered_dataframe_or_empty(
-    full_dataframe: pd.DataFrame,
+    full_df: pd.DataFrame,
     trading_pair: str,
     date_range: Any,
 ) -> pd.DataFrame:
     try:
-        filtered = filter_df(full_dataframe, trading_pair, date_range)
+        filtered = filter_df(full_df, trading_pair, date_range)
     except Exception as e:
         logger.exception("Failed to filter dataframe for %s: %s", trading_pair, e)
         return pd.DataFrame()
-
     if filtered is None:
         return pd.DataFrame()
-
     return filtered
 
 
 def _historical_figure_or_empty(
     *,
-    full_dataframe: pd.DataFrame,
+    full_df: pd.DataFrame,
     trading_pair: str,
     date_range: Any,
     required_columns: Sequence[str],
@@ -169,27 +166,27 @@ def _historical_figure_or_empty(
     empty_message: str,
     figure_builder: Any,
 ) -> go.Figure:
-    data = _filtered_dataframe_or_empty(full_dataframe, trading_pair, date_range)
+    data = _filtered_dataframe_or_empty(full_df, trading_pair, date_range)
     if data.empty:
         return _empty_figure(title, empty_message)
 
-    missing_columns = _missing_columns(data, required_columns)
-    if missing_columns:
+    missing = _missing_columns(data, required_columns)
+    if missing:
         logger.warning(
             "Missing required columns for %s: %s",
             title,
-            ", ".join(missing_columns),
+            ", ".join(missing),
         )
         return _empty_figure(
             title,
-            f"Missing required data: {', '.join(missing_columns)}",
+            f"Missing required data: {', '.join(missing)}",
         )
-
     try:
         return figure_builder(data, trading_pair = trading_pair)
     except Exception as e:
         logger.exception("Failed to build %s figure: %s", title, e)
         return _empty_figure(title, "Unable to render chart")
+
 
 def register_callbacks(app: dash.Dash) -> None:
     full_df = prepare_data()
@@ -217,49 +214,42 @@ def register_callbacks(app: dash.Dash) -> None:
         if records is None:
             return dash.no_update, status
         
-        realtime_df, y_column, error_message = _build_realtime_dataframe(records)
-        if error_message:
-            return dash.no_update, error_message
+        df, y_col, error = _build_realtime_dataframe(records)
+        if error:
+            return dash.no_update, error
         
-        symbol = str(realtime_df.iloc[0]["symbol"])
-        realtime_store[symbol] = realtime_df
-
+        symbol = str(df.iloc[0]["symbol"])
+        realtime_store[symbol] = df
         if not trading_pair:
             return dash.no_update, status
         
         selected_df = realtime_store.get(trading_pair)
-        if selected_df is None or selected_df.empty or y_column is None:
+        if selected_df is None or selected_df.empty or y_col is None:
             return dash.no_update, status
         
         try:
-            figure = _build_realtime_plot(selected_df, trading_pair, y_column)
+            fig = _build_realtime_plot(selected_df, trading_pair, y_col)
         except Exception as e:
-            logger.exception("Failed to build realtime plot for %s: %s", trading_pair, e)
+            logger.exception("Realtime plot error for %s: %s", trading_pair, e)
             return dash.no_update, "Error creating realtime plot"
-        
-        return figure, status
+
+        return fig, status
 
     @app.callback(
         Output("historical-lineplot", "figure"),
         Input("trading-pair-dropdown", "value"),
         Input("line-slider", "value"),
-        prevent_initial_call = True,
     )
-    def update_lineplot(trading_pair: Optional[str], date_range: Any) -> go.Figure:
-        if not trading_pair:
-            return _empty_figure("Historical Line Chart", "Select a trading pair")
-        
+    def update_lineplot(trading_pair, date_range):
         return _historical_figure_or_empty(
-            full_dataframe = full_df,
+            full_df = full_df,
             trading_pair = trading_pair,
             date_range = date_range,
             required_columns = HISTORICAL_LINE_REQUIRED_COLUMNS,
-            title = "Historical Line Chart",
-            empty_message = "No historical line data available for the selected range",
-            figure_builder = lambda data, trading_pair: create_lineplot(
-                data,
-                trading_pair = trading_pair,
-                show_emas = True,
+            title = "No data available",
+            empty_message = "No historical data for the selected symbol and date range.",
+            figure_builder = lambda df, trading_pair: create_lineplot(
+                df, trading_pair = trading_pair, show_emas = True
             ),
         )
 
@@ -267,19 +257,15 @@ def register_callbacks(app: dash.Dash) -> None:
         Output("historical-candleplot", "figure"),
         Input("trading-pair-dropdown", "value"),
         Input("candle-slider", "value"),
-        prevent_initial_call = True,
     )
-    def update_candlestick(trading_pair: Optional[str], date_range: Any) -> go.Figure:
-        if not trading_pair:
-            return _empty_figure("Historical Candlestick Chart", "Select a trading pair")
-        
+    def update_candlestick(trading_pair, date_range):
         return _historical_figure_or_empty(
-            full_dataframe = full_df,
+            full_df = full_df,
             trading_pair = trading_pair,
             date_range = date_range,
             required_columns = HISTORICAL_CANDLE_REQUIRED_COLUMNS,
-            title = "Historical Candlestick Chart",
-            empty_message = "No candlestick data available for the selected range",
+            title = "No data available",
+            empty_message = "No historical data for the selected symbol and date range.",
             figure_builder = create_candlestickplot,
         )
 
@@ -287,19 +273,15 @@ def register_callbacks(app: dash.Dash) -> None:
         Output("historical-volumeplot", "figure"),
         Input("trading-pair-dropdown", "value"),
         Input("volume-slider", "value"),
-        prevent_initial_call = True,
     )
-    def update_volume(trading_pair: Optional[str], date_range: Any) -> go.Figure:
-        if not trading_pair:
-            return _empty_figure("Historical Volume Chart", "Select a trading pair")
-        
+    def update_volume(trading_pair, date_range):
         return _historical_figure_or_empty(
-            full_dataframe = full_df,
+            full_df = full_df,
             trading_pair = trading_pair,
             date_range = date_range,
             required_columns = HISTORICAL_VOLUME_REQUIRED_COLUMNS,
-            title = "Historical Volume Chart",
-            empty_message = "No volume data available for the selected range",
+            title = "No data available",
+            empty_message = "No historical data for the selected symbol and date range.",
             figure_builder = create_volumeplot,
         )
 
@@ -308,41 +290,29 @@ def register_callbacks(app: dash.Dash) -> None:
         Input("atr-period-input", "value"),
         Input("volatility-slider", "value"),
         Input("data-init-trigger", "children"),
-        prevent_initial_call = False,
     )
-    def update_volatility(atr_period: Optional[int], date_range: Any, _: Any) -> go.Figure:
-        pair_data: Dict[str, pd.DataFrame] = {}
-
-        for trading_pair in VOLATILITY_TRADING_PAIRS:
-            filtered = _filtered_dataframe_or_empty(full_df, trading_pair, date_range)
-            if filtered.empty:
-                continue
-
-            missing_columns = _missing_columns(
-                filtered,
-                HISTORICAL_CANDLE_REQUIRED_COLUMNS,
+    def update_volatility(atr_period, date_range, _):
+        # build volatility data for both trading pairs
+        pair_data = {}
+        for pair in VOLATILITY_TRADING_PAIRS:
+            filtered = _filtered_dataframe_or_empty(
+                full_df, pair, date_range
             )
-            if missing_columns:
-                logger.warning(
-                    "Skipping %s for volatility plot; missing columns: %s",
-                    trading_pair,
-                    ", ".join(missing_columns),
-                )
-                continue
-            
-            pair_data[trading_pair] = filtered
-
+            if not filtered.empty:
+                pair_data[pair] = filtered
         if not pair_data:
             return _empty_figure(
-                "Historical Volatility Chart",
-                "No volatility data available for the selected range",
+                "No data available", "No volatility data for the selected date range."
             )
-        
         try:
-            return create_volatility_plot(pair_data, period = atr_period)
+            fig = create_volatility_plot(pair_data, period = atr_period)
         except Exception as e:
-            logger.exception("Failed to build volatility figure: %s", e)
+            logger.exception("Volatility plot error: %s", e)
             return _empty_figure(
-                "Historical Volatility Chart",
-                "Unable to render volatility chart",
+                "Nothing to display", "Unable to render the volatility chart."
             )
+        if not fig or not fig.get("data"):
+            return _empty_figure(
+                "Nothing to display", "Unable to render the volatility chart."
+            )
+        return fig
