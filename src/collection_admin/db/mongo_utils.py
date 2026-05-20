@@ -1,32 +1,27 @@
+import logging
 from pymongo import MongoClient
-from dotenv import load_dotenv
-import os
+from api_user.config import settings
 
-
-# load ROOT environment
-load_dotenv(dotenv_path="/app/.env", override=True)
+logger = logging.getLogger(__name__)
 
 
 def get_mongo_collection(db_name: str, collection_name: str):
-    """Connects to MongoDB and returns the specified collection."""
-    mongo_uri = os.getenv("MONGO_URI")
-    if not mongo_uri:
-        raise ValueError("MONGO_URI not set in environment variables.")
+    """Returns MongoDB collection."""
     try:
-        client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
+        client = MongoClient(
+            settings.MONGO_URI, 
+            serverSelectionTimeoutMS = 5000
+        )
         client.admin.command("ping")
         return client[db_name][collection_name]
+
     except Exception as e:
-        print(f"Unexpected error while connecting to MongoDB: {e}")
-        raise
+        logger.error(f"MongoDB connection error: {e}")
+        raise RuntimeError(f"MongoDB connection error: {e}") from e
 
 
 def save_to_collection(db_name: str, collection_name: str, data: dict):
-    """Inserts a document into the specified MongoDB collection."""
-    try:
-        collection = get_mongo_collection(db_name, collection_name)
-        result = collection.insert_one(data)
-        print(f"Inserted _id = {result.inserted_id} into {db_name}.{collection_name}")
-    except Exception as e:
-        print(f"Error inserting into MongoDB: {e}")
-
+    """Inserts a document into MongoDB."""
+    collection = get_mongo_collection(db_name, collection_name)
+    result = collection.insert_one(data)
+    logger.info(f"Inserted _id = {result.inserted_id} into {db_name}.{collection_name}")
