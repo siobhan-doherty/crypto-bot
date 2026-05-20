@@ -1,0 +1,52 @@
+# Git and version control
+.git/
+.gitignore
+.github/
+
+# Docker-related
+*.dockerignore
+Dockerfile*
+
+# Python caches and virtual environments
+__pycache__/
+*.py[cod]
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Build and distribution artifacts
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Logs and temporary files
+*.log
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Local development data and secrets
+.env
+data/
+*.db
+*.sqlite3
+airflow/logs/
+notebooks/
+references/
+
+# Application-specific (adjust as needed)
+**/.terraform/
+*.tfstate*
+*.tfvars
