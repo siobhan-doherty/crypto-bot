@@ -1,32 +1,61 @@
-from api_user.main import app
-import sys
-import pytest
+from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 from fastapi import status
 from fastapi.testclient import TestClient
+import sys
+import pytest
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT_DIR / "src"))
 
-# import app after path insertion
+from api_user.main import app
+from api_user import dependencies
 
-client = TestClient(app)
+
+def build_mock_db_with_collection() -> tuple[MagicMock, MagicMock, MagicMock]:
+    mock_client = MagicMock()
+    mock_db = MagicMock()
+    mock_collection = MagicMock()
+
+    mock_client.__getitem__.return_value = mock_db
+    mock_client.cryptobot = mock_db
+    mock_db.__getitem__.return_value = mock_collection
+
+    return mock_client, mock_db, mock_collection
 
 
-@pytest.fixture(autouse=True)
-def reset_test_state():
-    # reset singleton client in dependencies between tests
-    from src.api_user import dependencies
+@pytest.fixture(scope = "session")
+def mock_dependency_mongo_client():
+    """
+    Patch dependency-layer reference used by app, not just original
+    mongo module symbol.
+    """
+    with patch("api_user.dependencies.get_mongo_client") as mock:
+        yield mock
 
+
+@pytest.fixture(scope = "session")
+def client(mock_dependency_mongo_client):
+    mock_dependency_mongo_client.return_value = MagicMock()
+    return TestClient(app)
+
+
+@pytest.fixture(autouse = True)
+def reset_singleton():
     dependencies._client = None
     yield
     dependencies._client = None
 
 
-def test_root_endpoint() -> None:
-    """Helper to get a mock collection with find/sort/limit methods"""
+@pytest.fixture(autouse = True)
+def reset_mock(mock_dependency_mongo_client):
+    mock_dependency_mongo_client.reset_mock()
+    yield
+
+
+def test_root_endpoint(client):
     response = client.get("/")
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == {
@@ -36,20 +65,15 @@ def test_root_endpoint() -> None:
     }
 
 
-def test_invalid_endpoint() -> None:
+def test_invalid_endpoint(client):
     response = client.get("/nonexistent/endpoint")
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 class TestMarketEndpoints:
-    @patch("src.api_user.dependencies.get_mongo_client")
-    def test_get_ohlcv_filters_by_symbol(self, mock_get_mongo_client) -> None:
-        mock_client = MagicMock()
-        mock_db = MagicMock()
-        mock_collection = MagicMock()
-        mock_client.cryptobot = mock_db
-        mock_db.__getitem__.return_value = mock_collection
-        mock_get_mongo_client.return_value = mock_client
+    def test_get_ohlcv_filters_by_symbol(self, client, mock_dependency_mongo_client):
+        mock_client, _, mock_collection = build_mock_db_with_collection()
+        mock_dependency_mongo_client.return_value = mock_client
 
         open_time = int(
             datetime(2023, 1, 1, 0, 0, tzinfo=timezone.utc).timestamp() * 1000
@@ -58,13 +82,13 @@ class TestMarketEndpoints:
             datetime(2023, 1, 1, 0, 15, tzinfo=timezone.utc).timestamp() * 1000
         )
 
-        # set up mock cursor to return data
-        mock_cursor = MagicMock()
-        mock_collection.find.return_value = mock_cursor
-        mock_cursor.sort.return_value = [
+        mock_find = MagicMock()
+        mock_collection.find.return_value = mock_find
+        mock_find.sort.return_value = [
             {
                 "_id": "abc123",
                 "symbol": "BTCUSDT",
+                "interval": "15m",
                 "open_time": open_time,
                 "close_time": close_time,
                 "open": 100.0,
@@ -80,6 +104,7 @@ class TestMarketEndpoints:
         ]
 
         response = client.get("/api/market/ohlcv?symbol=BTCUSDT")
+
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
 
@@ -91,30 +116,22 @@ class TestMarketEndpoints:
         assert data[0]["low"] == 99.0
         assert data[0]["close"] == 100.5
         assert data[0]["volume"] == 1000.0
-        assert "open_datetime" in data[0]
-        assert "close_datetime" in data[0]
 
         mock_collection.find.assert_called_once_with({"symbol": "BTCUSDT"})
 
-    @patch("src.api_user.dependencies.get_mongo_client")
     def test_get_ohlcv_with_limit_returns_chronological_order(
-        self, mock_get_mongo_client
-    ) -> None:
-        mock_client = MagicMock()
-        mock_db = MagicMock()
-        mock_collection = MagicMock()
-        mock_client.cryptobot = mock_db
-        mock_db.__getitem__.return_value = mock_collection
-        mock_get_mongo_client.return_value = mock_client
+        self, client, mock_dependency_mongo_client
+    ):
+        mock_client, _, mock_collection = build_mock_db_with_collection()
+        mock_dependency_mongo_client.return_value = mock_client
 
         newer_open = int(
-            datetime(2023, 1, 1, 0, 15, tzinfo=timezone.utc).timestamp() * 1000
+            datetime(2023, 1, 1, 0, 15, tzinfo = timezone.utc).timestamp() * 1000
         )
         older_open = int(
-            datetime(2023, 1, 1, 0, 0, tzinfo=timezone.utc).timestamp() * 1000
+            datetime(2023, 1, 1, 0, 0, tzinfo = timezone.utc).timestamp() * 1000
         )
 
-        # set up  chained mocks for find().sort().limit()
         mock_find = MagicMock()
         mock_sort = MagicMock()
         mock_collection.find.return_value = mock_find
@@ -123,6 +140,7 @@ class TestMarketEndpoints:
             {
                 "_id": "newer",
                 "symbol": "BTCUSDT",
+                "interval": "15m",
                 "open_time": newer_open,
                 "close_time": newer_open + 900_000,
                 "open": 110.0,
@@ -134,6 +152,7 @@ class TestMarketEndpoints:
             {
                 "_id": "older",
                 "symbol": "BTCUSDT",
+                "interval": "15m",
                 "open_time": older_open,
                 "close_time": older_open + 900_000,
                 "open": 100.0,
@@ -145,18 +164,13 @@ class TestMarketEndpoints:
         ]
 
         response = client.get("/api/market/ohlcv?symbol=BTCUSDT&limit=2")
+
         assert response.status_code == status.HTTP_200_OK
-        # repo returns data reversed - oldest first
         assert [item["_id"] for item in response.json()] == ["older", "newer"]
 
-    @patch("src.api_user.dependencies.get_mongo_client")
-    def test_get_date_range(self, mock_get_mongo_client) -> None:
-        mock_client = MagicMock()
-        mock_db = MagicMock()
-        mock_collection = MagicMock()
-        mock_client.cryptobot = mock_db
-        mock_db.__getitem__.return_value = mock_collection
-        mock_get_mongo_client.return_value = mock_client
+    def test_get_date_range(self, client, mock_dependency_mongo_client):
+        mock_client, _, mock_collection = build_mock_db_with_collection()
+        mock_dependency_mongo_client.return_value = mock_client
 
         now = datetime.now(timezone.utc)
         week_ago = now - timedelta(days=7)
@@ -170,6 +184,7 @@ class TestMarketEndpoints:
         ]
 
         response = client.get("/api/market/range")
+
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
 

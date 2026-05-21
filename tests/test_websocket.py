@@ -1,7 +1,9 @@
 import asyncio
 import websockets
+import pytest
 
 
+@pytest.mark.asyncio
 async def test_websocket():
     uri = "ws://localhost:8000/ws/stream"
     print(f"Connecting to {uri}...")
@@ -21,7 +23,3 @@ async def test_websocket():
                     break
     except Exception as e:
         print(f"An error occurred: {e}")
-
-
-if __name__ == "__main__":
-    asyncio.run(test_websocket())
