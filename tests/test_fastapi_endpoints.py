@@ -117,7 +117,6 @@ class TestMarketEndpoints:
         # set up  chained mocks for find().sort().limit()
         mock_find = MagicMock()
         mock_sort = MagicMock()
-        mock_limit = MagicMock()
         mock_collection.find.return_value = mock_find
         mock_find.sort.return_value = mock_sort
         mock_sort.limit.return_value = [
