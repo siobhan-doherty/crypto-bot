@@ -24,7 +24,7 @@ def callbacks_module(monkeypatch):
             "symbol": ["BTCUSDT", "ETHUSDT"],
             "close_datetime": pd.to_datetime(
                 ["2026-05-19T10:00:00Z", "2026-05-19T10:05:00Z"],
-                utc = True,
+                utc=True,
             ),
             "open": [100.0, 200.0],
             "high": [110.0, 210.0],
@@ -35,69 +35,59 @@ def callbacks_module(monkeypatch):
     )
 
     controls_stub = types.ModuleType("api_user.visualization.layout.controls")
-    controls_stub.create_range_selector = (
-        lambda y_col: {"title": {"text": f"Range: {y_col}"}}
-    )
+    controls_stub.create_range_selector = lambda y_col: {
+        "title": {"text": f"Range: {y_col}"}
+    }
 
     lineplot_stub = types.ModuleType("api_user.visualization.plots.lineplot")
-    lineplot_stub.create_lineplot = (
-        lambda df, trading_pair, show_emas = False: go.Figure(
-            data = [
-                go.Scatter(
-                    x = df["close_datetime"],
-                    y = df["close"],
-                    mode = "lines",
-                    name = trading_pair,
-                )
-            ]
-        )
+    lineplot_stub.create_lineplot = lambda df, trading_pair, show_emas=False: go.Figure(
+        data=[
+            go.Scatter(
+                x=df["close_datetime"],
+                y=df["close"],
+                mode="lines",
+                name=trading_pair,
+            )
+        ]
     )
 
-    candlestick_stub = types.ModuleType(
-        "api_user.visualization.plots.candlestickplot"
-    )
-    candlestick_stub.create_candlestickplot = (
-        lambda df, trading_pair: go.Figure(
-            data = [
-                go.Candlestick(
-                    x = df["close_datetime"],
-                    open = df["open"],
-                    high = df["high"],
-                    low = df["low"],
-                    close = df["close"],
-                    name = trading_pair,
-                )
-            ]
-        )
+    candlestick_stub = types.ModuleType("api_user.visualization.plots.candlestickplot")
+    candlestick_stub.create_candlestickplot = lambda df, trading_pair: go.Figure(
+        data=[
+            go.Candlestick(
+                x=df["close_datetime"],
+                open=df["open"],
+                high=df["high"],
+                low=df["low"],
+                close=df["close"],
+                name=trading_pair,
+            )
+        ]
     )
 
     volumeplot_stub = types.ModuleType("api_user.visualization.plots.volumeplot")
-    volumeplot_stub.create_volumeplot = (
-        lambda df, trading_pair: go.Figure(
-            data = [
-                go.Bar(
-                    x = df["close_datetime"],
-                    y = df["volume"],
-                    name = trading_pair,
-                )
-            ]
-        )
+    volumeplot_stub.create_volumeplot = lambda df, trading_pair: go.Figure(
+        data=[
+            go.Bar(
+                x=df["close_datetime"],
+                y=df["volume"],
+                name=trading_pair,
+            )
+        ]
     )
 
     volatilityplot_stub = types.ModuleType(
         "api_user.visualization.plots.volatilityplot"
     )
-    volatilityplot_stub.create_volatility_plot = (
-        lambda pair_data, period: go.Figure(
-            data = [
-                go.Scatter(
-                    x = next(iter(pair_data.values()))["close_datetime"],
-                    y = [float(period or 14)] * len(next(iter(pair_data.values()))),
-                    mode = "lines",
-                    name = "volatility",
-                )
-            ]
-        )
+    volatilityplot_stub.create_volatility_plot = lambda pair_data, period: go.Figure(
+        data=[
+            go.Scatter(
+                x=next(iter(pair_data.values()))["close_datetime"],
+                y=[float(period or 14)] * len(next(iter(pair_data.values()))),
+                mode="lines",
+                name="volatility",
+            )
+        ]
     )
 
     utils_stub = types.ModuleType("api_user.visualization.utils")
@@ -117,7 +107,7 @@ def callbacks_module(monkeypatch):
             start_idx = max(int(date_range[0]), 0)
             end_idx = min(int(date_range[1]), len(filtered) - 1)
             if start_idx > end_idx:
-                return pd.DataFrame(columns = filtered.columns)
+                return pd.DataFrame(columns=filtered.columns)
             return filtered.iloc[start_idx : end_idx + 1].copy()
 
         return filtered
@@ -301,7 +291,7 @@ def test_build_realtime_plot(callbacks_module):
         {
             "close_datetime": pd.to_datetime(
                 ["2026-05-19T10:00:00Z", "2026-05-19T10:01:00Z"],
-                utc = True,
+                utc=True,
             ),
             "close": [100000.0, 100100.0],
         }
@@ -336,13 +326,13 @@ def test_historical_figure_or_empty_returns_placeholder_for_empty_data(
     callbacks_module,
 ):
     result = callbacks_module._historical_figure_or_empty(
-        full_dataframe = pd.DataFrame(),
-        trading_pair = "BTCUSDT",
-        date_range = [0, 1],
-        required_columns = ("close_datetime", "close"),
-        title = "Historical Line Chart",
-        empty_message = "No data available",
-        figure_builder = lambda data, trading_pair: go.Figure(),
+        full_dataframe=pd.DataFrame(),
+        trading_pair="BTCUSDT",
+        date_range=[0, 1],
+        required_columns=("close_datetime", "close"),
+        title="Historical Line Chart",
+        empty_message="No data available",
+        figure_builder=lambda data, trading_pair: go.Figure(),
     )
 
     assert isinstance(result, go.Figure)
@@ -356,18 +346,18 @@ def test_historical_figure_or_empty_returns_placeholder_for_missing_columns(
     full_dataframe = pd.DataFrame(
         {
             "symbol": ["BTCUSDT"],
-            "close_datetime": pd.to_datetime(["2026-05-19T10:00:00Z"], utc = True),
+            "close_datetime": pd.to_datetime(["2026-05-19T10:00:00Z"], utc=True),
         }
     )
 
     result = callbacks_module._historical_figure_or_empty(
-        full_dataframe = full_dataframe,
-        trading_pair = "BTCUSDT",
-        date_range = None,
-        required_columns = ("close_datetime", "close"),
-        title = "Historical Line Chart",
-        empty_message = "No data available",
-        figure_builder = lambda data, trading_pair: go.Figure(),
+        full_dataframe=full_dataframe,
+        trading_pair="BTCUSDT",
+        date_range=None,
+        required_columns=("close_datetime", "close"),
+        title="Historical Line Chart",
+        empty_message="No data available",
+        figure_builder=lambda data, trading_pair: go.Figure(),
     )
 
     assert isinstance(result, go.Figure)

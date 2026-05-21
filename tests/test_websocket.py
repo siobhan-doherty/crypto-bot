@@ -14,7 +14,7 @@ async def test_websocket():
             # try to receive a few data messages
             for i in range(3):
                 try:
-                    message = await asyncio.wait_for(websocket.recv(), timeout = 35)
+                    message = await asyncio.wait_for(websocket.recv(), timeout=35)
                     print(f"Received: {message}")
                 except asyncio.TimeoutError:
                     print("Timeout: no data received in 35 seconds")

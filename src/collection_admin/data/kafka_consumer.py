@@ -8,18 +8,18 @@ from collection_admin.config import settings
 
 # config logging for script
 logging.basicConfig(
-    level = getattr(logging, settings.LOG_LEVEL.upper()),
-    format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=getattr(logging, settings.LOG_LEVEL.upper()),
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
 
-def wait_for_kafka(host, port, timeout = 60):
+def wait_for_kafka(host, port, timeout=60):
     logger.info(f"Waiting for Kafka at {host}:{port} ...")
     start = time.time()
     while True:
         try:
-            with socket.create_connection((host, port), timeout = 2):
+            with socket.create_connection((host, port), timeout=2):
                 logger.info("Kafka is ready!")
                 return
         except Exception:
@@ -28,14 +28,15 @@ def wait_for_kafka(host, port, timeout = 60):
                 raise
             time.sleep(2)
 
+
 wait_for_kafka("kafka", 9092)
 
 consumer = KafkaConsumer(
     "binance_prices",
-    bootstrap_servers = settings.KAFKA_BOOTSTRAP_SERVERS,
-    auto_offset_reset = "latest",
-    group_id = "binance-test",
-    value_deserializer = lambda x: json.loads(x.decode())
+    bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS,
+    auto_offset_reset="latest",
+    group_id="binance-test",
+    value_deserializer=lambda x: json.loads(x.decode()),
 )
 
 logger.info("Consumer started. Listening...")

@@ -4,7 +4,7 @@ from api_user.database.mongo import get_mongo_client
 router = APIRouter()
 
 
-@router.get("/health", tags = ["health"])
+@router.get("/health", tags=["health"])
 async def health_check():
     client = None
     try:
@@ -13,8 +13,8 @@ async def health_check():
         return {"status": "healthy", "database": "connected"}
     except Exception as e:
         raise HTTPException(
-            status_code = status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail = {"status": "unhealthy", "error": str(e)},
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"status": "unhealthy", "error": str(e)},
         ) from e
     finally:
         if client is not None:

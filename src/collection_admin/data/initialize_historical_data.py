@@ -13,8 +13,8 @@ from collection_admin.config import settings
 
 # config logging for script
 logging.basicConfig(
-    level = getattr(logging, settings.LOG_LEVEL.upper()),
-    format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=getattr(logging, settings.LOG_LEVEL.upper()),
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ logger.info("Initialising Spark session")
 spark = SparkSession.builder.appName("InitHistorical15m").getOrCreate()
 
 
-def get_klines(symbol, interval, start_ms, end_ms, limit = 1000):
+def get_klines(symbol, interval, start_ms, end_ms, limit=1000):
     """Public (no-signature) Binance klines endpoint."""
     url = "https://api.binance.com/api/v3/klines"
     params = {
@@ -35,16 +35,16 @@ def get_klines(symbol, interval, start_ms, end_ms, limit = 1000):
         "interval": interval,
         "startTime": int(start_ms),
         "endTime": int(end_ms),
-        "limit": min(limit, 1000)
+        "limit": min(limit, 1000),
     }
     r = requests.get(url, params=params)
     r.raise_for_status()
     return r.json()
 
 
-def fetch_15m(symbol = "BTCUSDT", months = 6):
+def fetch_15m(symbol="BTCUSDT", months=6):
     end_dt = datetime.now(timezone.utc)
-    start_dt = end_dt - timedelta(days = 30 * months)
+    start_dt = end_dt - timedelta(days=30 * months)
     start_ms, end_ms = int(start_dt.timestamp() * 1000), int(end_dt.timestamp() * 1000)
     rows = []
 
@@ -53,21 +53,23 @@ def fetch_15m(symbol = "BTCUSDT", months = 6):
         if not batch:
             break
         for r in batch:
-            rows.append(Row(
-                symbol = symbol,
-                open_time = int(r[0]),
-                open = float(r[1]),
-                high = float(r[2]),
-                low = float(r[3]),
-                close = float(r[4]),
-                volume = float(r[5]),
-                close_time = int(r[6]),
-                quote_volume = float(r[7]),
-                num_trades = int(r[8]),
-                taker_base_volume = float(r[9]),
-                taker_quote_volume = float(r[10]),
-                ignore = r[11]
-            ))
+            rows.append(
+                Row(
+                    symbol=symbol,
+                    open_time=int(r[0]),
+                    open=float(r[1]),
+                    high=float(r[2]),
+                    low=float(r[3]),
+                    close=float(r[4]),
+                    volume=float(r[5]),
+                    close_time=int(r[6]),
+                    quote_volume=float(r[7]),
+                    num_trades=int(r[8]),
+                    taker_base_volume=float(r[9]),
+                    taker_quote_volume=float(r[10]),
+                    ignore=r[11],
+                )
+            )
         start_ms = batch[-1][6] + 1
         time.sleep(0.2)
 
@@ -78,7 +80,7 @@ def fetch_15m(symbol = "BTCUSDT", months = 6):
 def main():
     for sym in ["BTCUSDT", "ETHUSDT"]:
         logger.info(f"Initialising {sym} 15m data")
-        rows = fetch_15m(sym, months = 6)
+        rows = fetch_15m(sym, months=6)
         logger.info(f"Saving {len(rows)} rows for {sym}")
         for row in rows:
             save_to_collection(DB, COLL, row.asDict())

@@ -1,3 +1,4 @@
+from api_user.main import app
 import sys
 import pytest
 from datetime import datetime, timedelta, timezone
@@ -6,19 +7,19 @@ from unittest.mock import MagicMock, patch
 from fastapi import status
 from fastapi.testclient import TestClient
 
-ROOT_DIR= Path(__file__).resolve().parent.parent
+ROOT_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT_DIR / "src"))
 
 # import app after path insertion
-from api_user.main import app
 
 client = TestClient(app)
 
 
-@pytest.fixture(autouse =  True)
+@pytest.fixture(autouse=True)
 def reset_test_state():
     # reset singleton client in dependencies between tests
     from src.api_user import dependencies
+
     dependencies._client = None
     yield
     dependencies._client = None
@@ -51,10 +52,10 @@ class TestMarketEndpoints:
         mock_get_mongo_client.return_value = mock_client
 
         open_time = int(
-            datetime(2023, 1, 1, 0, 0, tzinfo = timezone.utc).timestamp() * 1000
+            datetime(2023, 1, 1, 0, 0, tzinfo=timezone.utc).timestamp() * 1000
         )
         close_time = int(
-            datetime(2023, 1, 1, 0, 15, tzinfo = timezone.utc).timestamp() * 1000
+            datetime(2023, 1, 1, 0, 15, tzinfo=timezone.utc).timestamp() * 1000
         )
 
         # set up mock cursor to return data
@@ -96,7 +97,9 @@ class TestMarketEndpoints:
         mock_collection.find.assert_called_once_with({"symbol": "BTCUSDT"})
 
     @patch("src.api_user.dependencies.get_mongo_client")
-    def test_get_ohlcv_with_limit_returns_chronological_order(self, mock_get_mongo_client) -> None:
+    def test_get_ohlcv_with_limit_returns_chronological_order(
+        self, mock_get_mongo_client
+    ) -> None:
         mock_client = MagicMock()
         mock_db = MagicMock()
         mock_collection = MagicMock()
@@ -105,10 +108,10 @@ class TestMarketEndpoints:
         mock_get_mongo_client.return_value = mock_client
 
         newer_open = int(
-            datetime(2023, 1, 1, 0, 15, tzinfo = timezone.utc).timestamp() * 1000
+            datetime(2023, 1, 1, 0, 15, tzinfo=timezone.utc).timestamp() * 1000
         )
         older_open = int(
-            datetime(2023, 1, 1, 0, 0, tzinfo = timezone.utc).timestamp() * 1000
+            datetime(2023, 1, 1, 0, 0, tzinfo=timezone.utc).timestamp() * 1000
         )
 
         # set up  chained mocks for find().sort().limit()
@@ -157,7 +160,7 @@ class TestMarketEndpoints:
         mock_get_mongo_client.return_value = mock_client
 
         now = datetime.now(timezone.utc)
-        week_ago = now - timedelta(days = 7)
+        week_ago = now - timedelta(days=7)
 
         mock_collection.aggregate.return_value = [
             {

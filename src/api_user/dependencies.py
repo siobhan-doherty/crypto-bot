@@ -16,11 +16,11 @@ def get_db_client() -> MongoClient:
     return _client
 
 
-def get_market_repo(client: MongoClient = Depends(
-        get_db_client)) -> MarketRepository:
+def get_market_repo(client: MongoClient = Depends(get_db_client)) -> MarketRepository:
     return MarketRepository(client)
 
 
-def get_market_service(repo: MarketRepository = Depends(
-        get_market_repo)) -> MarketService:
+def get_market_service(
+    repo: MarketRepository = Depends(get_market_repo),
+) -> MarketService:
     return MarketService(repo)

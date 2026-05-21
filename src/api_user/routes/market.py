@@ -13,13 +13,11 @@ async def get_date_range(service: MarketService = Depends(get_market_service)):
 
 @router.get("/market/ohlcv")
 async def get_ohlcv(
-    symbol: Optional[str] = Query(default = None),
-    interval: str = Query(default = "15m"),
-    start_time: Optional[int] = Query(default = None),
-    end_time: Optional[int] = Query(default = None),
-    limit: Optional[int] = Query(default = None, ge = 1),
+    symbol: Optional[str] = Query(default=None),
+    interval: str = Query(default="15m"),
+    start_time: Optional[int] = Query(default=None),
+    end_time: Optional[int] = Query(default=None),
+    limit: Optional[int] = Query(default=None, ge=1),
     service: MarketService = Depends(get_market_service),
 ):
-    return service.get_ohlcv(
-        symbol, interval, start_time, end_time, limit
-    )
+    return service.get_ohlcv(symbol, interval, start_time, end_time, limit)

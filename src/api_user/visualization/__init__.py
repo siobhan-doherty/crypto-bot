@@ -9,11 +9,12 @@ from .layout.theme import COLORS, PLOT_LAYOUT
 from .layout.controls import (
     create_date_range_slider,
     create_trading_pair_dropdown,
-    create_atr_period_input
+    create_atr_period_input,
 )
 
 
 def init_app():
     """Initialize and return the Dash application."""
     from .dash_app import create_app
+
     return create_app()

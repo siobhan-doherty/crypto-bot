@@ -10,7 +10,7 @@ from api_user.config import settings
 router = APIRouter()
 
 # configure logging
-logging.basicConfig(level = getattr(logging, settings.LOG_LEVEL.upper()))
+logging.basicConfig(level=getattr(logging, settings.LOG_LEVEL.upper()))
 logger = logging.getLogger(__name__)
 
 DB_NAME = "cryptobot"
@@ -22,23 +22,19 @@ Y_VALUE = "close"
 async def get_mongodb_connection():
     client = None
     try:
-        client = MongoClient(settings.MONGO_URI, serverSelectionTimeoutMS = 5000)
+        client = MongoClient(settings.MONGO_URI, serverSelectionTimeoutMS=5000)
         client.server_info()
         logger.debug("Connected to MongoDB")
         yield client[DB_NAME][COLLECTION_NAME]
     except Exception as e:
         logger.error(f"MongoDB connection error: {e}")
-        raise HTTPException(status_code = 500, detail = f"Database error: {e}")
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
     finally:
         if client:
             client.close()
 
 
-def fetch_data(
-    collection: Collection,
-    minutes: int = 60,
-    filters: dict = None
-) -> list:
+def fetch_data(collection: Collection, minutes: int = 60, filters: dict = None) -> list:
     """
     Fetch recent data from MongoDB collection.
 
@@ -54,7 +50,7 @@ def fetch_data(
         filters = {}
     try:
         end_time = datetime.now(timezone.utc)
-        start_time = end_time - timedelta(minutes = minutes)
+        start_time = end_time - timedelta(minutes=minutes)
         time_filter = {
             "close_datetime": {
                 "$gte": start_time.isoformat(),
@@ -76,35 +72,40 @@ async def stream_data(websocket: WebSocket):
     await websocket.accept()
     logger.info("New WebSocket connection")
     # first message to confirm connection
-    await websocket.send_json({
-        "status": "connected", 
-        "timestamp": datetime.now(timezone.utc).isoformat()
-    })
+    await websocket.send_json(
+        {"status": "connected", "timestamp": datetime.now(timezone.utc).isoformat()}
+    )
     try:
         async with get_mongodb_connection() as collection:
             while True:
                 try:
                     for symbol in ["BTCUSDT", "ETHUSDT"]:
                         records = fetch_data(
-                            collection, minutes = 60, filters = {"symbol": symbol}
+                            collection, minutes=60, filters={"symbol": symbol}
                         )
                         formatted_records = []
                         for record in records:
                             # get timestamp value
-                            ts = record.get("close_datetime", datetime.now(timezone.utc))
+                            ts = record.get(
+                                "close_datetime", datetime.now(timezone.utc)
+                            )
                             # convert to ISO format if it's a datetime object
                             if isinstance(ts, datetime):
                                 ts = ts.isoformat()
-                            formatted_records.append({
-                                "symbol": record.get("symbol", symbol),
-                                "close": record.get("close"),
-                                "close_datetime": ts,
-                            })
+                            formatted_records.append(
+                                {
+                                    "symbol": record.get("symbol", symbol),
+                                    "close": record.get("close"),
+                                    "close_datetime": ts,
+                                }
+                            )
                         if formatted_records:
-                            await websocket.send_json({
-                                "data": formatted_records,
-                                "timestamp": datetime.now(timezone.utc).isoformat(),
-                            })
+                            await websocket.send_json(
+                                {
+                                    "data": formatted_records,
+                                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                                }
+                            )
                     # add small delay to prevent overwhelming the client
                     await asyncio.sleep(30)
                 except WebSocketDisconnect:
