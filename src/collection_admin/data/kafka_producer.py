@@ -1,115 +1,102 @@
 import json
 import time
-import socket
 import logging
+import signal
+from typing import List, Optional
 from binance import ThreadedWebsocketManager
 from kafka import KafkaProducer
 from datetime import datetime, timezone
 from collection_admin.config import settings
+from collection_admin.kafka_utils import wait_for_kafka, kline_to_dict
 
 # config logging for script
 logging.basicConfig(
-    level=getattr(logging, settings.LOG_LEVEL.upper()),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level = getattr(logging, settings.LOG_LEVEL.upper()),
+    format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
 
-def wait_for_kafka(host, port, timeout=60):
-    logging.info(f"Waiting for Kafka at {host}:{port} ...")
-    start = time.time()
-    while True:
+class KafkaProducerService:
+    def __init__(
+        self,
+        bootstrap_servers: List[str],
+        symbols: List[str],
+        interval: str = "1m",
+        topic: str = "binance_prices",
+    ):
+        self.bootstrap_servers = bootstrap_servers
+        self.symbols = symbols
+        self.interval = interval
+        self.topic = topic
+        self.producer: Optional[KafkaProducer] = None
+        self.twm: Optional[ThreadedWebsocketManager] = None
+        self._running = False
+    
+    def start(self) -> None:
+        host, port = self.bootstrap_servers[0].split(":")
+        wait_for_kafka(host, int(port))
+        self.producer = KafkaProducer(
+            bootstrap_servers = self.bootstrap_servers,
+            value_serializer = lambda v: json.dumps(v).encode("utf-8"),
+        )
+        self.twm = ThreadedWebsocketManager(
+            api_key = settings.BINANCE_API_KEY,
+            api_secret = settings.BINANCE_SECRET_KEY,
+        )
+        self.twm.start()
+        for symbol in self.symbols:
+            self.twm.start_kline_socket(
+                callback = self._handle_message,
+                symbol = symbol, 
+                interval = self.interval,
+            )
+        self._running = True
+        logger.info("Kafka producer and WebSocket started")
+
+    def _handle_message(self, msg: dict) -> None:
+        if not self._running:
+            return
         try:
-            with socket.create_connection((host, port), timeout=2):
-                logger.info("Kafka is ready!")
-                return
-        except Exception:
-            if time.time() - start > timeout:
-                logger.info("Timeout waiting for Kafka")
-                raise
-            time.sleep(2)
+            if msg.get("e") == "kline" and msg.get("k", {}).get("x", False):
+                data = kline_to_dict(msg)
+                self.producer.send(self.topic, data)
+                logger.debug(f"Sent kline for {data['symbol']}")
+        except Exception as e:
+            logger.error(f"Error: {e}")
+    
+    def stop(self) -> None:
+        logger.info("Shutting down producer...")
+        self._running = False
+        if self.twm:
+            self.twm.stop()
+        if self.producer:
+            self.producer.flush()
+            self.producer.close()
+        logger.info("Producer stopped")
+
+    def run_forever(self) -> None:
+        signal.signal(signal.SIGINT, lambda *_: self.stop())
+        signal.signal(signal.SIGTERM, lambda *_: self.stop())
+        while self._running:
+            time.sleep(1)
 
 
-wait_for_kafka("kafka", 9092)
-
-producer = KafkaProducer(
-    bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS,
-    value_serializer=lambda v: json.dumps(v).encode("utf-8"),
-)
-
-symbols_to_send = ["BTCUSDT", "ETHUSDT"]
-interval = "1m"  # WebSocket interval format
-
-logger.info("WebSocket Producer started. Streaming real-time klines...")
-
-
-def get_iso_timestamp():
-    return datetime.now(timezone.utc).isoformat(timespec="milliseconds")
-
-
-def process_kline(msg):
-    k = msg["k"]
-    return {
-        "symbol": msg["s"],
-        "open_time": k["t"],
-        "open": float(k["o"]),
-        "high": float(k["h"]),
-        "low": float(k["l"]),
-        "close": float(k["c"]),
-        "volume": float(k["v"]),
-        "close_time": k["T"],
-        "quote_volume": float(k["q"]),
-        "num_trades": k["n"],
-        "taker_base_volume": float(k["V"]),
-        "taker_quote_volume": float(k["Q"]),
-        "open_datetime": datetime.fromtimestamp(
-            k["t"] / 1000, tz=timezone.utc
-        ).isoformat(),
-        "close_datetime": datetime.fromtimestamp(
-            k["T"] / 1000, tz=timezone.utc
-        ).isoformat(),
-        "price_change": float(k["c"]) - float(k["o"]),
-        "price_change_pct": round(
-            (float(k["c"]) - float(k["o"])) / float(k["o"]) * 100, 4
-        ),
-        "high_low_spread": float(k["h"]) - float(k["l"]),
-        "high_low_spread_pct": round(
-            (float(k["h"]) - float(k["l"])) / float(k["l"]) * 100, 4
-        ),
-        "ts": get_iso_timestamp(),
-        "is_closed": k["x"],
-    }
-
-
-def handle_socket_message(msg):
-    try:
-        if msg["e"] == "kline" and msg["k"]["x"]:
-            processed_msg = process_kline(msg)
-            producer.send("binance_prices", processed_msg)
-            logger.info(f"Sent kline for {msg['s']} at {processed_msg['ts']}")
-    except Exception as e:
-        logger.info(f"Error processing message: {e}")
-
-
-# Start WebSocket
-twm = ThreadedWebsocketManager(
-    api_key=settings.BINANCE_API_KEY, api_secret=settings.BINANCE_SECRET_KEY
-)
-twm.start()
-
-
-# Subscribe to klines for each symbol
-for symbol in symbols_to_send:
-    twm.start_kline_socket(
-        callback=handle_socket_message, symbol=symbol, interval=interval
+def main():
+    service = KafkaProducerService(
+        bootstrap_servers= settings.KAFKA_BOOTSTRAP_SERVERS.split(","),
+        symbols = settings.BINANCE_SYMBOLS,
+        interval = settings.KAFKA_INTERVAL,
+        topic = settings.KAFKA_TOPIC,
     )
+    try:
+        service.start()
+        service.run_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        service.stop()
 
 
-# Keep the connection alive
-try:
-    while True:
-        time.sleep(10)  # keep the main thread alive
-except KeyboardInterrupt:
-    logger.info("Shutting down...")
-    twm.stop()
-    producer.flush()
+if __name__ == "__main__":
+    main()

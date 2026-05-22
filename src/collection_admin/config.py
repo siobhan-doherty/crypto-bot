@@ -1,4 +1,6 @@
+from typing import List
 from pydantic_settings import BaseSettings
+from pydantic import ConfigDict
 
 
 class Settings(BaseSettings):
@@ -7,10 +9,15 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     BINANCE_API_KEY: str = ""
     BINANCE_SECRET_KEY: str = ""
+    BINANCE_SYMBOLS: List[str] = ["BTCUSDT", "ETHUSDT"]
+    KAFKA_INTERVAL: str = "1m"
+    KAFKA_TOPIC: str = "binance_prices"
+    KAFKA_CONSUMER_GROUP: str = "binance-group"
 
-    class Config:
-        env_file = ".env"
+    model_config = ConfigDict(
+        env_file = ".env",
         extra = "ignore"
+    )
 
 
 settings = Settings()
