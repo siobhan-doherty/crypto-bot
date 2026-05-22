@@ -1,6 +1,7 @@
 from __future__ import annotations
 from pathlib import Path
 from dash import Dash
+from datetime import datetime, timezone, timedelta
 import importlib
 import json
 import sys
@@ -147,25 +148,40 @@ def callbacks_module(monkeypatch):
 
 
 def test_extract_ws_records_valid_payload(callbacks_module):
+    # complete mock streaming record matching StreamingData schema
+    now = datetime.now(timezone.utc)
+    mock_record = {
+        "symbol": "BTCUSDT",
+        "open_time": int(now.timestamp() * 1000),
+        "open": 50000.0,
+        "high": 50200.0,
+        "low": 49900.0,
+        "close": 100000.0,
+        "volume": 1.5,
+        "close_time": int(now.timestamp() * 1000) + 60000,
+        "quote_volume": 75000.0,
+        "num_trades": 120,
+        "taker_base_volume": 0.8,
+        "taker_quote_volume": 40000.0,
+        "open_datetime": now.isoformat(),
+        "close_datetime": (now + timedelta(minutes=1)).isoformat(),
+        "price_change": 100.0,
+        "price_change_pct": 0.2,
+        "high_low_spread": 300.0,
+        "high_low_spread_pct": 0.6,
+        "ts": now.isoformat(),
+        "is_closed": True,
+    }
     ws_message = {
-        "data": json.dumps(
-            {
-                "data": [
-                    {
-                        "symbol": "BTCUSDT",
-                        "close_datetime": "2026-05-19T10:00:00Z",
-                        "close": 100000.0,
-                    }
-                ]
-            }
-        )
+        "data": json.dumps({"data": [mock_record]})
     }
 
     records, status = callbacks_module._extract_ws_records(ws_message)
 
     assert records is not None
-    assert len(records) == 1
     assert status == "WebSocket connected"
+    assert len(records) == 1
+    assert records[0]["symbol"] == "BTCUSDT"
 
 
 def test_extract_ws_records_invalid_json(callbacks_module):

@@ -2,7 +2,7 @@ import os
 import requests
 import pandas as pd
 import logging
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 from datetime import datetime, timedelta, timezone
 from tenacity import (
     retry,
@@ -11,6 +11,7 @@ from tenacity import (
     retry_if_exception_type,
 )
 from api_user.config import settings
+from api_user.visualization.schemas import HistoricalData, KlineData
 
 logging.basicConfig(level=getattr(logging, settings.LOG_LEVEL.upper()))
 logger = logging.getLogger(__name__)
@@ -113,3 +114,15 @@ def fetch_historical_data(
     except Exception as e:
         print(f"Unexpected error: {e}")
         return pd.DataFrame()
+
+
+def get_historical_data(symbol: str) -> HistoricalData:
+    response = requests.get(f"{API_BASE_URL}/historical/{symbol}")
+    response.raise_for_status()
+    return HistoricalData.model_validate_json(response.text)
+
+
+def get_streaming_data(symbol: str) -> List[KlineData]:
+    response = requests.get(f"{API_BASE_URL}/streaming/{symbol}")
+    response.raise_for_status()
+    return [KlineData.model_validate(item) for item in response.json()]

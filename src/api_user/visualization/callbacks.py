@@ -7,6 +7,7 @@ from api_user.visualization.plots.lineplot import create_lineplot
 from api_user.visualization.plots.volatilityplot import create_volatility_plot
 from api_user.visualization.plots.volumeplot import create_volumeplot
 from api_user.visualization.utils import filter_df
+from api_user.visualization.schemas import StreamingData
 from dash.dependencies import Input, Output
 import json
 import logging
@@ -101,6 +102,7 @@ def _extract_ws_records(
         return None, f"WebSocket error: {payload['error']}"
 
     records = payload.get("data")
+    validated = [StreamingData.model_validate(rec) for rec in records]
     if not isinstance(records, list):
         return None, "Invalid WebSocket data format"
 
