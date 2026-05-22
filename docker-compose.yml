@@ -129,7 +129,7 @@ services:
       retries: 3
       start_period: 15s
     networks: [crypto_network]
-    
+
   dash:
     build:
       context: .
@@ -172,7 +172,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  
+
   airflow-init:
     image: apache/airflow:2.9.1-python3.11
     container_name: crypto_airflow_init
@@ -199,30 +199,39 @@ services:
       - crypto_network
 
   airflow:
-      image: apache/airflow:2.9.1-python3.11
-      container_name: crypto_airflow
-      user: root
-      depends_on:
-        - airflow-init
-        - postgres
-      env_file:
-        - .env
-      volumes:
-        - ./airflow/dags:/opt/airflow/dags
-        - ./airflow/logs:/opt/airflow/logs  
-        - ./src/collection_admin/data:/app/data
-        - /var/run/docker.sock:/var/run/docker.sock
-      ports:
-        - "8080:8080"
-      command: webserver
-      networks:
-        - crypto_network
-      healthcheck:
-        test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-        interval: 30s
-        timeout: 10s
-        retries: 5
-        
+    image: apache/airflow:2.9.1-python3.11
+    container_name: crypto_airflow
+    user: root
+    depends_on:
+      - airflow-init
+      - postgres
+    env_file:
+      - .env
+    environment:
+      - DATA_COLLECTOR_CONTAINER=crypto_data_collector
+      - INIT_HISTORICAL_SCRIPT=/app/src/collection_admin/data/initialize_historical_data.py
+      - UPDATE_HISTORICAL_SCRIPT=/app/src/collection_admin/data/update_historical_data.py
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs  
+      - ./src/collection_admin/data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "8080:8080"
+    command: webserver
+    networks:
+      - crypto_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   airflow-scheduler:
     image: apache/airflow:2.9.1-python3.11
     container_name: crypto_airflow_scheduler
@@ -231,6 +240,10 @@ services:
       - postgres
     env_file:
       - .env
+    environment:
+      - DATA_COLLECTOR_CONTAINER=crypto_data_collector
+      - INIT_HISTORICAL_SCRIPT=/app/src/collection_admin/data/initialize_historical_data.py
+      - UPDATE_HISTORICAL_SCRIPT=/app/src/collection_admin/data/update_historical_data.py
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
@@ -243,6 +256,11 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   postgres_data:  # named volume for Postgres data persistence
