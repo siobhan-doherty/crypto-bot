@@ -1,4 +1,5 @@
 from typing import List
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,9 +14,7 @@ class Settings(BaseSettings):
     KAFKA_TOPIC: str = "binance_prices"
     KAFKA_CONSUMER_GROUP: str = "binance-group"
 
-    model_config = SettingsConfigDict(
-        env_file = ".env",
-        extra = "ignore"
-    )
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
 
 settings = Settings()

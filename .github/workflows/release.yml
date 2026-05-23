@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       BUILD_ID: ${{ needs.build-and-test.outputs.build-id }}
-    
+
     steps:
       - name: Debug build ID
         run: |

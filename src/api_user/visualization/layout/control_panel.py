@@ -60,9 +60,11 @@ def create_control_panel(df=None):
                         style={"margin": "5px 0"},
                     ),
                     html.Div(
-                        f"From: {min_date.strftime('%Y-%m-%d')}"
-                        if min_date
-                        else "No data available",
+                        (
+                            f"From: {min_date.strftime('%Y-%m-%d')}"
+                            if min_date
+                            else "No data available"
+                        ),
                         style={"margin": "5px 0"},
                     ),
                     html.Div(

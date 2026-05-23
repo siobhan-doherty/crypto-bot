@@ -3,6 +3,7 @@ import logging
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from pymongo import MongoClient
 from pymongo.collection import Collection
@@ -36,7 +37,9 @@ async def get_mongodb_connection():
             client.close()
 
 
-def fetch_data(collection: Collection, minutes: int = 60, filters: Optional[dict] = None) -> list:
+def fetch_data(
+    collection: Collection, minutes: int = 60, filters: Optional[dict] = None
+) -> list:
     """
     Fetch recent data from MongoDB collection.
 

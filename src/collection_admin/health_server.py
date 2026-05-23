@@ -13,6 +13,6 @@ class HealthHandler(BaseHTTPRequestHandler):
 
 
 def run_health_server(port=8001):
-    server = HTTPServer(("0.0.0.0", port), HealthHandler)
+    server = HTTPServer(("0.0.0.0", port), HealthHandler)  # nosec
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()

@@ -55,7 +55,7 @@ db.historical_data_15m.find({}, {open_time: -1, _id: 0}).sort({ open_time: -1 })
   .forEach(doc => print(new Date(Number(doc.open_time))));
 
 # check How many candles are in BTCUSDT
-var symbol = "BTCUSDT"; 
+var symbol = "BTCUSDT";
 var earliest = db.historical_data_15m.find({symbol: symbol}).sort({ open_time: 1 }).limit(1).toArray()[0].open_time;
 var latest   = db.historical_data_15m.find({symbol: symbol}).sort({ open_time: -1 }).limit(1).toArray()[0].open_time;
 earliest = Number(earliest);
@@ -106,4 +106,3 @@ db.historical_data_15m.aggregate([
   { $count: "duplicates" }
 ])
 ```
-

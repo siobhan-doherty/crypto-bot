@@ -95,4 +95,3 @@ mkdir -p airflow/plugins
 ```bash
 sudo chown -R 50000:0 airflow/logs
 ```
-

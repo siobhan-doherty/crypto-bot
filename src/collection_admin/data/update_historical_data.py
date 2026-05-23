@@ -2,6 +2,7 @@
 Fetch only new 15-minute candles since last stored timestamp.
 Run daily (e.g. via Airflow).
 """
+
 import logging
 from datetime import datetime, timezone
 
@@ -36,7 +37,7 @@ def get_klines(symbol, interval, start_ms, end_ms, limit=1000):
         "endTime": int(end_ms),
         "limit": min(limit, 1000),
     }
-    r = requests.get(url, params=params)
+    r = requests.get(url, params=params, timeout=30)
     r.raise_for_status()
     return r.json()
 

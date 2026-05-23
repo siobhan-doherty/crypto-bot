@@ -12,8 +12,8 @@ from fastapi.testclient import TestClient
 ROOT_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT_DIR / "src"))
 
-from api_user import dependencies   # noqa: E402
-from api_user.main import app   # noqa: E402
+from api_user import dependencies  # noqa: E402
+from api_user.main import app  # noqa: E402
 
 
 def build_mock_db_with_collection() -> tuple[MagicMock, MagicMock, MagicMock]:

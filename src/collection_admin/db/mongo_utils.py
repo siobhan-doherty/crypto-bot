@@ -10,7 +10,9 @@ logger = logging.getLogger(__name__)
 def get_mongo_collection(db_name: str, collection_name: str):
     """Returns MongoDB collection."""
     try:
-        client: MongoClient = MongoClient(settings.MONGO_URI, serverSelectionTimeoutMS=5000)
+        client: MongoClient = MongoClient(
+            settings.MONGO_URI, serverSelectionTimeoutMS=5000
+        )
         client.admin.command("ping")
         return client[db_name][collection_name]
 

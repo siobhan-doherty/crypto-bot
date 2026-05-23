@@ -12,14 +12,14 @@ class MarketService:
         min_time, max_time = self.repo.get_date_range()
         if min_time is None or max_time is None:
             end_date = datetime.now(timezone.utc)
-            start_date = end_date - timedelta(days = 7)
+            start_date = end_date - timedelta(days=7)
             return {
                 "min_date": start_date.isoformat(),
                 "max_date": end_date.isoformat(),
             }
         assert min_time is not None and max_time is not None
-        min_date = datetime.fromtimestamp(min_time / 1000, tz = timezone.utc)
-        max_date = datetime.fromtimestamp(max_time / 1000, tz = timezone.utc)
+        min_date = datetime.fromtimestamp(min_time / 1000, tz=timezone.utc)
+        max_date = datetime.fromtimestamp(max_time / 1000, tz=timezone.utc)
         return {"min_date": min_date.isoformat(), "max_date": max_date.isoformat()}
 
     def get_ohlcv(

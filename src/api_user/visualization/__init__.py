@@ -1,4 +1,5 @@
 """Visualization package for the crypto dashboard."""
+
 from .callbacks import register_callbacks
 from .fetch_data import fetch_historical_data, get_available_date_range
 from .layout.controls import (

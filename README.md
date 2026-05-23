@@ -265,10 +265,10 @@ MONGO_URI=mongodb://your_user:your_pass@crypto_mongo:27017/cryptobot?authSource=
 
   * Kafka producer and consumer start **automatically** with Docker Compose.
   * Use `docker logs crypto_kafka_producer` or `docker logs crypto_kafka_consumer` to monitor live activity.
-  * 
+  *
 #### 2.4 Running Data Collector Scripts for testing outside the airflow
 
-  Seed 3–6 months of 15m data: 
+  Seed 3–6 months of 15m data:
   ```bash
   docker exec -it crypto_data_collector python /app/src/collection_admin/data/initialize_historical_data.py
   ```
@@ -312,7 +312,7 @@ MONGO_URI=mongodb://your_user:your_pass@crypto_mongo:27017/cryptobot?authSource=
 ## Authors
 
 * Team A – DataScientest : Bootcamp Data Engineer Project (April 2025)
-  * Indira Burga 
+  * Indira Burga
   * Katharina Klat
   * Siobhan Doherty
 

@@ -1,4 +1,4 @@
-# Binance Klines (Candlesticks) 
+# Binance Klines (Candlesticks)
 
 ## What is a Candlestick?
 

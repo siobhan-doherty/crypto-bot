@@ -60,13 +60,13 @@ def kline_to_dict(msg: Dict[str, Any]) -> Dict[str, Any]:
         "open_datetime": iso_from_ms(open_time),
         "close_datetime": iso_from_ms(close_time),
         "price_change": close_price - open_price,
-        "price_change_pct": round((close_price - open_price) / open_price * 100, 4)
-        if open_price
-        else 0,
+        "price_change_pct": (
+            round((close_price - open_price) / open_price * 100, 4) if open_price else 0
+        ),
         "high_low_spread": high_price - low_price,
-        "high_low_spread_pct": round((high_price - low_price) / low_price * 100, 4)
-        if low_price
-        else 0,
+        "high_low_spread_pct": (
+            round((high_price - low_price) / low_price * 100, 4) if low_price else 0
+        ),
         "ts": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
         "is_closed": is_closed,
     }

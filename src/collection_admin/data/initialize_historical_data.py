@@ -2,6 +2,7 @@
 Fetch 3 to 6 months of 15-minute candles from Binance and seed MongoDB.
 Run once at beginning.
 """
+
 import logging
 import time
 from datetime import datetime, timedelta, timezone
@@ -39,7 +40,7 @@ def get_klines(symbol, interval, start_ms, end_ms, limit=1000):
         "endTime": int(end_ms),
         "limit": min(limit, 1000),
     }
-    r = requests.get(url, params=params)
+    r = requests.get(url, params=params, timeout=30)
     r.raise_for_status()
     return r.json()
 

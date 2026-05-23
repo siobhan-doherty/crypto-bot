@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 import requests
@@ -26,13 +26,13 @@ DEFAULT_INTERVAL = "15m"
     wait=wait_exponential(multiplier=1, min=2, max=10),
     retry=retry_if_exception_type(requests.RequestException),
 )
-def _call_api(endpoint: str, params: Optional[dict] = None) -> dict:
+def _call_api(endpoint: str, params: Optional[dict] = None) -> Dict[str, Any]:
     """ "Make a GET request to the FastAPI endpoint with retries."""
     url = f"{API_BASE_URL}/{endpoint.lstrip('/')}"
     try:
         response = requests.get(url, params=params, timeout=10)
         response.raise_for_status()
-        return response.json()
+        return response.json()  # type: ignore[no-any-return]
     except requests.RequestException as e:
         logger.error(f"API call failed: {e}")
         raise
@@ -71,7 +71,6 @@ def fetch_historical_data(
         if start_time.tzinfo is None:
             start_time = start_time.replace(tzinfo=timezone.utc)
         params["start_time"] = int(start_time.timestamp() * 1000)
-
     if end_time:
         if end_time.tzinfo is None:
             end_time = end_time.replace(tzinfo=timezone.utc)
@@ -118,12 +117,12 @@ def fetch_historical_data(
 
 
 def get_historical_data(symbol: str) -> HistoricalData:
-    response = requests.get(f"{API_BASE_URL}/historical/{symbol}")
+    response = requests.get(f"{API_BASE_URL}/historical/{symbol}", timeout=30)
     response.raise_for_status()
     return HistoricalData.model_validate_json(response.text)
 
 
 def get_streaming_data(symbol: str) -> List[KlineData]:
-    response = requests.get(f"{API_BASE_URL}/streaming/{symbol}")
+    response = requests.get(f"{API_BASE_URL}/streaming/{symbol}", timeout=30)
     response.raise_for_status()
     return [KlineData.model_validate(item) for item in response.json()]
