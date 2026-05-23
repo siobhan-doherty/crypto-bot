@@ -1,15 +1,16 @@
-import os
-import requests
-import pandas as pd
 import logging
-from typing import Optional, Tuple, List
 from datetime import datetime, timedelta, timezone
+from typing import List, Optional, Tuple
+
+import pandas as pd
+import requests
 from tenacity import (
     retry,
+    retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
-    retry_if_exception_type,
 )
+
 from api_user.config import settings
 from api_user.visualization.schemas import HistoricalData, KlineData
 
@@ -25,7 +26,7 @@ DEFAULT_INTERVAL = "15m"
     wait=wait_exponential(multiplier=1, min=2, max=10),
     retry=retry_if_exception_type(requests.RequestException),
 )
-def _call_api(endpoint: str, params: dict = None) -> dict:
+def _call_api(endpoint: str, params: Optional[dict] = None) -> dict:
     """ "Make a GET request to the FastAPI endpoint with retries."""
     url = f"{API_BASE_URL}/{endpoint.lstrip('/')}"
     try:

@@ -1,7 +1,9 @@
 from __future__ import annotations
-from typing import Sequence
-import pandas as pd
+
 import logging
+from typing import Sequence
+
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 

@@ -1,18 +1,18 @@
 import json
-import time
 import logging
 import signal
-import sys
 from typing import Optional
+
 from kafka import KafkaConsumer
-from collection_admin.db.mongo_utils import save_to_collection
+
 from collection_admin.config import settings
+from collection_admin.db.mongo_utils import save_to_collection
 from collection_admin.kafka_utils import wait_for_kafka
 
 # config logging for script
 logging.basicConfig(
-    level = getattr(logging, settings.LOG_LEVEL.upper()),
-    format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=getattr(logging, settings.LOG_LEVEL.upper()),
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -38,11 +38,11 @@ class KafkaConsumerService:
         host, port = self.bootstrap_servers[0].split(":")
         wait_for_kafka(host, int(port))
         self.consumer = KafkaConsumer(
-            self.topic, 
-            bootstrap_servers = self.bootstrap_servers,
-            auto_offset_reset = "latest",
-            group_id = self.group_id,
-            value_deserializer = lambda x: json.loads(x.decode()),
+            self.topic,
+            bootstrap_servers=self.bootstrap_servers,
+            auto_offset_reset="latest",
+            group_id=self.group_id,
+            value_deserializer=lambda x: json.loads(x.decode()),
         )
         self._running = True
         logger.info(f"Consumer started on topic '{self.topic}'")
@@ -59,7 +59,7 @@ class KafkaConsumerService:
         signal.signal(signal.SIGINT, lambda *_: self.stop())
         signal.signal(signal.SIGTERM, lambda *_: self.stop())
         while self._running:
-            records = self.consumer.poll(timeout_ms = 1000)
+            records = self.consumer.poll(timeout_ms=1000)
             for tp, messages in records.items():
                 for msg in messages:
                     self._process_message(msg)
@@ -74,9 +74,9 @@ class KafkaConsumerService:
 
 def main():
     service = KafkaConsumerService(
-        bootstrap_servers = settings.KAFKA_BOOTSTRAP_SERVERS.split(","),
-        topic = settings.KAFKA_TOPIC,
-        group_id = settings.KAFKA_CONSUMER_GROUP,
+        bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS.split(","),
+        topic=settings.KAFKA_TOPIC,
+        group_id=settings.KAFKA_CONSUMER_GROUP,
     )
     try:
         service.start()

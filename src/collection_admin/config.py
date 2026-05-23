@@ -1,10 +1,9 @@
 from typing import List
-from pydantic_settings import BaseSettings
-from pydantic import ConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    MONGO_URI: str
+    MONGO_URI: str = "mongodb://localhost:27017"
     KAFKA_BOOTSTRAP_SERVERS: str = "kafka:9092"
     LOG_LEVEL: str = "INFO"
     BINANCE_API_KEY: str = ""
@@ -14,10 +13,9 @@ class Settings(BaseSettings):
     KAFKA_TOPIC: str = "binance_prices"
     KAFKA_CONSUMER_GROUP: str = "binance-group"
 
-    model_config = ConfigDict(
+    model_config = SettingsConfigDict(
         env_file = ".env",
         extra = "ignore"
     )
-
 
 settings = Settings()

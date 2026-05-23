@@ -1,15 +1,16 @@
 from dash import dcc, html
-from api_user.visualization.layout.theme import COLORS
+
 from api_user.visualization.data_store import prepare_data
-from api_user.visualization.utils import filter_df
 from api_user.visualization.layout.controls import (
-    create_date_range_slider,
     create_atr_period_input,
+    create_date_range_slider,
 )
-from api_user.visualization.plots.lineplot import create_lineplot
+from api_user.visualization.layout.theme import COLORS
 from api_user.visualization.plots.candlestickplot import create_candlestickplot
-from api_user.visualization.plots.volumeplot import create_volumeplot
+from api_user.visualization.plots.lineplot import create_lineplot
 from api_user.visualization.plots.volatilityplot import create_volatility_plot
+from api_user.visualization.plots.volumeplot import create_volumeplot
+from api_user.visualization.utils import filter_df
 
 
 def create_historical_layout():

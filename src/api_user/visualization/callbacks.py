@@ -1,5 +1,14 @@
 from __future__ import annotations
-from typing import Any, Dict, Iterable, Mapping, Optional, Sequence, Tuple
+
+import json
+import logging
+from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
+
+import dash
+import pandas as pd
+import plotly.graph_objects as go
+from dash.dependencies import Input, Output
+
 from api_user.visualization.data_store import prepare_data
 from api_user.visualization.layout.controls import create_range_selector
 from api_user.visualization.plots.candlestickplot import create_candlestickplot
@@ -7,13 +16,6 @@ from api_user.visualization.plots.lineplot import create_lineplot
 from api_user.visualization.plots.volatilityplot import create_volatility_plot
 from api_user.visualization.plots.volumeplot import create_volumeplot
 from api_user.visualization.utils import filter_df
-from api_user.visualization.schemas import StreamingData
-from dash.dependencies import Input, Output
-import json
-import logging
-import dash
-import pandas as pd
-import plotly.graph_objects as go
 
 logger = logging.getLogger(__name__)
 DISPLAY_TIMEZONE = "Europe/Berlin"
@@ -102,7 +104,6 @@ def _extract_ws_records(
         return None, f"WebSocket error: {payload['error']}"
 
     records = payload.get("data")
-    validated = [StreamingData.model_validate(rec) for rec in records]
     if not isinstance(records, list):
         return None, "Invalid WebSocket data format"
 

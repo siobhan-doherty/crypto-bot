@@ -1,11 +1,11 @@
-import json
+import logging
 import socket
 import time
-import logging
-from typing import Any, Dict
 from datetime import datetime, timezone
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
+
 
 def wait_for_kafka(host: str, port: int, timeout: int = 60) -> None:
     """Block until Kafka is reachable"""
@@ -13,7 +13,7 @@ def wait_for_kafka(host: str, port: int, timeout: int = 60) -> None:
     start = time.time()
     while True:
         try:
-            with socket.create_connection((host, port), timeout = 2):
+            with socket.create_connection((host, port), timeout=2):
                 logger.info("Kafka is ready!")
                 return
         except Exception:
@@ -40,8 +40,9 @@ def kline_to_dict(msg: Dict[str, Any]) -> Dict[str, Any]:
     is_closed = k["x"]
 
     def iso_from_ms(ms: int) -> str:
-        return datetime.fromtimestamp(ms / 1000.0, tz = timezone.utc) \
-            .isoformat(timespec = "milliseconds")
+        return datetime.fromtimestamp(ms / 1000.0, tz=timezone.utc).isoformat(
+            timespec="milliseconds"
+        )
 
     return {
         "symbol": msg["s"],
@@ -59,9 +60,13 @@ def kline_to_dict(msg: Dict[str, Any]) -> Dict[str, Any]:
         "open_datetime": iso_from_ms(open_time),
         "close_datetime": iso_from_ms(close_time),
         "price_change": close_price - open_price,
-        "price_change_pct": round((close_price - open_price) / open_price * 100, 4) if open_price else 0,
+        "price_change_pct": round((close_price - open_price) / open_price * 100, 4)
+        if open_price
+        else 0,
         "high_low_spread": high_price - low_price,
-        "high_low_spread_pct": round((high_price - low_price) / low_price * 100, 4) if low_price else 0,
+        "high_low_spread_pct": round((high_price - low_price) / low_price * 100, 4)
+        if low_price
+        else 0,
         "ts": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
         "is_closed": is_closed,
     }

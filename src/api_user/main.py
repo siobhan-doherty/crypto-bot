@@ -1,10 +1,12 @@
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from api_user.dependencies import get_db_client
 from api_user.routes.health import router as health_router
 from api_user.routes.market import router as market_router
 from api_user.streaming import router as streaming_router
-from api_user.dependencies import get_db_client
 
 
 @asynccontextmanager

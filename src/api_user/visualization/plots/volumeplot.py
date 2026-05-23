@@ -1,5 +1,6 @@
 import plotly.graph_objects as go
-from ..layout.theme import PLOT_LAYOUT, COLORS
+
+from ..layout.theme import COLORS, PLOT_LAYOUT
 
 
 def create_volumeplot(df, trading_pair="BTCUSDT"):

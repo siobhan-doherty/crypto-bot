@@ -1,5 +1,7 @@
-import pytest 
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from collection_admin.data.kafka_consumer import KafkaConsumerService
 from collection_admin.data.kafka_producer import KafkaProducerService
 from collection_admin.kafka_utils import kline_to_dict
@@ -21,8 +23,8 @@ def test_kline_to_dict():
             "n": 120,
             "V": "0.8",
             "Q": "40000",
-            "x": True
-        }
+            "x": True,
+        },
     }
     result = kline_to_dict(sample_msg)
     assert result["symbol"] == "BTCUSDT"
@@ -37,10 +39,10 @@ def test_kline_to_dict():
 @pytest.fixture
 def producer_service():
     return KafkaProducerService(
-        bootstrap_servers = ["localhost:9092"],
-        symbols = ["BTCUSDT"],
-        interval = "1m",
-        topic = "test_topic"
+        bootstrap_servers=["localhost:9092"],
+        symbols=["BTCUSDT"],
+        interval="1m",
+        topic="test_topic",
     )
 
 
@@ -83,8 +85,8 @@ def test_handle_message(producer_service):
             "n": 120,
             "V": "0.8",
             "Q": "40000",
-            "x": True
-        }
+            "x": True,
+        },
     }
     producer_service._handle_message(sample_msg)
     producer_service.producer.send.assert_called_once()
@@ -97,11 +99,11 @@ def test_handle_message(producer_service):
 @pytest.fixture
 def consumer_service():
     return KafkaConsumerService(
-        bootstrap_servers = ["localhost:9092"],
-        topic = "test_topic",
-        group_id = "test_group",
-        mongo_db = "test_db",
-        mongo_collection = "test_coll"
+        bootstrap_servers=["localhost:9092"],
+        topic="test_topic",
+        group_id="test_group",
+        mongo_db="test_db",
+        mongo_collection="test_coll",
     )
 
 
@@ -124,5 +126,6 @@ def test_consumer_stop(consumer_service):
 def test_consumer_process_message(mock_save, consumer_service):
     class MockMessage:
         value = {"price": 50000}
+
     consumer_service._process_message(MockMessage())
     mock_save.assert_called_once_with("test_db", "test_coll", {"price": 50000})

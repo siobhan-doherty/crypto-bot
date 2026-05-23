@@ -1,5 +1,6 @@
 import pandas as pd
 from dash import dcc, html
+
 from .theme import COLORS
 
 

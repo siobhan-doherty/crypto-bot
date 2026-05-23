@@ -1,10 +1,12 @@
 import asyncio
 import logging
+from contextlib import asynccontextmanager
+from datetime import datetime, timedelta, timezone
+from typing import Optional
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from pymongo import MongoClient
-from contextlib import asynccontextmanager
-from datetime import datetime, timezone, timedelta
 from pymongo.collection import Collection
+
 from api_user.config import settings
 
 router = APIRouter()
@@ -34,7 +36,7 @@ async def get_mongodb_connection():
             client.close()
 
 
-def fetch_data(collection: Collection, minutes: int = 60, filters: dict = None) -> list:
+def fetch_data(collection: Collection, minutes: int = 60, filters: Optional[dict] = None) -> list:
     """
     Fetch recent data from MongoDB collection.
 

@@ -1,4 +1,5 @@
 from pymongo import MongoClient
+
 from api_user.config import settings
 
 

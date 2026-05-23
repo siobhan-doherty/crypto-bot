@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends, Query
 from typing import Optional
-from api_user.services.market_service import MarketService
+
+from fastapi import APIRouter, Depends, Query
+
 from api_user.dependencies import get_market_service
+from api_user.services.market_service import MarketService
 
 router = APIRouter()
 

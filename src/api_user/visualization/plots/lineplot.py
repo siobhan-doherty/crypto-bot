@@ -1,4 +1,4 @@
-from ..layout.theme import PLOT_LAYOUT, COLORS
+from ..layout.theme import COLORS, PLOT_LAYOUT
 
 
 def calculate_ema(series, periods):

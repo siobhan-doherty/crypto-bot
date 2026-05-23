@@ -1,4 +1,4 @@
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 from pymongo import MongoClient
 
 
@@ -31,10 +31,10 @@ class MarketRepository:
         end_time: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
-        query = {}
+        query: dict[str, Any] = {}
         if symbol:
             query["symbol"] = symbol.upper()
-        time_filter = {}
+        time_filter: Dict[str, int] = {}
         if start_time:
             time_filter["$gte"] = start_time
         if end_time:

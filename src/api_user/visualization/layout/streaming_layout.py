@@ -1,5 +1,6 @@
-from dash import html, dcc
+from dash import dcc, html
 from dash_extensions import WebSocket
+
 from .theme import COLORS
 
 

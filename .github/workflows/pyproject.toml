@@ -1,0 +1,18 @@
+[tool.black]
+line-length = 88
+target-version = ['py311']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.bandit]
+exclude_dirs = ["tests", "venv", ".venv", "env"]
+skips = ["B101", "B311"]

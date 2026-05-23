@@ -1,6 +1,7 @@
-import plotly.graph_objects as go
 import pandas as pd
-from ..layout.theme import PLOT_LAYOUT, COLORS, VOLATILITY_PLOT
+import plotly.graph_objects as go
+
+from ..layout.theme import COLORS, PLOT_LAYOUT, VOLATILITY_PLOT
 
 
 def calculate_atr(df, period=14):

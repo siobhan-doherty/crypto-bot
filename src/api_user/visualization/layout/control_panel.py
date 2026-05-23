@@ -1,7 +1,8 @@
 from dash import html
-from .theme import COLORS
-from .controls import create_trading_pair_dropdown
+
 from ..fetch_data import get_available_date_range
+from .controls import create_trading_pair_dropdown
+from .theme import COLORS
 
 
 def create_control_panel(df=None):

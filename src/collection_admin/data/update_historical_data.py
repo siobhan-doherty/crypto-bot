@@ -2,12 +2,13 @@
 Fetch only new 15-minute candles since last stored timestamp.
 Run daily (e.g. via Airflow).
 """
-import time
-import requests
 import logging
 from datetime import datetime, timezone
+
+import requests
+
 from collection_admin.config import settings
-from collection_admin.db.mongo_utils import save_to_collection, get_mongo_collection
+from collection_admin.db.mongo_utils import get_mongo_collection, save_to_collection
 
 # config logging for script
 logging.basicConfig(

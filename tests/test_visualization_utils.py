@@ -1,11 +1,14 @@
 from __future__ import annotations
-from api_user.visualization.utils import filter_df
-from api_user.visualization import data_store
-from api_user.visualization.data_store import prepare_data
-from pathlib import Path
+
 import sys
+from pathlib import Path
+
 import pandas as pd
 import pandas.testing as pdt
+
+from api_user.visualization import data_store
+from api_user.visualization.data_store import prepare_data
+from api_user.visualization.utils import filter_df
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT_DIR / "src"))

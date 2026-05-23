@@ -2,14 +2,16 @@
 Fetch 3 to 6 months of 15-minute candles from Binance and seed MongoDB.
 Run once at beginning.
 """
-import time
-import requests
 import logging
-import findspark
+import time
 from datetime import datetime, timedelta, timezone
-from pyspark.sql import SparkSession, Row
-from collection_admin.db.mongo_utils import save_to_collection
+
+import findspark
+import requests
+from pyspark.sql import Row, SparkSession
+
 from collection_admin.config import settings
+from collection_admin.db.mongo_utils import save_to_collection
 
 # config logging for script
 logging.basicConfig(

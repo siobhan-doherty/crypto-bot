@@ -1,9 +1,9 @@
 from fastapi import Depends
 from pymongo import MongoClient
+
 from api_user.database.mongo import get_mongo_client
 from api_user.repositories.market_repo import MarketRepository
 from api_user.services.market_service import MarketService
-
 
 # singleton client
 _client = None

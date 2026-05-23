@@ -1,17 +1,19 @@
 from __future__ import annotations
+
+import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
-import sys
-import pytest
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT_DIR / "src"))
 
-from api_user.main import app
-from api_user import dependencies
+from api_user import dependencies   # noqa: E402
+from api_user.main import app   # noqa: E402
 
 
 def build_mock_db_with_collection() -> tuple[MagicMock, MagicMock, MagicMock]:
@@ -26,7 +28,7 @@ def build_mock_db_with_collection() -> tuple[MagicMock, MagicMock, MagicMock]:
     return mock_client, mock_db, mock_collection
 
 
-@pytest.fixture(scope = "session")
+@pytest.fixture(scope="session")
 def mock_dependency_mongo_client():
     """
     Patch dependency-layer reference used by app, not just original
@@ -36,20 +38,20 @@ def mock_dependency_mongo_client():
         yield mock
 
 
-@pytest.fixture(scope = "session")
+@pytest.fixture(scope="session")
 def client(mock_dependency_mongo_client):
     mock_dependency_mongo_client.return_value = MagicMock()
     return TestClient(app)
 
 
-@pytest.fixture(autouse = True)
+@pytest.fixture(autouse=True)
 def reset_singleton():
     dependencies._client = None
     yield
     dependencies._client = None
 
 
-@pytest.fixture(autouse = True)
+@pytest.fixture(autouse=True)
 def reset_mock(mock_dependency_mongo_client):
     mock_dependency_mongo_client.reset_mock()
     yield
@@ -126,10 +128,10 @@ class TestMarketEndpoints:
         mock_dependency_mongo_client.return_value = mock_client
 
         newer_open = int(
-            datetime(2023, 1, 1, 0, 15, tzinfo = timezone.utc).timestamp() * 1000
+            datetime(2023, 1, 1, 0, 15, tzinfo=timezone.utc).timestamp() * 1000
         )
         older_open = int(
-            datetime(2023, 1, 1, 0, 0, tzinfo = timezone.utc).timestamp() * 1000
+            datetime(2023, 1, 1, 0, 0, tzinfo=timezone.utc).timestamp() * 1000
         )
 
         mock_find = MagicMock()

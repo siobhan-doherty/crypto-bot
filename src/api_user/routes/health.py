@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
+
 from api_user.database.mongo import get_mongo_client
 
 router = APIRouter()

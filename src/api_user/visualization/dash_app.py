@@ -1,7 +1,8 @@
 import dash
 import dash_bootstrap_components as dbc
-from api_user.visualization.layout.main_layout import create_main_layout
+
 from api_user.visualization.callbacks import register_callbacks
+from api_user.visualization.layout.main_layout import create_main_layout
 
 
 def create_app() -> dash.Dash:
