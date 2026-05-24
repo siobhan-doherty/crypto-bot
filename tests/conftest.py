@@ -61,15 +61,18 @@ def docker_services(
     import socket
 
     start = time.time()
-    while time.time() - start < 60:
+    timeout = 120  # seconds
+    while time.time() - start < timeout:
         try:
             with socket.create_connection(("localhost", 9092), timeout=2):
-                with socket.create_connection(("localhost", 27017), timeout=2):
-                    break
+                with socket.create_connection(("localhost", 27018), timeout=2):
+                    with socket.create_connection(("localhost", 8003), timeout=2):
+                        break
         except Exception:
             time.sleep(1)
     else:
-        raise RuntimeError("Timeout waiting for services")
+        raise RuntimeError(f"Timeout waiting for services after {timeout}s")
+    time.sleep(10)  # give kafka consumer some seconds to fully initialise
     yield
 
 
@@ -80,4 +83,4 @@ def kafka_endpoint(docker_services):
 
 @pytest.fixture(scope="session")
 def mongo_endpoint(docker_services):
-    return "mongodb://localhost:27017"
+    return "mongodb://localhost:27018"

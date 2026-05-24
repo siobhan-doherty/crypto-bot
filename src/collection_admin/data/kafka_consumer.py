@@ -40,7 +40,7 @@ class KafkaConsumerService:
         self.consumer = KafkaConsumer(
             self.topic,
             bootstrap_servers=self.bootstrap_servers,
-            auto_offset_reset="latest",
+            auto_offset_reset="earliest",
             group_id=self.group_id,
             value_deserializer=lambda x: json.loads(x.decode()),
         )

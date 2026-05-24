@@ -1,14 +1,22 @@
 import json
+import os
 import time
 
+import requests
 from kafka import KafkaProducer
+from kafka.errors import NoBrokersAvailable
 from pymongo import MongoClient
 
 
-def test_data_flow(kafka_endpoint, mongo_endpoint):
-    # create a test message, matching schema of streaming_data_1m
+def test_data_flow():
+    kafka_endpoint = os.getenv("KAFKA_ENDPOINT", "localhost:9092")
+    mongo_endpoint = os.getenv("MONGO_ENDPOINT", "mongodb://localhost:27018")
+    fastapi_url = os.getenv("FASTAPI_URL", "http://localhost:8003")
+
     test_message = {
         "symbol": "TESTUSDT",
+        "interval": "1m",
+        "open_time": 1620000000000,
         "open": 50000.0,
         "high": 50200.0,
         "low": 49900.0,
@@ -29,11 +37,20 @@ def test_data_flow(kafka_endpoint, mongo_endpoint):
         "is_closed": True,
     }
 
-    # send message to Kafka
-    producer = KafkaProducer(
-        bootstrap_servers=kafka_endpoint,
-        value_serializer=lambda v: json.dumps(v).encode("utf-8"),
-    )
+    # retry creating producer - Kafka may not be ready immediately
+    max_retries = 5
+    for i in range(max_retries):
+        try:
+            producer = KafkaProducer(
+                bootstrap_servers=kafka_endpoint,
+                value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+            )
+            break
+        except NoBrokersAvailable:
+            if i == max_retries - 1:
+                raise
+            time.sleep(2)
+
     future = producer.send("binance_prices", value=test_message)
     producer.flush()
     result = future.get(timeout=5)
@@ -42,14 +59,22 @@ def test_data_flow(kafka_endpoint, mongo_endpoint):
     # wait for MongoDB to receive message
     mongo_client = MongoClient(mongo_endpoint)
     collection = mongo_client["cryptobot"]["streaming_data_1m"]
-    start_time = time.time()
+    start = time.time()
     doc = None
-    while time.time() - start_time < 30:
+    while time.time() - start < 30:
         doc = collection.find_one({"symbol": "TESTUSDT"})
         if doc:
             break
         time.sleep(1)
-    assert doc is not None, "Test message not found in MongoDB within 30 seconds"
-
-    # cleanup, remove test doc
+    assert doc is not None, "Test message not found in MongoDB"
     collection.delete_one({"_id": doc["_id"]})
+
+    # verify FastAPI health
+    health_response = requests.get(f"{fastapi_url}/api/health", timeout=5)
+    assert health_response.status_code == 200
+    assert health_response.json().get("status") == "ok"
+
+    historical_response = requests.get(
+        f"{fastapi_url}/api/historical/TESTUSDT", timeout=5
+    )
+    assert historical_response.status_code == 200
