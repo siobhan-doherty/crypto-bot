@@ -95,6 +95,32 @@ def test_handle_message(producer_service):
     assert args[1]["symbol"] == "BTCUSDT"
 
 
+def test_producer_send_message(producer_service, mock_kafka_producer):
+    producer_service._running = True
+    producer_service.producer = mock_kafka_producer
+    producer_service._handle_message(
+        {
+            "e": "kline",
+            "s": "BTCUSDT",
+            "k": {
+                "x": True,
+                "t": 123,
+                "T": 456,
+                "o": "50000",
+                "c": "50100",
+                "h": "50200",
+                "l": "49900",
+                "v": "1.5",
+                "q": "75000",
+                "n": 120,
+                "V": "0.8",
+                "Q": "40000",
+            },
+        }
+    )
+    mock_kafka_producer.send.assert_called_once()
+
+
 # KafkaConsumerService tests
 @pytest.fixture
 def consumer_service():
