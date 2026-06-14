@@ -155,3 +155,30 @@ def test_consumer_process_message(mock_save, consumer_service):
 
     consumer_service._process_message(MockMessage())
     mock_save.assert_called_once_with("test_db", "test_coll", {"price": 50000})
+
+
+# extra tests for edge cases
+def test_producer_handle_bad_message(producer_service):
+    """Malformed messages should be logged but not crash."""
+    producer_service._running = True
+    producer_service.producer = MagicMock()
+
+    # invalid message, e.g. missing 'e'
+    producer_service._handle_message({"s": "BTCUSDT"})
+    producer_service.producer.send.assert_not_called()
+
+    # message with 'k' but 'x' is False, unclosed kline
+    producer_service._handle_message({"e": "kline", "s": "BTCUSDT", "k": {"x": False}})
+    producer_service.producer.send.assert_not_called()
+
+
+def test_consumer_failure_handling(consumer_service):
+    """If saving to MongoDB fails, consumer should still continue."""
+    with patch(
+        "collection_admin.data.kafka_consumer.save_to_collection",
+        side_effect=Exception("DB error"),
+    ):
+        msg = MagicMock()
+        msg.value = {"price": 50000}
+        # no exception should be raised
+        consumer_service._process_message(msg)

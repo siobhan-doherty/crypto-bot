@@ -50,8 +50,11 @@ class KafkaConsumerService:
     def _process_message(self, msg) -> None:
         data = msg.value
         logger.debug(f"Received: {data}")
-        save_to_collection(self.mongo_db, self.mongo_collection, data)
-        logger.debug("Persisted to MongoDB")
+        try:
+            save_to_collection(self.mongo_db, self.mongo_collection, data)
+            logger.debug("Persisted to MongoDB")
+        except Exception as e:
+            logger.error(f"Error occurred while saving to MongoDB: {e}")
 
     def run_forever(self) -> None:
         if not self.consumer:
