@@ -1,57 +1,47 @@
 from __future__ import annotations
-
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import MagicMock, patch
-
 import pytest
 from fastapi import status
 from fastapi.testclient import TestClient
-
 ROOT_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT_DIR / "src"))
-
-from api_user import dependencies  # noqa: E402
-from api_user.main import app  # noqa: E402
+from api_user import dependencies
+from api_user.main import app
 
 
 def build_mock_db_with_collection() -> tuple[MagicMock, MagicMock, MagicMock]:
     mock_client = MagicMock()
     mock_db = MagicMock()
     mock_collection = MagicMock()
-
     mock_client.__getitem__.return_value = mock_db
     mock_client.cryptobot = mock_db
     mock_db.__getitem__.return_value = mock_collection
-
     return mock_client, mock_db, mock_collection
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope = "session")
 def mock_dependency_mongo_client():
-    """
-    Patch dependency-layer reference used by app, not just original
-    mongo module symbol.
-    """
     with patch("api_user.dependencies.get_mongo_client") as mock:
         yield mock
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope = "session")
 def client(mock_dependency_mongo_client):
     mock_dependency_mongo_client.return_value = MagicMock()
     return TestClient(app)
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse = True)
 def reset_singleton():
     dependencies._client = None
     yield
     dependencies._client = None
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse = True)
 def reset_mock(mock_dependency_mongo_client):
     mock_dependency_mongo_client.reset_mock()
     yield
@@ -77,12 +67,8 @@ class TestMarketEndpoints:
         mock_client, _, mock_collection = build_mock_db_with_collection()
         mock_dependency_mongo_client.return_value = mock_client
 
-        open_time = int(
-            datetime(2023, 1, 1, 0, 0, tzinfo=timezone.utc).timestamp() * 1000
-        )
-        close_time = int(
-            datetime(2023, 1, 1, 0, 15, tzinfo=timezone.utc).timestamp() * 1000
-        )
+        open_time = int(datetime(2023, 1, 1, 0, 0, tzinfo = timezone.utc).timestamp() * 1000)
+        close_time = int(datetime(2023, 1, 1, 0, 15, tzinfo = timezone.utc).timestamp() * 1000)
 
         mock_find = MagicMock()
         mock_collection.find.return_value = mock_find
@@ -106,10 +92,8 @@ class TestMarketEndpoints:
         ]
 
         response = client.get("/api/market/ohlcv?symbol=BTCUSDT")
-
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
-
         assert len(data) == 1
         assert data[0]["symbol"] == "BTCUSDT"
         assert data[0]["interval"] == "15m"
@@ -118,21 +102,14 @@ class TestMarketEndpoints:
         assert data[0]["low"] == 99.0
         assert data[0]["close"] == 100.5
         assert data[0]["volume"] == 1000.0
-
         mock_collection.find.assert_called_once_with({"symbol": "BTCUSDT"})
 
-    def test_get_ohlcv_with_limit_returns_chronological_order(
-        self, client, mock_dependency_mongo_client
-    ):
+    def test_get_ohlcv_with_limit_returns_chronological_order(self, client, mock_dependency_mongo_client):
         mock_client, _, mock_collection = build_mock_db_with_collection()
         mock_dependency_mongo_client.return_value = mock_client
 
-        newer_open = int(
-            datetime(2023, 1, 1, 0, 15, tzinfo=timezone.utc).timestamp() * 1000
-        )
-        older_open = int(
-            datetime(2023, 1, 1, 0, 0, tzinfo=timezone.utc).timestamp() * 1000
-        )
+        newer_open = int(datetime(2023, 1, 1, 0, 15, tzinfo = timezone.utc).timestamp() * 1000)
+        older_open = int(datetime(2023, 1, 1, 0, 0, tzinfo = timezone.utc).timestamp() * 1000)
 
         mock_find = MagicMock()
         mock_sort = MagicMock()
@@ -166,7 +143,6 @@ class TestMarketEndpoints:
         ]
 
         response = client.get("/api/market/ohlcv?symbol=BTCUSDT&limit=2")
-
         assert response.status_code == status.HTTP_200_OK
         assert [item["_id"] for item in response.json()] == ["older", "newer"]
 
@@ -175,7 +151,7 @@ class TestMarketEndpoints:
         mock_dependency_mongo_client.return_value = mock_client
 
         now = datetime.now(timezone.utc)
-        week_ago = now - timedelta(days=7)
+        week_ago = now - timedelta(days = 7)
 
         mock_collection.aggregate.return_value = [
             {
@@ -186,10 +162,8 @@ class TestMarketEndpoints:
         ]
 
         response = client.get("/api/market/range")
-
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
-
         assert "min_date" in data
         assert "max_date" in data
         assert data["min_date"] <= data["max_date"]
