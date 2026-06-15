@@ -97,6 +97,7 @@ def test_producer_send_message(producer_service):
     })
     producer_service.producer.send.assert_called_once()
 
+
 # KafkaConsumerService tests
 @pytest.fixture
 def consumer_service():
@@ -162,3 +163,27 @@ def test_consumer_failure_handling(consumer_service):
         msg.value = {"price": 50000}
         # no exception should be raised
         consumer_service._process_message(msg)
+
+
+# producer error handling
+@patch("collection_admin.data.kafka_producer.KafkaProducer")
+def test_producer_connection_failure(mock_kafka_producer):
+    mock_kafka_producer.side_effect = Exception()
+    service = KafkaProducerService(
+        ["localhost:9092"], ["BTCUSDT"]
+    )
+    with pytest.raises(Exception):
+        service.start()
+
+
+# consumer error handling, topic does not exist
+@patch("collection_admin.data.kafka_consumer.KafkaConsumer")
+def test_consumer_topic_missing(mock_kafka_consumer):
+    mock_kafka_consumer.side_effect = Exception(
+        "Topic not found"
+    )
+    service = KafkaConsumerService(
+        ["localhost:9092"], "nonexistent_topic", "test_group"
+    )
+    with pytest.raises(Exception):
+        service.start()
