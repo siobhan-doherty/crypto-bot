@@ -1,5 +1,4 @@
 import sys
-
 import pytest
 from airflow.models import DagBag
 
@@ -10,7 +9,13 @@ if DAGS_DIR not in sys.path:
 
 @pytest.fixture
 def dag_bag():
-    return DagBag(dag_folder=DAGS_DIR, include_examples=False)
+    return DagBag(
+        dag_folder = DAGS_DIR, include_examples = False
+    )
+
+
+def test_no_import_errors(dag_bag):
+    assert not dag_bag.import_errors, f"DAG import errors: {dag_bag.import_errors}"
 
 
 def test_max_active_runs_not_one(dag_bag):
