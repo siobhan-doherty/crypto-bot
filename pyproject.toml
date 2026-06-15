@@ -17,3 +17,7 @@ exclude = ['airflow/']
 [tool.bandit]
 exclude_dirs = ["tests", "venv", ".venv", "env"]
 skips = ["B101", "B311", "B104"]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["tests/*"]
