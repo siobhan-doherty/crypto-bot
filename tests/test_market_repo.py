@@ -1,6 +1,5 @@
 import pytest
 from mongomock import MongoClient
-
 from api_user.repositories.market_repo import MarketRepository
 
 
@@ -59,18 +58,45 @@ def test_get_ohlcv_no_filters(repo):
 
 
 def test_get_ohlcv_filter_symbol(repo):
-    data = repo.get_ohlcv(symbol="BTCUSDT")
+    data = repo.get_ohlcv(symbol = "BTCUSDT")
     assert len(data) == 2
     assert all(d["symbol"] == "BTCUSDT" for d in data)
 
 
 def test_get_ohlcv_filter_time_range(repo):
-    data = repo.get_ohlcv(start_time=1000, end_time=1015)
+    data = repo.get_ohlcv(start_time = 1000, end_time = 1015)
     assert len(data) == 3
     for d in data:
         assert 1000 <= d["open_time"] <= 1015
 
 
 def test_get_ohlcv_limit(repo):
-    data = repo.get_ohlcv(limit=1)
+    data = repo.get_ohlcv(limit = 1)
     assert len(data) == 1
+
+
+def test_get_date_range_empty_db():
+    client = MongoClient()
+    db = client.cryptobot
+    repo = MarketRepository(client)
+    min_time, max_time = repo.get_date_range()
+    assert min_time is None
+    assert max_time is None
+
+
+def test_get_ohlcv_no_matching_symbol(repo):
+    data = repo.get_ohlcv(symbol = "NONEXISTENT")
+    assert data == []
+
+
+def test_get_ohlcv_with_only_start_time(repo):
+    data = repo.get_ohlcv(start_time = 1015)
+    assert len(data) >= 1
+    for d in data:
+        assert d["open_time"] >= 1015
+
+
+def test_get_ohlcv_with_only_end_time(repo):
+    data = repo.get_ohlcv(end_time = 1005)
+    for d in data:
+        assert d["open_time"] <= 1005
