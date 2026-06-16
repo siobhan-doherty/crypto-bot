@@ -1,4 +1,5 @@
 import pytest
+import time
 from unittest.mock import MagicMock, patch
 from collection_admin.data.kafka_consumer import KafkaConsumerService
 from collection_admin.data.kafka_producer import KafkaProducerService
@@ -187,3 +188,45 @@ def test_consumer_topic_missing(mock_kafka_consumer):
     )
     with pytest.raises(Exception):
         service.start()
+
+
+@patch("collection_admin.data.kafka_producer.KafkaProducerService")
+def test_producer_main(mock_service_class):
+    """Exercise main() function of kafka_producer."""
+    from collection_admin.data import kafka_producer
+
+    with patch("collection_admin.data.kafka_producer.settings") as mock_settings:
+        mock_settings.KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
+        mock_settings.BINANCE_SYMBOLS = ["BTCUSDT"]
+        mock_settings.KAFKA_INTERVAL = "1m"
+        mock_settings.KAFKA_TOPIC = "test_topic"
+        kafka_producer.main()
+        mock_service_class.assert_called_once()
+
+
+@patch("collection_admin.data.kafka_consumer.KafkaConsumerService")
+def test_consumer_main(mock_service_class):
+    """Exercise main() function of kafka_consumer."""
+    from collection_admin.data import kafka_consumer
+
+    with patch("collection_admin.data.kafka_consumer.settings") as mock_settings:
+        mock_settings.KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
+        mock_settings.KAFKA_TOPIC = "test_topic"
+        mock_settings.KAFKA_CONSUMER_GROUP = "test_group"
+        kafka_consumer.main()
+        mock_service_class.assert_called_once()
+
+
+def test_producer_run_forever(producer_service):
+    """Test run_forever loop with mocked sleep & signal."""
+    producer_service._running = True
+    with patch("time.sleep") as mock_sleep:
+        with patch("signal.signal") as mock_signal:
+            import threading
+            thread = threading.Thread(target = producer_service.run_forever)
+            thread.daemon = True
+            thread.start()
+            time.sleep(0.1)          # let loop execute once
+            producer_service._running = False
+            thread.join(timeout = 0.5)
+            mock_sleep.assert_called()
