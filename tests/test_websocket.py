@@ -1,26 +1,12 @@
 import asyncio
-
 import pytest
 import websockets
+from fastapi.testclient import TestClient
+from api_user.main import app
 
 
-@pytest.mark.asyncio
-async def test_websocket():
-    uri = "ws://localhost:8000/ws/stream"
-    print(f"Connecting to {uri}...")
-    try:
-        async with websockets.connect(uri) as websocket:
-            # receive initial connection confirmation
-            response = await websocket.recv()
-            print(f"Connected: {response}")
-
-            # try to receive a few data messages
-            for i in range(3):
-                try:
-                    message = await asyncio.wait_for(websocket.recv(), timeout=35)
-                    print(f"Received: {message}")
-                except asyncio.TimeoutError:
-                    print("Timeout: no data received in 35 seconds")
-                    break
-    except Exception as e:
-        print(f"An error occurred: {e}")
+def test_websocket_connection():
+    client = TestClient(app)
+    with client.websocket_connect("/ws/stream") as websocket:
+        data = websocket.receive_json()
+        assert data["status"] == "connected"
