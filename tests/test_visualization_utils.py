@@ -35,7 +35,7 @@ def test_prepare_data_normalizes_and_sorts(monkeypatch):
             "close": [2.0, 1.0],
         }
     )
-    monkeypatch.setattr(data_store, "fetch_historical_data", lambda: df)
+    monkeypatch.setattr(data_store, "fetch_historical_data", lambda *args, **kwargs: df)
     result = prepare_data()
     assert list(result["close"]) == [1.0, 2.0]
     assert str(result["open_datetime"].dtype).startswith("datetime64[ns, UTC]")

@@ -180,7 +180,7 @@ def _historical_figure_or_empty(
             f"Missing required data: {', '.join(missing)}",
         )
     try:
-        return figure_builder(data, trading_pair = trading_pair)
+        return figure_builder(data, trading_pair)
     except Exception as e:
         logger.exception("Failed to build %s figure: %s", title, e)
         return _empty_figure(title, "Unable to render chart")
@@ -233,7 +233,7 @@ def update_lineplot(trading_pair: str, date_range: Any) -> go.Figure:
         required_columns = HISTORICAL_LINE_REQUIRED_COLUMNS,
         title = "No data available",
         empty_message = "No historical data for the selected symbol and date range.",
-        figure_builder = lambda df, trading_pair: create_lineplot(df, trading_pair = trading_pair, show_emas = True),
+        figure_builder = lambda df, tp: create_lineplot(df, trading_pair = tp, show_emas = True),
     )
 
 
@@ -285,10 +285,37 @@ def update_volatility(atr_period: int, date_range: Any, _: Any) -> go.Figure:
     return fig
 
 
-# Dash callback registration
+# dynamic slider range update based on data length
+def update_slider_range(_: Any) -> Tuple[int, list, int, list, int, list, int, list]:
+    global _full_df
+    if _full_df.empty:
+        default_max = 100
+        default_val = [0, 100]
+        return default_max, default_val, default_max, default_val, default_max, default_val, default_max, default_val
+    max_val = len(_full_df) - 1
+    value = [0, max_val]
+    return max_val, value, max_val, value, max_val, value, max_val, value
+
+
+# dash callback registration
 def register_callbacks(app: dash.Dash) -> None:
     global _full_df
     _full_df = prepare_data()
+
+    # update slider ranges after data is loaded
+    app.callback(
+        [
+            Output("line-slider", "max"),
+            Output("line-slider", "value"),
+            Output("candle-slider", "max"),
+            Output("candle-slider", "value"),
+            Output("volume-slider", "max"),
+            Output("volume-slider", "value"),
+            Output("volatility-slider", "max"),
+            Output("volatility-slider", "value"),
+        ],
+        Input("data-init-trigger", "children"),
+    )(update_slider_range)
 
     app.callback(
         Output("trading-pair-title", "children"),
@@ -298,7 +325,7 @@ def register_callbacks(app: dash.Dash) -> None:
     app.callback(
         [Output("real-time", "figure"), Output("ws-status", "children")],
         [Input("ws", "message"), Input("trading-pair-dropdown", "value")],
-        prevent_initial_call = True,
+        prevent_initial_call=True,
     )(update_real_time)
 
     app.callback(
