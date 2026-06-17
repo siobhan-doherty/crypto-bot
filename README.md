@@ -1,3 +1,4 @@
+[![Coverage](https://img.shields.io/badge/coverage-77%25-yellowgreen)](https://github.com/siobhan-doherty/crypto-bot)
 [![CI](https://github.com/siobhan-doherty/crypto-bot/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/siobhan-doherty/crypto-bot/actions/workflows/build-and-test.yml)
 [![CodeQL](https://github.com/siobhan-doherty/crypto-bot/actions/workflows/codeql.yml/badge.svg)](https://github.com/siobhan-doherty/crypto-bot/actions/workflows/codeql.yml)
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue?logo=python)](https://www.python.org/downloads/release/python-3110/)
