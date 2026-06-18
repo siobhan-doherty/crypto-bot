@@ -51,5 +51,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements-dev.txt
-      - name: Run E2E test
+      - name: Build Docker images
+        run: docker compose build
+      - name: Run E2E tests
         run: bash scripts/run-e2e.sh
