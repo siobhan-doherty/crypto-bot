@@ -8,26 +8,27 @@ COMPOSE_FILE="${INTEGRATION_DIR}/docker-compose.e2e.yml"
 
 cleanup() {
     status=$?
-
     if [ $status -ne 0 ]; then
         echo "=== E2E failed: dumping logs ==="
         docker compose -f "${COMPOSE_FILE}" logs --tail=200
-        docker compose -f "${COMPOSE_FILE}" logs kafka_consumer --tail=200
     fi
-
     echo "=== Stopping and cleaning up E2E stack ==="
     docker compose -f "${COMPOSE_FILE}" down -v || true
-
     exit $status
 }
 
 trap cleanup EXIT
 
+# build required images first
+echo "=== Building required images ==="
+docker build -f "${REPO_ROOT}/src/collection_admin/docker/Dockerfile.data_collector" -t crypto_data_collector .
+docker build -f "${REPO_ROOT}/src/api_user/docker/Dockerfile.fastapi" -t crypto-bot-fastapi .
+
 echo "=== Starting E2E test stack ==="
 docker compose -f "${COMPOSE_FILE}" up -d --wait
 
-echo "=== Waiting for services to be healthy (consumer needs time) ==="
-sleep 35
+echo "=== Waiting for services to be healthy ==="
+sleep 15
 
 echo "=== Running E2E test ==="
 cd "${REPO_ROOT}"
