@@ -1,15 +1,17 @@
 """
 FastAPI testing using httpx.AsyncClient with direct patching of get_mongo_client.
 """
-import pytest
-import pytest_asyncio
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
+
 import mongomock
+import pytest
+import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from api_user.main import app
+
 import api_user.dependencies as deps
 import api_user.routes.health as health_routes
+from api_user.main import app
 
 
 @pytest_asyncio.fixture

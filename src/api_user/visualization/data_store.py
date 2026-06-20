@@ -1,7 +1,10 @@
 from __future__ import annotations
-from .fetch_data import fetch_historical_data
+
 import logging
+
 import pandas as pd
+
+from .fetch_data import fetch_historical_data
 
 logger = logging.getLogger(__name__)
 

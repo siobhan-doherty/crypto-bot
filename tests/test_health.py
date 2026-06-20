@@ -1,4 +1,4 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 
 def test_health_endpoint():
@@ -11,6 +11,7 @@ def test_health_endpoint():
 
         # import TestClient & app inside patch context
         from fastapi.testclient import TestClient
+
         from api_user.main import app
 
         client = TestClient(app)

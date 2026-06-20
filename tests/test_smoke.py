@@ -1,7 +1,8 @@
 import subprocess
 import time
-import requests
+
 import pytest
+import requests
 
 
 def wait_for_service(url, timeout = 60):

@@ -1,11 +1,11 @@
-import os
 import json
+import os
 import time
-import pytest
-from testcontainers.kafka import KafkaContainer
-from kafka import KafkaProducer, KafkaConsumer
-from kafka.admin import KafkaAdminClient, NewTopic
 
+import pytest
+from kafka import KafkaConsumer, KafkaProducer
+from kafka.admin import KafkaAdminClient, NewTopic
+from testcontainers.kafka import KafkaContainer
 
 # disable global Kafka mocks from conftest.py
 os.environ["E2E_TEST"] = "1"

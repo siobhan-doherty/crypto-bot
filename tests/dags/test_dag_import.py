@@ -1,7 +1,7 @@
-import sys 
-import pytest 
-from airflow.models import DagBag
+import sys
 
+import pytest
+from airflow.models import DagBag
 
 # add DAGs directory to Python path so 'config' can be imported
 sys.path.insert(0, "airflow/dags")

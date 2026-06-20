@@ -1,4 +1,5 @@
 from dash import dcc, html
+
 from api_user.visualization.data_store import prepare_data
 from api_user.visualization.layout.controls import create_atr_period_input
 from api_user.visualization.layout.theme import COLORS

@@ -19,7 +19,7 @@ cleanup() {
 
 trap cleanup EXIT
 
-# build required images first
+# build required images from project root
 echo "=== Building required images ==="
 docker build -f "${REPO_ROOT}/src/collection_admin/docker/Dockerfile.data_collector" -t crypto_data_collector .
 docker build -f "${REPO_ROOT}/src/api_user/docker/Dockerfile.fastapi" -t crypto-bot-fastapi .

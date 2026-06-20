@@ -1,6 +1,8 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
 import requests
-from unittest.mock import patch, MagicMock
+
 # try to import module, skip whole test file if findspark is missing
 initialize_historical_data = pytest.importorskip(
     "collection_admin.data.initialize_historical_data"

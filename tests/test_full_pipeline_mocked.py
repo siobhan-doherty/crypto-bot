@@ -1,8 +1,9 @@
-import pytest
 import subprocess
 import time
+from unittest.mock import MagicMock, patch
+
+import pytest
 import requests
-from unittest.mock import patch, MagicMock
 
 
 # mock subprocess.run outputs for Airflow CLI commands

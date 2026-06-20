@@ -1,5 +1,6 @@
 import pytest
 from mongomock import MongoClient
+
 from api_user.repositories.market_repo import MarketRepository
 
 

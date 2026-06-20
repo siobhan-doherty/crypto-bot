@@ -1,9 +1,11 @@
 import json
+from unittest.mock import MagicMock, patch
+
 import dash
 import pandas as pd
 import plotly.graph_objects as go
-from unittest.mock import MagicMock, patch
 from dash import no_update
+
 from api_user.visualization import callbacks
 
 

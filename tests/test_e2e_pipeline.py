@@ -1,9 +1,11 @@
 import json
 import os
 import time
-import requests
+
 import pytest
+import requests
 from pymongo import MongoClient
+
 # conditional import, skip test if kafka-python is not installed
 try:
     from kafka import KafkaProducer

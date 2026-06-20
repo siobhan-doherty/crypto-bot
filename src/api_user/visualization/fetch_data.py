@@ -1,4 +1,7 @@
 import logging
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional, Tuple
+
 import pandas as pd
 import requests
 from tenacity import (
@@ -7,8 +10,7 @@ from tenacity import (
     stop_after_attempt,
     wait_exponential,
 )
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional, Tuple
+
 from api_user.config import settings
 from api_user.visualization.schemas import HistoricalData, KlineData
 

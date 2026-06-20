@@ -1,6 +1,8 @@
-import pytest
 import time
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from collection_admin.data.kafka_consumer import KafkaConsumerService
 from collection_admin.data.kafka_producer import KafkaProducerService
 from collection_admin.kafka_utils import kline_to_dict

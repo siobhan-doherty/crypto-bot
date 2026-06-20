@@ -23,7 +23,6 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # Install isort explicitly (it's not in requirements-dev.txt)
           pip install isort black mypy bandit ruff pytest pytest-cov
           pip install -r requirements-dev.txt
 
@@ -92,8 +91,9 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
 
-      - name: Create .env file for CI
+      - name: Create .env files for CI
         run: |
+          # Root .env
           cat > .env << EOF
           AIRFLOW_ADMIN_USERNAME=admin
           AIRFLOW_ADMIN_PASSWORD=admin
@@ -110,8 +110,7 @@ jobs:
           AIRFLOW_UID=50000
           EOF
 
-      - name: Create collection_admin .env file
-        run: |
+          # collection_admin .env
           mkdir -p src/collection_admin
           cat > src/collection_admin/.env << EOF
           MONGO_URI=mongodb://admin:password123@crypto_mongo:27017/cryptobot?authSource=admin
@@ -119,8 +118,7 @@ jobs:
           BINANCE_SECRET_KEY=dummy_secret
           EOF
 
-      - name: Create api_user .env file
-        run: |
+          # api_user .env
           mkdir -p src/api_user
           cat > src/api_user/.env << EOF
           MONGO_URI=mongodb://admin:password123@crypto_mongo:27017/cryptobot?authSource=admin

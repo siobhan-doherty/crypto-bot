@@ -1,4 +1,5 @@
-from dash import html, dcc
+from dash import dcc, html
+
 from .control_panel import create_control_panel
 from .historical_layout import create_historical_layout
 from .streaming_layout import create_streaming_layout

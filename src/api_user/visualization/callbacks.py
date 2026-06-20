@@ -1,6 +1,14 @@
 from __future__ import annotations
+
+import json
+import logging
 from typing import Any, Dict, Iterable, Mapping, Optional, Sequence, Tuple
+
+import dash
+import pandas as pd
+import plotly.graph_objects as go
 from dash.dependencies import Input, Output
+
 from api_user.visualization.data_store import prepare_data
 from api_user.visualization.layout.controls import create_range_selector
 from api_user.visualization.plots.candlestickplot import create_candlestickplot
@@ -8,11 +16,6 @@ from api_user.visualization.plots.lineplot import create_lineplot
 from api_user.visualization.plots.volatilityplot import create_volatility_plot
 from api_user.visualization.plots.volumeplot import create_volumeplot
 from api_user.visualization.utils import filter_df
-import json
-import logging
-import dash
-import pandas as pd
-import plotly.graph_objects as go
 
 logger = logging.getLogger(__name__)
 

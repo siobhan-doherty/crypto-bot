@@ -1,9 +1,12 @@
 import os
 import sys
+
 import pytest
+
 pytest.skip("Skipping because it causes hang; fix later", allow_module_level = True)
 from types import ModuleType
 from unittest.mock import MagicMock, patch
+
 # disable Kafka mocks from conftest & mock Spark dependencies
 os.environ["E2E_TEST"] = "1"
 # mock findspark & pyspark globally to allow clean import
