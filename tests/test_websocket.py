@@ -14,7 +14,9 @@ def test_websocket_health_connected():
         assert data["status"] == "connected"
 
 
-@pytest.mark.skip(reason="Async WebSocket test requires a running server; logic covered by fetch_data unit tests and E2E")
+@pytest.mark.skip(
+    reason="Async WebSocket test requires a running server; logic covered by fetch_data unit tests and E2E"
+)
 @pytest.mark.asyncio
 async def test_websocket_streams_data():
     pass

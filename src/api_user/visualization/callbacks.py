@@ -35,11 +35,11 @@ def _empty_figure(title: str, message: str) -> go.Figure:
     """Create plotly figure with centered message and no axes."""
     figure = go.Figure()
     figure.update_layout(
-        title = title,
-        template = "plotly_dark",
-        xaxis = {"visible": False},
-        yaxis = {"visible": False},
-        annotations = [
+        title=title,
+        template="plotly_dark",
+        xaxis={"visible": False},
+        yaxis={"visible": False},
+        annotations=[
             {
                 "text": message,
                 "xref": "paper",
@@ -50,7 +50,7 @@ def _empty_figure(title: str, message: str) -> go.Figure:
                 "font": {"size": 16},
             }
         ],
-        margin = {"l": 40, "r": 40, "t": 60, "b": 40},
+        margin={"l": 40, "r": 40, "t": 60, "b": 40},
     )
     return figure
 
@@ -69,7 +69,7 @@ def _coerce_datetime_column(
     if column_name not in dataframe.columns or dataframe.empty:
         return dataframe
     result = dataframe.copy()
-    parsed = pd.to_datetime(result[column_name], utc = True, errors = "coerce")
+    parsed = pd.to_datetime(result[column_name], utc=True, errors="coerce")
     result = result.loc[parsed.notna()].copy()
     if result.empty:
         return result
@@ -81,7 +81,7 @@ def _first_available_numeric_column(dataframe: pd.DataFrame) -> Optional[str]:
     excluded_columns = {"timestamp", "close_time", "close_datetime"}
     numeric_cols = [
         col
-        for col in dataframe.select_dtypes(include = ["number"]).columns
+        for col in dataframe.select_dtypes(include=["number"]).columns
         if col not in excluded_columns
     ]
     return numeric_cols[0] if numeric_cols else None
@@ -129,8 +129,8 @@ def _build_realtime_dataframe(
     if not y_col:
         return df, None, "No numeric realtime field available"
     df = df.sort_values("close_datetime").drop_duplicates(
-        subset = "close_datetime",
-        keep = "last",
+        subset="close_datetime",
+        keep="last",
     )
     return df, y_col, None
 
@@ -138,7 +138,7 @@ def _build_realtime_dataframe(
 def _build_realtime_plot(df: pd.DataFrame, trading_pair: str, y_col: str) -> go.Figure:
     plot_df = df[["close_datetime", y_col]].copy()
     plot_df.columns = ["close_datetime", "close"]
-    fig = create_lineplot(plot_df, trading_pair = trading_pair, show_emas = False)
+    fig = create_lineplot(plot_df, trading_pair=trading_pair, show_emas=False)
     fig["layout"].update(create_range_selector(y_col))
     return fig
 
@@ -230,37 +230,39 @@ def update_real_time(
 
 def update_lineplot(trading_pair: str, date_range: Any) -> go.Figure:
     return _historical_figure_or_empty(
-        full_df = _full_df,
-        trading_pair = trading_pair,
-        date_range = date_range,
-        required_columns = HISTORICAL_LINE_REQUIRED_COLUMNS,
-        title = "No data available",
-        empty_message = "No historical data for the selected symbol and date range.",
-        figure_builder = lambda df, tp: create_lineplot(df, trading_pair = tp, show_emas = True),
+        full_df=_full_df,
+        trading_pair=trading_pair,
+        date_range=date_range,
+        required_columns=HISTORICAL_LINE_REQUIRED_COLUMNS,
+        title="No data available",
+        empty_message="No historical data for the selected symbol and date range.",
+        figure_builder=lambda df, tp: create_lineplot(
+            df, trading_pair=tp, show_emas=True
+        ),
     )
 
 
 def update_candlestick(trading_pair: str, date_range: Any) -> go.Figure:
     return _historical_figure_or_empty(
-        full_df = _full_df,
-        trading_pair = trading_pair,
-        date_range = date_range,
-        required_columns = HISTORICAL_CANDLE_REQUIRED_COLUMNS,
-        title = "No data available",
-        empty_message = "No historical data for the selected symbol and date range.",
-        figure_builder = create_candlestickplot,
+        full_df=_full_df,
+        trading_pair=trading_pair,
+        date_range=date_range,
+        required_columns=HISTORICAL_CANDLE_REQUIRED_COLUMNS,
+        title="No data available",
+        empty_message="No historical data for the selected symbol and date range.",
+        figure_builder=create_candlestickplot,
     )
 
 
 def update_volume(trading_pair: str, date_range: Any) -> go.Figure:
     return _historical_figure_or_empty(
-        full_df = _full_df,
-        trading_pair = trading_pair,
-        date_range = date_range,
-        required_columns = HISTORICAL_VOLUME_REQUIRED_COLUMNS,
-        title = "No data available",
-        empty_message = "No historical data for the selected symbol and date range.",
-        figure_builder = create_volumeplot,
+        full_df=_full_df,
+        trading_pair=trading_pair,
+        date_range=date_range,
+        required_columns=HISTORICAL_VOLUME_REQUIRED_COLUMNS,
+        title="No data available",
+        empty_message="No historical data for the selected symbol and date range.",
+        figure_builder=create_volumeplot,
     )
 
 
@@ -275,7 +277,7 @@ def update_volatility(atr_period: int, date_range: Any, _: Any) -> go.Figure:
             "No data available", "No volatility data for the selected date range."
         )
     try:
-        fig = create_volatility_plot(pair_data, period = atr_period)
+        fig = create_volatility_plot(pair_data, period=atr_period)
     except Exception as e:
         logger.exception("Volatility plot error: %s", e)
         return _empty_figure(
@@ -294,7 +296,16 @@ def update_slider_range(_: Any) -> Tuple[int, list, int, list, int, list, int, l
     if _full_df.empty:
         default_max = 100
         default_val = [0, 100]
-        return default_max, default_val, default_max, default_val, default_max, default_val, default_max, default_val
+        return (
+            default_max,
+            default_val,
+            default_max,
+            default_val,
+            default_max,
+            default_val,
+            default_max,
+            default_val,
+        )
     max_val = len(_full_df) - 1
     value = [0, max_val]
     return max_val, value, max_val, value, max_val, value, max_val, value

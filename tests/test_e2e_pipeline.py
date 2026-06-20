@@ -10,6 +10,7 @@ from pymongo import MongoClient
 try:
     from kafka import KafkaProducer
     from kafka.errors import NoBrokersAvailable
+
     KAFKA_AVAILABLE = True
 except ImportError:
     KAFKA_AVAILABLE = False
@@ -17,7 +18,7 @@ except ImportError:
     NoBrokersAvailable = None
 
 
-@pytest.mark.skipif(not KAFKA_AVAILABLE, reason = "kafka-python not installed")
+@pytest.mark.skipif(not KAFKA_AVAILABLE, reason="kafka-python not installed")
 def test_data_flow():
     kafka_endpoint = os.getenv("KAFKA_ENDPOINT", "localhost:9092")
     mongo_endpoint = os.getenv("MONGO_ENDPOINT", "mongodb://localhost:27018")
@@ -52,8 +53,8 @@ def test_data_flow():
     for i in range(max_retries):
         try:
             producer = KafkaProducer(
-                bootstrap_servers = kafka_endpoint,
-                value_serializer = lambda v: json.dumps(v).encode("utf-8"),
+                bootstrap_servers=kafka_endpoint,
+                value_serializer=lambda v: json.dumps(v).encode("utf-8"),
             )
             break
         except NoBrokersAvailable:
@@ -61,9 +62,9 @@ def test_data_flow():
                 raise
             time.sleep(2)
 
-    future = producer.send("binance_prices", value = test_message)
+    future = producer.send("binance_prices", value=test_message)
     producer.flush()
-    result = future.get(timeout = 5)
+    result = future.get(timeout=5)
     assert result.topic == "binance_prices"
 
     # wait for MongoDB to receive message
@@ -80,12 +81,12 @@ def test_data_flow():
     collection.delete_one({"_id": doc["_id"]})
 
     # verify FastAPI health
-    health_response = requests.get(f"{fastapi_url}/api/health", timeout = 5)
+    health_response = requests.get(f"{fastapi_url}/api/health", timeout=5)
     assert health_response.status_code == 200
-    assert health_response.json().get("status") == "ok"
+    assert health_response.json().get("status") == "healthy"
 
     # verify historical endpoint
     historical_response = requests.get(
-        f"{fastapi_url}/api/historical/TESTUSDT", timeout = 5
+        f"{fastapi_url}/api/historical/TESTUSDT", timeout=5
     )
     assert historical_response.status_code == 200

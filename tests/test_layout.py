@@ -11,7 +11,7 @@ def test_create_main_layout_returns_div():
     layout = create_main_layout()
     assert isinstance(layout, html.Div)
     # check layout contains expected children
-    children = getattr(layout, 'children', [])
+    children = getattr(layout, "children", [])
     # at minimum should contain control panel, streaming, historical, and hidden sliders
     # check not empty and contains Divs
     assert len(children) >= 4

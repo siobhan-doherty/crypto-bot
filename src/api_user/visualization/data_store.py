@@ -19,8 +19,8 @@ def _normalize_datetime_columns(df: pd.DataFrame) -> pd.DataFrame:
         if column in normalized.columns:
             normalized[column] = pd.to_datetime(
                 normalized[column],
-                utc = True,
-                errors = "coerce",
+                utc=True,
+                errors="coerce",
             )
     return normalized
 
@@ -34,7 +34,7 @@ def _resolve_time_column(df: pd.DataFrame) -> str | None:
 
 def prepare_data() -> pd.DataFrame:
     try:
-        df = fetch_historical_data(symbol = "BTCUSDT")
+        df = fetch_historical_data(symbol="BTCUSDT")
     except Exception:
         logger.exception("Failed to fetch historical data for visualization.")
         return pd.DataFrame()
@@ -51,10 +51,10 @@ def prepare_data() -> pd.DataFrame:
             "Historical dataset does not contain a supported time column. Columns=%s",
             list(normalized.columns),
         )
-        return normalized.reset_index(drop = True)
+        return normalized.reset_index(drop=True)
 
-    normalized = normalized.sort_values(time_column, kind = "stable").reset_index(
-        drop = True
+    normalized = normalized.sort_values(time_column, kind="stable").reset_index(
+        drop=True
     )
 
     logger.info(

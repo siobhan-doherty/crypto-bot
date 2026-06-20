@@ -10,9 +10,7 @@ if DAGS_DIR not in sys.path:
 
 @pytest.fixture
 def dag_bag():
-    return DagBag(
-        dag_folder = DAGS_DIR, include_examples = False
-    )
+    return DagBag(dag_folder=DAGS_DIR, include_examples=False)
 
 
 def test_no_import_errors(dag_bag):

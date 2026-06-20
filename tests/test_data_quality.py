@@ -11,7 +11,7 @@ from pymongo import MongoClient
 try:
     import great_expectations as gx
 except ImportError:
-    pytest.skip("Great Expectations not installed", allow_module_level = True)
+    pytest.skip("Great Expectations not installed", allow_module_level=True)
 
 
 @pytest.fixture(scope="session")
@@ -20,7 +20,7 @@ def mongo_client():
     uri = os.environ.get("MONGO_URI")
     if not uri:
         pytest.skip("MONGO_URI not set")
-    client = MongoClient(uri, serverSelectionTimeoutMS = 2000)
+    client = MongoClient(uri, serverSelectionTimeoutMS=2000)
     try:
         client.admin.command("ping")
     except Exception as e:
@@ -60,8 +60,8 @@ def test_high_greater_than_low(sample_data):
 
 def test_close_between_high_low(sample_data):
     invalid = sample_data[
-        (sample_data["close"] < sample_data["low"]) |
-        (sample_data["close"] > sample_data["high"])
+        (sample_data["close"] < sample_data["low"])
+        | (sample_data["close"] > sample_data["high"])
     ]
     assert invalid.empty, f"Found {len(invalid)} rows where close outside [low, high]"
 

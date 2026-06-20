@@ -13,10 +13,18 @@ def test_kline_to_dict():
     sample_msg = {
         "s": "BTCUSDT",
         "k": {
-            "t": 1620000000000, "T": 1620000060000,
-            "o": "50000", "c": "50100", "h": "50200",
-            "l": "49900", "v": "1.5", "q": "75000",
-            "n": 120, "V": "0.8", "Q": "40000", "x": True,
+            "t": 1620000000000,
+            "T": 1620000060000,
+            "o": "50000",
+            "c": "50100",
+            "h": "50200",
+            "l": "49900",
+            "v": "1.5",
+            "q": "75000",
+            "n": 120,
+            "V": "0.8",
+            "Q": "40000",
+            "x": True,
         },
     }
     result = kline_to_dict(sample_msg)
@@ -32,20 +40,16 @@ def test_kline_to_dict():
 @pytest.fixture
 def producer_service():
     return KafkaProducerService(
-        bootstrap_servers = ["localhost:9092"],
-        symbols = ["BTCUSDT"],
-        interval = "1m",
-        topic = "test_topic",
+        bootstrap_servers=["localhost:9092"],
+        symbols=["BTCUSDT"],
+        interval="1m",
+        topic="test_topic",
     )
 
 
 def test_producer_start(producer_service, mock_kafka_producer):
-    with patch(
-        "collection_admin.data.kafka_producer.wait_for_kafka"
-    ) as mock_wait:
-        with patch(
-            "binance.ThreadedWebsocketManager"
-        ) as mock_twm:
+    with patch("collection_admin.data.kafka_producer.wait_for_kafka") as mock_wait:
+        with patch("binance.ThreadedWebsocketManager") as mock_twm:
             mock_twm.return_value.start = MagicMock()
             producer_service.start()
             mock_wait.assert_called_once()
@@ -71,10 +75,18 @@ def test_handle_message(producer_service):
         "e": "kline",
         "s": "BTCUSDT",
         "k": {
-            "t": 1620000000000, "T": 1620000060000,
-            "o": "50000", "c": "50100", "h": "50200", 
-            "l": "49900", "v": "1.5", "q": "75000",
-            "n": 120, "V": "0.8", "Q": "40000", "x": True,
+            "t": 1620000000000,
+            "T": 1620000060000,
+            "o": "50000",
+            "c": "50100",
+            "h": "50200",
+            "l": "49900",
+            "v": "1.5",
+            "q": "75000",
+            "n": 120,
+            "V": "0.8",
+            "Q": "40000",
+            "x": True,
         },
     }
     producer_service._handle_message(sample_msg)
@@ -85,19 +97,30 @@ def test_handle_message(producer_service):
 
 
 def test_producer_send_message(producer_service):
-    from unittest.mock import MagicMock 
+    from unittest.mock import MagicMock
 
     producer_service._running = True
     producer_service.producer = MagicMock()
-    producer_service._handle_message({
-        "e": "kline",
-        "s": "BTCUSDT",
-        "k": {
-            "x": True, "t": 123, "T": 456, "o": "50000",
-            "c": "50100", "h": "50200", "l": "49900", "v": "1.5", 
-            "q": "75000", "n": 120, "V": "0.8", "Q": "40000"
-        },
-    })
+    producer_service._handle_message(
+        {
+            "e": "kline",
+            "s": "BTCUSDT",
+            "k": {
+                "x": True,
+                "t": 123,
+                "T": 456,
+                "o": "50000",
+                "c": "50100",
+                "h": "50200",
+                "l": "49900",
+                "v": "1.5",
+                "q": "75000",
+                "n": 120,
+                "V": "0.8",
+                "Q": "40000",
+            },
+        }
+    )
     producer_service.producer.send.assert_called_once()
 
 
@@ -114,9 +137,7 @@ def consumer_service():
 
 
 def test_consumer_start(consumer_service, mock_kafka_producer):
-    with patch(
-        "collection_admin.data.kafka_consumer.wait_for_kafka"
-    ) as mock_wait:
+    with patch("collection_admin.data.kafka_consumer.wait_for_kafka") as mock_wait:
         consumer_service.start()
         mock_wait.assert_called_once()
         assert consumer_service.consumer is not None
@@ -136,9 +157,7 @@ def test_consumer_process_message(mock_save, consumer_service):
         value = {"price": 50000}
 
     consumer_service._process_message(MockMessage())
-    mock_save.assert_called_once_with(
-        "test_db", "test_coll", {"price": 50000}
-    )
+    mock_save.assert_called_once_with("test_db", "test_coll", {"price": 50000})
 
 
 # extra tests for edge cases
@@ -150,9 +169,7 @@ def test_producer_handle_bad_message(producer_service):
     producer_service._handle_message({"s": "BTCUSDT"})
     producer_service.producer.send.assert_not_called()
     # message with 'k' but 'x' is False, unclosed kline
-    producer_service._handle_message(
-        {"e": "kline", "s": "BTCUSDT", "k": {"x": False}}
-    )
+    producer_service._handle_message({"e": "kline", "s": "BTCUSDT", "k": {"x": False}})
     producer_service.producer.send.assert_not_called()
 
 
@@ -160,7 +177,7 @@ def test_consumer_failure_handling(consumer_service):
     """If saving to MongoDB fails, consumer should still continue."""
     with patch(
         "collection_admin.data.kafka_consumer.save_to_collection",
-        side_effect = Exception("DB error"),
+        side_effect=Exception("DB error"),
     ):
         msg = MagicMock()
         msg.value = {"price": 50000}
@@ -172,9 +189,7 @@ def test_consumer_failure_handling(consumer_service):
 @patch("collection_admin.data.kafka_producer.KafkaProducer")
 def test_producer_connection_failure(mock_kafka_producer):
     mock_kafka_producer.side_effect = Exception()
-    service = KafkaProducerService(
-        ["localhost:9092"], ["BTCUSDT"]
-    )
+    service = KafkaProducerService(["localhost:9092"], ["BTCUSDT"])
     with pytest.raises(Exception):
         service.start()
 
@@ -182,9 +197,7 @@ def test_producer_connection_failure(mock_kafka_producer):
 # consumer error handling, topic does not exist
 @patch("collection_admin.data.kafka_consumer.KafkaConsumer")
 def test_consumer_topic_missing(mock_kafka_consumer):
-    mock_kafka_consumer.side_effect = Exception(
-        "Topic not found"
-    )
+    mock_kafka_consumer.side_effect = Exception("Topic not found")
     service = KafkaConsumerService(
         ["localhost:9092"], "nonexistent_topic", "test_group"
     )
@@ -225,10 +238,11 @@ def test_producer_run_forever(producer_service):
     with patch("time.sleep") as mock_sleep:
         with patch("signal.signal") as mock_signal:
             import threading
-            thread = threading.Thread(target = producer_service.run_forever)
+
+            thread = threading.Thread(target=producer_service.run_forever)
             thread.daemon = True
             thread.start()
-            time.sleep(0.1)          # let loop execute once
+            time.sleep(0.1)  # let loop execute once
             producer_service._running = False
-            thread.join(timeout = 0.5)
+            thread.join(timeout=0.5)
             mock_sleep.assert_called()

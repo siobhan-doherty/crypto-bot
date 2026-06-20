@@ -7,16 +7,24 @@ from pymongo import MongoClient
 
 
 def run_cmd(cmd):
-    result = subprocess.run(cmd, capture_output = True, text = True)
+    result = subprocess.run(cmd, capture_output=True, text=True)
     return result.stdout.strip(), result.stderr.strip(), result.returncode
 
 
 def get_latest_run_id(dag_id):
     """Fetch most recent dag_run_id for given DAG using docker exec."""
-    stdout, _, rc = run_cmd([
-        "docker", "exec", "crypto_airflow", "airflow", 
-        "dags", "list-runs", "-d", dag_id
-    ])
+    stdout, _, rc = run_cmd(
+        [
+            "docker",
+            "exec",
+            "crypto_airflow",
+            "airflow",
+            "dags",
+            "list-runs",
+            "-d",
+            dag_id,
+        ]
+    )
     if rc != 0:
         return None
     lines = stdout.split("\n")
@@ -24,17 +32,27 @@ def get_latest_run_id(dag_id):
         if line.strip() and not line.startswith("=") and not line.startswith("dag_id"):
             parts = line.split()
             if len(parts) >= 2:
-                return parts[1]   # run_id is second column
+                return parts[1]  # run_id is second column
     return None
 
 
-def wait_for_dag_success(dag_id, run_id, timeout = 600):
+def wait_for_dag_success(dag_id, run_id, timeout=600):
     start = time.time()
     while time.time() - start < timeout:
-        stdout, _, rc = run_cmd([
-            "docker", "exec", "crypto_airflow", "airflow", "dags", 
-            "state", "--dag-id", dag_id, "--run-id", run_id
-        ])
+        stdout, _, rc = run_cmd(
+            [
+                "docker",
+                "exec",
+                "crypto_airflow",
+                "airflow",
+                "dags",
+                "state",
+                "--dag-id",
+                dag_id,
+                "--run-id",
+                run_id,
+            ]
+        )
         if rc == 0:
             for line in stdout.split("\n"):
                 if dag_id in line and run_id in line:
@@ -54,17 +72,13 @@ def test_full_pipeline():
     mongo_endpoint = os.getenv("MONGO_ENDPOINT", "mongodb://localhost:27017")
     dag_id = "update_historical_data"
     # unpause DAG
-    run_cmd([
-        "docker", "exec", "crypto_airflow", 
-        "airflow", "dags", "unpause", dag_id
-    ])
+    run_cmd(["docker", "exec", "crypto_airflow", "airflow", "dags", "unpause", dag_id])
     # get current latest run ID before triggering
     old_run_id = get_latest_run_id(dag_id)
     # trigger DAG
-    _, stderr, rc = run_cmd([
-        "docker", "exec", "crypto_airflow", 
-        "airflow", "dags", "trigger", dag_id
-    ])
+    _, stderr, rc = run_cmd(
+        ["docker", "exec", "crypto_airflow", "airflow", "dags", "trigger", dag_id]
+    )
     assert rc == 0, f"Failed to trigger DAG: {stderr}"
     # wait for new run to appear
     time.sleep(3)
@@ -84,7 +98,7 @@ def test_full_pipeline():
     mongo_client.close()
     # verify FastAPI serves data
     ohlcv_url = f"{fastapi_url}/market/ohlcv?symbol=BTCUSDT&limit=5"
-    resp = requests.get(ohlcv_url, timeout = 10)
+    resp = requests.get(ohlcv_url, timeout=10)
     resp.raise_for_status()
     data = resp.json()
     assert len(data) > 0, "FastAPI returned no historical data"

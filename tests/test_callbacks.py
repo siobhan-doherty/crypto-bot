@@ -10,7 +10,7 @@ from api_user.visualization import callbacks
 
 
 # helpers
-def make_ws_message(records = None):
+def make_ws_message(records=None):
     if records is None:
         records = [
             {
@@ -91,10 +91,9 @@ def test_build_realtime_dataframe_no_numeric():
 
 
 def test_build_realtime_plot():
-    df = pd.DataFrame({
-        "close_datetime": pd.to_datetime(["2026-06-04T10:00:00Z"]), 
-        "close": [50000.0]
-    })
+    df = pd.DataFrame(
+        {"close_datetime": pd.to_datetime(["2026-06-04T10:00:00Z"]), "close": [50000.0]}
+    )
     fig = callbacks._build_realtime_plot(df, "BTCUSDT", "close")
     assert isinstance(fig, dict)
     assert "data" in fig
@@ -125,13 +124,13 @@ def test_filtered_dataframe_or_empty_exception():
 def test_historical_figure_or_empty_empty_data():
     df = pd.DataFrame()
     fig = callbacks._historical_figure_or_empty(
-        full_df = df,
-        trading_pair = "BTCUSDT",
-        date_range = None,
-        required_columns = ("close_datetime", "close"),
-        title = "Test",
-        empty_message = "No data",
-        figure_builder = lambda data, tp: go.Figure(),
+        full_df=df,
+        trading_pair="BTCUSDT",
+        date_range=None,
+        required_columns=("close_datetime", "close"),
+        title="Test",
+        empty_message="No data",
+        figure_builder=lambda data, tp: go.Figure(),
     )
     assert fig.layout.title.text == "Test"
     assert fig.layout.annotations[0].text == "No data"
@@ -140,13 +139,13 @@ def test_historical_figure_or_empty_empty_data():
 def test_historical_figure_or_empty_missing_columns():
     df = pd.DataFrame({"symbol": ["BTCUSDT"]})
     fig = callbacks._historical_figure_or_empty(
-        full_df = df,
-        trading_pair = "BTCUSDT",
-        date_range = None,
-        required_columns = ("close_datetime", "close"),
-        title = "Test",
-        empty_message = "No data",
-        figure_builder = lambda data, tp: go.Figure(),
+        full_df=df,
+        trading_pair="BTCUSDT",
+        date_range=None,
+        required_columns=("close_datetime", "close"),
+        title="Test",
+        empty_message="No data",
+        figure_builder=lambda data, tp: go.Figure(),
     )
     assert (
         "Missing required data: close_datetime, close"
@@ -158,18 +157,20 @@ def test_historical_figure_or_empty_handles_builder_exception():
     def failing_builder(data, tp):
         raise ValueError("Something went wrong")
 
-    df = pd.DataFrame({
-        "close_datetime": pd.date_range("2026-06-15", periods = 5),
-        "close": [1, 2, 3, 4, 5]
-    })
+    df = pd.DataFrame(
+        {
+            "close_datetime": pd.date_range("2026-06-15", periods=5),
+            "close": [1, 2, 3, 4, 5],
+        }
+    )
     fig = callbacks._historical_figure_or_empty(
-        full_df = df,
-        trading_pair = "BTCUSDT",
-        date_range = None,
-        required_columns = ("close_datetime", "close"),
-        title = "Test",
-        empty_message = "No data",
-        figure_builder = failing_builder
+        full_df=df,
+        trading_pair="BTCUSDT",
+        date_range=None,
+        required_columns=("close_datetime", "close"),
+        title="Test",
+        empty_message="No data",
+        figure_builder=failing_builder,
     )
     # exception is caught + empty_message is returned
     assert fig.layout.annotations[0].text == "No data"
@@ -219,58 +220,71 @@ def test_update_real_time_valid_data():
 
 
 def test_update_lineplot_returns_figure():
-    df = pd.DataFrame({
-        "symbol": ["BTCUSDT"] * 5,
-        "close_datetime": pd.date_range("2026-06-15", periods = 5),
-        "close": [1, 2, 3, 4, 5]
-    })
+    df = pd.DataFrame(
+        {
+            "symbol": ["BTCUSDT"] * 5,
+            "close_datetime": pd.date_range("2026-06-15", periods=5),
+            "close": [1, 2, 3, 4, 5],
+        }
+    )
     callbacks._full_df = df
     fig = callbacks.update_lineplot("BTCUSDT", None)
-    assert isinstance(fig, dict)    # changed to dict
+    assert isinstance(fig, dict)  # changed to dict
     assert len(fig["data"]) > 0
-    assert fig["layout"]["title"]["text"] == "BTCUSDT Close Price with Exponential Moving Averages"
+    assert (
+        fig["layout"]["title"]["text"]
+        == "BTCUSDT Close Price with Exponential Moving Averages"
+    )
 
 
 def test_update_candlestick_returns_figure():
-    df = pd.DataFrame({
-        "symbol": ["BTCUSDT"] * 5,
-        "close_datetime": pd.date_range("2026-06-15", periods = 5),
-        "open": [1, 2, 3, 4, 5],
-        "high": [2, 3, 4, 5, 6],
-        "low": [0, 1, 2, 3, 4],
-        "close": [1, 2, 3, 4, 5]
-    })
+    df = pd.DataFrame(
+        {
+            "symbol": ["BTCUSDT"] * 5,
+            "close_datetime": pd.date_range("2026-06-15", periods=5),
+            "open": [1, 2, 3, 4, 5],
+            "high": [2, 3, 4, 5, 6],
+            "low": [0, 1, 2, 3, 4],
+            "close": [1, 2, 3, 4, 5],
+        }
+    )
     callbacks._full_df = df
     fig = callbacks.update_candlestick("BTCUSDT", None)
-    assert isinstance(fig, dict)    # changed to dict
+    assert isinstance(fig, dict)  # changed to dict
     assert len(fig["data"]) > 0
     assert any(trace.get("type") == "candlestick" for trace in fig["data"])
 
 
 def test_update_volume_returns_figure():
-    df = pd.DataFrame({
-        "symbol": ["BTCUSDT"] * 5,
-        "close_datetime": pd.date_range("2026-06-15", periods = 5),
-        "volume": [100, 200, 300, 400, 500],
-        "open": [1, 2, 3, 4, 5],
-        "close": [1, 2, 3, 4, 5]
-    })
+    df = pd.DataFrame(
+        {
+            "symbol": ["BTCUSDT"] * 5,
+            "close_datetime": pd.date_range("2026-06-15", periods=5),
+            "volume": [100, 200, 300, 400, 500],
+            "open": [1, 2, 3, 4, 5],
+            "close": [1, 2, 3, 4, 5],
+        }
+    )
     callbacks._full_df = df
     fig = callbacks.update_volume("BTCUSDT", None)
-    assert isinstance(fig, dict)    # changed to dict
+    assert isinstance(fig, dict)  # changed to dict
     assert len(fig["data"]) > 0
 
 
 def test_update_volatility_returns_figure():
-    df = pd.DataFrame({
-        "close_datetime": pd.date_range("2026-06-15", periods = 5),
-        "close": [1, 2, 3, 4, 5],
-        "high": [2, 3, 4, 5, 6],
-        "low": [0, 1, 2, 3, 4]
-    })
+    df = pd.DataFrame(
+        {
+            "close_datetime": pd.date_range("2026-06-15", periods=5),
+            "close": [1, 2, 3, 4, 5],
+            "high": [2, 3, 4, 5, 6],
+            "low": [0, 1, 2, 3, 4],
+        }
+    )
     callbacks._full_df = df
     # need to mock _filtered_dataframe_or_empty to return df for both pairs
-    with patch("api_user.visualization.callbacks._filtered_dataframe_or_empty") as mock_filter:
+    with patch(
+        "api_user.visualization.callbacks._filtered_dataframe_or_empty"
+    ) as mock_filter:
         mock_filter.side_effect = [df, df]  # BTCUSDT, ETHUSDT
         fig = callbacks.update_volatility(14, None, None)
     assert isinstance(fig, dict)
@@ -280,7 +294,7 @@ def test_update_volatility_returns_figure():
 def test_register_callbacks_smoke():
     app = MagicMock()
     with patch(
-        "api_user.visualization.data_store.prepare_data", return_value = pd.DataFrame()
+        "api_user.visualization.data_store.prepare_data", return_value=pd.DataFrame()
     ):
         callbacks.register_callbacks(app)
     # no exception equals success

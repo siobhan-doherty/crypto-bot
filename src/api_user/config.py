@@ -8,9 +8,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     API_BASE_URL: str = "http://fastapi:8000/api"
 
-    model_config = SettingsConfigDict(
-        env_file = ".env", 
-        extra = "ignore"
-    )
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
 
 settings = Settings()

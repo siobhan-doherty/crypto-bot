@@ -19,8 +19,7 @@ async def client():
     deps._client = None
     app.dependency_overrides.clear()
     async with AsyncClient(
-        transport = ASGITransport(app = app), 
-        base_url = "http://test"
+        transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
         yield client
     app.dependency_overrides.clear()
@@ -29,7 +28,7 @@ async def client():
 
 def create_mock_client_with_data():
     client = mongomock.MongoClient()
-    client.server_info = MagicMock(return_value = {"ok": 1})
+    client.server_info = MagicMock(return_value={"ok": 1})
     return client, client.cryptobot, client.cryptobot.historical_data_15m
 
 
@@ -47,7 +46,7 @@ async def test_root_endpoint(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_health_endpoint(client: AsyncClient):
     mock_client, _, _ = create_mock_client_with_data()
-    with patch.object(health_routes, "get_mongo_client", return_value = mock_client):
+    with patch.object(health_routes, "get_mongo_client", return_value=mock_client):
         response = await client.get("/api/health")
     assert response.status_code == 200
     assert response.json() == {"status": "healthy", "database": "connected"}
@@ -62,8 +61,10 @@ async def test_invalid_endpoint(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_get_ohlcv_filters_by_symbol(client: AsyncClient):
     mock_client, _, collection = create_mock_client_with_data()
-    open_time = int(datetime(2023, 1, 1, 0, 0, tzinfo = timezone.utc).timestamp() * 1000)
-    close_time = int(datetime(2023, 1, 1, 0, 15, tzinfo = timezone.utc).timestamp() * 1000)
+    open_time = int(datetime(2023, 1, 1, 0, 0, tzinfo=timezone.utc).timestamp() * 1000)
+    close_time = int(
+        datetime(2023, 1, 1, 0, 15, tzinfo=timezone.utc).timestamp() * 1000
+    )
 
     collection.insert_one(
         {
@@ -97,7 +98,7 @@ async def test_get_ohlcv_filters_by_symbol(client: AsyncClient):
 async def test_get_date_range(client: AsyncClient):
     mock_client, _, collection = create_mock_client_with_data()
     now = datetime.now(timezone.utc)
-    week_ago = now - timedelta(days = 7)
+    week_ago = now - timedelta(days=7)
 
     collection.insert_one({"open_time": int(week_ago.timestamp() * 1000)})
     collection.insert_one({"open_time": int(now.timestamp() * 1000)})
