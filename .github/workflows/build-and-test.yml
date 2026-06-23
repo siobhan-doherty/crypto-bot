@@ -91,9 +91,10 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
 
+      # create required .env files for CI
       - name: Create .env files for CI
         run: |
-          # Root .env
+          # Root .env (used by Airflow and compose variable interpolation)
           cat > .env << EOF
           AIRFLOW_ADMIN_USERNAME=admin
           AIRFLOW_ADMIN_PASSWORD=admin
@@ -110,7 +111,7 @@ jobs:
           AIRFLOW_UID=50000
           EOF
 
-          # collection_admin .env
+          # collection_admin .env (used by data_collector, producer, consumer)
           mkdir -p src/collection_admin
           cat > src/collection_admin/.env << EOF
           MONGO_URI=mongodb://admin:password123@crypto_mongo:27017/cryptobot?authSource=admin
@@ -118,7 +119,7 @@ jobs:
           BINANCE_SECRET_KEY=dummy_secret
           EOF
 
-          # api_user .env
+          # api_user .env (used by fastapi, dash)
           mkdir -p src/api_user
           cat > src/api_user/.env << EOF
           MONGO_URI=mongodb://admin:password123@crypto_mongo:27017/cryptobot?authSource=admin
@@ -130,6 +131,7 @@ jobs:
       - name: Start full stack
         run: docker compose up -d --wait
 
+      # wait for Airflow to be ready before running tests
       - name: Wait for Airflow to be ready
         run: |
           for i in {1..30}; do
