@@ -6,6 +6,7 @@ from src.alerts.config import AlertSettings
 from src.alerts.models import PriceAlert
 from src.alerts.notifier import TelegramNotifier, HuggingFaceEnhancer
 from datetime import datetime, timedelta, timezone
+from src.exchange_wrapper import get_price
 
 logger = logging.getLogger(__name__)
 
@@ -42,9 +43,8 @@ class PriceAlertEngine:
         prices = {}
         for symbol in self.settings.symbols:
             try:
-                ticker = self.exchange.fetch_ticker(symbol)
-                prices[symbol] = ticker["last"]
-                logger.debug(f"{symbol}: {ticker['last']}")
+                prices[symbol] = get_price(symbol, exchange="binance")
+                logger.debug(f"{symbol}: {prices[symbol]}")
             except Exception as e:
                 logger.error(f"Failed to fetch {symbol}: {e}")
         return prices
