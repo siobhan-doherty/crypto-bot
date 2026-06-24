@@ -134,6 +134,16 @@ services:
       start_period: 15s
     networks: [crypto_network]
 
+  price_alerts:
+    build:
+      context: .
+      dockerfile: Dockerfile.alerts
+    container_name: crypto_price_alerts
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks: [crypto_network]
+
   dash:
     build:
       context: .

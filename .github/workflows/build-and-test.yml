@@ -125,6 +125,9 @@ jobs:
           MONGO_URI=mongodb://admin:password123@crypto_mongo:27017/cryptobot?authSource=admin
           EOF
 
+          # --- Prevent alert spam in CI ---
+          echo "ALERT_CHECK_INTERVAL_SECONDS=3600" >> .env   # check once per hour
+
       - name: Build Docker images
         run: docker compose build
 

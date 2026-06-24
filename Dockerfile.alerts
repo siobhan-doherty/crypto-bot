@@ -1,0 +1,22 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
+# copy requirements first for better caching
+COPY requirements-dev.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# copy entire src folder, so alerts module is available
+COPY src/ /app/src/
+
+# copy scripts folder
+COPY scripts/ /app/scripts/
+
+# set PYTHONPATH
+ENV PYTHONPATH=/app
+
+# run alert engine
+CMD ["python", "/app/scripts/run_alerts.py"]
