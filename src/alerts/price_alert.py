@@ -1,11 +1,9 @@
 import time
 import logging
-import ccxt
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from src.alerts.config import AlertSettings
 from src.alerts.models import PriceAlert
 from src.alerts.notifier import TelegramNotifier, HuggingFaceEnhancer
-from datetime import datetime, timedelta, timezone
 from src.exchange_wrapper import get_price
 
 logger = logging.getLogger(__name__)
@@ -14,39 +12,53 @@ logger = logging.getLogger(__name__)
 class PriceAlertEngine:
     def __init__(self, settings: AlertSettings):
         self.settings = settings
-        self.exchange = ccxt.binance()
         self.notifier = TelegramNotifier(
             settings.telegram_bot_token,
             settings.telegram_chat_id,
         )
         self.hf = HuggingFaceEnhancer(settings.hf_token, settings.hf_model)
-        self.alerts = [
-            PriceAlert(
-                symbol = s, 
-                threshold = self.settings.price_threshold_above, 
-                condition = "above"
+        
+        # build alerts from config, each alert now has its own exchange
+        self.alerts = []
+        for alert_config in self.settings.alerts:
+            self.alerts.append(
+                PriceAlert(
+                    symbol = alert_config["symbol"],
+                    exchange = alert_config.get("exchange", "binance"),
+                    threshold = alert_config["threshold"],
+                    condition = alert_config["condition"],
+                    fallback_exchanges = alert_config.get("fallback_exchanges"),
+                )
+            ) 
+
+        logger.info(f"Loaded {len(self.alerts)} alerts")
+        for alert in self.alerts:
+            logger.info(
+                f"{alert.symbol} @ {alert.exchange} {alert.condition} ${alert.threshold}"
             )
-            for s in self.settings.symbols
-        ] + [
-            PriceAlert(
-                symbol = s, 
-                threshold = self.settings.price_threshold_below, 
-                condition = "below"
-            )
-            for s in self.settings.symbols
-        ]
-        self._last_prices = {}  # symbol -> last price
 
 
     def fetch_prices(self) -> dict[str, float]:
-        """Fetch latest prices for all symbols."""
+        """Fetch latest prices for all symbols using per alert exchange configuration."""
         prices = {}
-        for symbol in self.settings.symbols:
+        for alert in self.alerts:
+            key = f"{alert.exchange}:{alert.symbol}"
+            if key in prices:
+                continue  # already fetched this symbol from this exchange
+
             try:
-                prices[symbol] = get_price(symbol, exchange="binance")
-                logger.debug(f"{symbol}: {prices[symbol]}")
+                # use alert's exchange with its fallback list
+                fallback = alert.fallback_exchanges or self.settings.default_fallback_exchanges
+                price = get_price(
+                    symbol = alert.symbol,
+                    exchange = alert.exchange,
+                    fallback_exchanges = fallback,
+                )
+                prices[key] = price
+                logger.debug(f"{key}: {price}")
             except Exception as e:
-                logger.error(f"Failed to fetch {symbol}: {e}")
+                logger.error(f"Failed to fetch {key}: {e}")
+
         return prices
 
 
@@ -57,8 +69,8 @@ class PriceAlertEngine:
         cooldown = timedelta(hours = 1)
 
         for alert in self.alerts:
-            symbol = alert.symbol
-            current = prices.get(symbol)
+            key = f"{alert.exchange}:{alert.symbol}"
+            current = prices.get(key)
             if current is None:
                 continue
 
@@ -71,7 +83,7 @@ class PriceAlertEngine:
             if triggered:
                 # check cooldown
                 if alert.last_alert_time and (now - alert.last_alert_time) < cooldown:
-                    continue   # skip, cooldown active
+                    continue
 
                 # avoid duplicate alerts for same price level
                 if alert.last_triggered_price is not None and abs(current - alert.last_triggered_price) <= 100:
@@ -82,7 +94,8 @@ class PriceAlertEngine:
 
                 msg = (
                     f"*Price Alert!*\n"
-                    f"Symbol: `{symbol}`\n"
+                    f"Symbol: `{alert.symbol}`\n"
+                    f"Exchange: `{alert.exchange}`\n"
                     f"Current: `${current:,.2f}`\n"
                     f"Threshold: `${alert.threshold:,.2f}` ({alert.condition})\n"
                     f"Time: {now.strftime('%Y-%m-%d %H:%M:%S UTC')}"

@@ -1,0 +1,19 @@
+[
+    {"symbol": "BTC/USDT", "exchange": "binance", "threshold": 70000.0, "condition": "above"},
+    {"symbol": "BTC/USDT", "exchange": "binance", "threshold": 60000.0, "condition": "below"},
+    {"symbol": "BTC/USDT", "exchange": "kraken", "threshold": 68000.0, "condition": "above"},
+    {"symbol": "BTC/USDT", "exchange": "kraken", "threshold": 62000.0, "condition": "below"},
+    {"symbol": "BTC/USDT", "exchange": "bitmex", "threshold": 69000.0, "condition": "above"},
+    {"symbol": "BTC/USDT", "exchange": "bitmex", "threshold": 61000.0, "condition": "below"},
+    {"symbol": "BTC/USDT", "exchange": "bybit", "threshold": 71000.0, "condition": "above"},
+    {"symbol": "BTC/USDT", "exchange": "bybit", "threshold": 59000.0, "condition": "below"},
+    {"symbol": "ETH/USDT", "exchange": "binance", "threshold": 4000.0, "condition": "above"},
+    {"symbol": "ETH/USDT", "exchange": "binance", "threshold": 3500.0, "condition": "below"},
+    {"symbol": "ETH/USDT", "exchange": "kraken", "threshold": 3900.0, "condition": "above"},
+    {"symbol": "ETH/USDT", "exchange": "kraken", "threshold": 3600.0, "condition": "below"},
+    {"symbol": "ETH/USDT", "exchange": "bitmex", "threshold": 4100.0, "condition": "above"},
+    {"symbol": "ETH/USDT", "exchange": "bitmex", "threshold": 3400.0, "condition": "below"},
+    {"symbol": "ETH/USDT", "exchange": "bybit", "threshold": 4200.0, "condition": "above"},
+    {"symbol": "ETH/USDT", "exchange": "bybit", "threshold": 3300.0, "condition": "below"},
+    {"symbol": "BTC/USDT", "exchange": "bitmex", "threshold": 69000.0, "condition": "above", "fallback_exchanges": ["binance", "kraken"]}
+]

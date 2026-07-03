@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import List
 
 
 class ExchangeWrapperConfig(BaseSettings):
@@ -9,11 +10,15 @@ class ExchangeWrapperConfig(BaseSettings):
     enable_cache: bool = True
     cache_ttl_seconds: int = 5   # cache price for 5 seconds to avoid redundant calls
 
-    # optional API keys, only needed for private endpoints
+    # API keys
     binance_api_key: str = ""
     binance_api_secret: str = ""
     kraken_api_key: str = ""
     kraken_api_secret: str = ""
+    bybit_api_key: str = ""
+    bybit_api_secret: str = ""
+    bitmex_api_key: str = ""
+    bitmex_api_secret: str = ""
 
     model_config = SettingsConfigDict(
         env_file = ".env",

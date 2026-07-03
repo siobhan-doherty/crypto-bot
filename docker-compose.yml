@@ -141,6 +141,8 @@ services:
     container_name: crypto_price_alerts
     env_file:
       - .env
+    volumes:
+      - ./alerts.json:/app/alerts.json:ro
     restart: unless-stopped
     networks: [crypto_network]
 

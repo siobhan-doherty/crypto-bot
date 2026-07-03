@@ -1,6 +1,5 @@
 import ccxt
 import logging
-from functools import lru_cache
 from typing import Dict, Optional
 from .config import ExchangeWrapperConfig
 from .exceptions import ExchangeConnectionError
@@ -30,7 +29,8 @@ class ExchangeFactory:
         exchange_classes = {
             "binance": ccxt.binance,
             "kraken": ccxt.kraken,
-            "coinbase": ccxt.coinbase,
+            "bitmex": ccxt.bitmex,
+            "bybit": ccxt.bybit,
         }
 
         for name, cls_ in exchange_classes.items():
@@ -47,9 +47,11 @@ class ExchangeFactory:
                 if api_key and api_secret:
                     exchange.apiKey = api_key
                     exchange.secret = api_secret
-                    # coinbase also needs passphrase
-                    if name == "coinbase":
-                        exchange.password = self.config.coinbase_passphrase
+
+                # Kraken & some exchanges may need passphrase
+                passphrase = getattr(self.config, f"{name}_passphrase", "")
+                if passphrase:
+                    exchange.password = passphrase
 
                 self._exchanges[name] = exchange
                 logger.info(f"Initialized exchange: {name}")

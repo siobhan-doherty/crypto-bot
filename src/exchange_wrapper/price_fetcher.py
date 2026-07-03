@@ -1,7 +1,6 @@
 import logging
 import time
-from functools import lru_cache
-from typing import Dict, Optional, Union
+from typing import Dict, Optional
 from .config import ExchangeWrapperConfig
 from .exchange_factory import ExchangeFactory
 from .exceptions import ExchangeConnectionError, ExchangeSymbolNotFound, ExchangeRateLimitError
@@ -10,23 +9,6 @@ logger = logging.getLogger(__name__)
 
 
 class PriceFetcher:
-    """Thread‑safe price fetcher handling retries, caching and exchange‑specific symbol mapping."""
-    # map common symbol formats to exchange-specific ones if needed
-    # CCXT usually accepts standard formats like BTC/USDT, but some exchanges differ.
-    _symbol_mapping: Dict[str, Dict[str, str]] = {
-        "binance": {
-            # no mapping needed for Binance, uses BTC/USDT
-        },
-        "kraken": {
-            # Kraken uses XBT/USD for Bitcoin but CCXT also accepts BTC/USD
-            # keep simple, CCXT handles most conversions
-        },
-        "coinbase": {
-            # coinbase uses BTC-USD for their API however CCXT accepts BTC/USD
-        },
-    }
-
-
     def __init__(self):
         self.config = ExchangeWrapperConfig()
         self.factory = ExchangeFactory.get_instance()
@@ -51,39 +33,12 @@ class PriceFetcher:
             self._cache[key] = (price, time.time())
 
 
-    @staticmethod
-    def _normalize_symbol(symbol: str) -> str:
-        """Ensure symbol uses '/' separator CCXT standard."""
-        if "/" not in symbol:
-            # assume like BTCUSDT, convert to BTC/USDT for CCXT (for prod. one may want mapping)
-            # assume inputs already in CCXT format
-            pass
-        return symbol
-
-
     def get_price(
         self,
         symbol: str,
         exchange: Optional[str] = None,
         fallback_exchanges: Optional[list[str]] = None,
     ) -> float:
-        """
-        Fetch the current price (last trade) for a symbol from the specified exchange.
-
-        Args:
-            symbol: Trading pair (e.g., "BTC/USDT", "ETH/BTC").
-            exchange: Name of the primary exchange to use (e.g., "binance").
-                    If None, uses the default from config.
-            fallback_exchanges: List of exchanges to try if the primary fails.
-                                If None, defaults to all supported exchanges (except the primary).
-
-        Returns:
-            The last price as a float.
-
-        Raises:
-            ExchangeConnectionError: If all exchange attempts fail.
-            ExchangeSymbolNotFound: If the symbol is not found on any exchange.
-        """
         if exchange is None:
             exchange = self.config.default_exchange
 
@@ -112,7 +67,8 @@ class PriceFetcher:
 
 
     def _fetch_from_exchange(self, symbol: str, exchange_name: str) -> Optional[float]:
-        """Internal method to fetch from single exchange with retries."""
+        import ccxt
+
         cache_key = f"{exchange_name}:{symbol}"
         cached = self._get_cached_price(cache_key)
         if cached is not None:
@@ -137,6 +93,7 @@ class PriceFetcher:
 
             except ccxt.BadSymbol:
                 raise ExchangeSymbolNotFound(f"Symbol {symbol} not found on {exchange_name}")
+
             except ccxt.RateLimitExceeded:
                 raise ExchangeRateLimitError(f"Rate limit exceeded on {exchange_name}")
             except ccxt.NetworkError as e:
@@ -172,15 +129,4 @@ def get_price(
         exchange: Optional[str] = None, 
         fallback_exchanges: Optional[list[str]] = None
 ) -> float:
-    """
-    Public interface to fetch price.
-
-    Example:
-        >>> price = get_price("BTC/USDT", exchange="binance")
-        >>> print(price)
-        65000.0
-
-        >>> # with fallbacks
-        >>> price = get_price("BTC/USDT", exchange="kraken", fallback_exchanges=["coinbase"])
-    """
     return _price_fetcher.get_price(symbol, exchange, fallback_exchanges)
