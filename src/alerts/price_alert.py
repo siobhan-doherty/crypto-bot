@@ -3,7 +3,8 @@ import logging
 from datetime import datetime, timedelta, timezone
 from src.alerts.config import AlertSettings
 from src.alerts.models import PriceAlert
-from src.alerts.notifier import TelegramNotifier, HuggingFaceEnhancer
+from src.alerts.notifier import TelegramNotifier
+from src.alerts.sentiment import get_sentiment_provider
 from src.exchange_wrapper import get_price
 
 logger = logging.getLogger(__name__)
@@ -16,8 +17,8 @@ class PriceAlertEngine:
             settings.telegram_bot_token,
             settings.telegram_chat_id,
         )
-        self.hf = HuggingFaceEnhancer(settings.hf_token, settings.hf_model)
-        
+        self.sentiment = get_sentiment_provider(settings)
+
         # build alerts from config, each alert now has its own exchange
         self.alerts = []
         for alert_config in self.settings.alerts:
@@ -84,7 +85,6 @@ class PriceAlertEngine:
                 # check cooldown
                 if alert.last_alert_time and (now - alert.last_alert_time) < cooldown:
                     continue
-
                 # avoid duplicate alerts for same price level
                 if alert.last_triggered_price is not None and abs(current - alert.last_triggered_price) <= 100:
                     continue
@@ -106,15 +106,12 @@ class PriceAlertEngine:
 
 
     def enhance_message(self, message: str) -> str:
-        """Optionally enrich with HF sentiment analysis."""
-        if not self.settings.hf_token:
-            return message
-
-        result = self.hf.classify(message, ["bullish", "bearish", "neutral"])
-        if result and "labels" in result:
+        result = self.sentiment.classify(message)
+        if result and result.get("labels"):
             top_label = result["labels"][0]
             top_score = result["scores"][0]
-            message += f"\n\n*Sentiment:* {top_label} ({top_score:.2f})"
+            provider = self.settings.sentiment_provider
+            message += f"\n\n*Sentiment ({provider}):* {top_label} ({top_score:.2f})"
         return message
 
 
