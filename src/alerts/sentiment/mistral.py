@@ -34,10 +34,15 @@ class MistralSentiment(SentimentProvider):
             resp = requests.post(self.base_url, json = payload, headers = headers, timeout = 10)
             resp.raise_for_status()
             data = resp.json()
+            # extract token usage if available, Mistral returns usage
+            usage = data.get("usage", {})
+            if usage:
+                logger.debug(f"Mistral token usage: {usage}")
             result = json.loads(data["choices"][0]["message"]["content"])
             return {
                 "labels": [result.get("sentiment", "neutral")],
-                "scores": [result.get("confidence", 0.5)]
+                "scores": [result.get("confidence", 0.5)],
+                "usage": usage  # pass for cost
             }
 
         except Exception as e:

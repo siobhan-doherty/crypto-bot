@@ -15,6 +15,7 @@ class AlertSettings(BaseSettings):
     sentiment_provider: str = "mistral"
     mistral_api_key: str = ""
     mistral_model: str = "open-mistral-7b"
+    enable_sentiment_fallback: bool = True
     # Alerts
     alerts_file: str = "alerts.json"
     check_interval_seconds: int = 60

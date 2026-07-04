@@ -3,7 +3,6 @@
     {"symbol": "BTC/USDT", "exchange": "binance", "threshold": 60000.0, "condition": "below"},
     {"symbol": "BTC/USDT", "exchange": "kraken", "threshold": 68000.0, "condition": "above"},
     {"symbol": "BTC/USDT", "exchange": "kraken", "threshold": 62000.0, "condition": "below"},
-    {"symbol": "BTC/USDT", "exchange": "bitmex", "threshold": 69000.0, "condition": "above"},
     {"symbol": "BTC/USDT", "exchange": "bitmex", "threshold": 61000.0, "condition": "below"},
     {"symbol": "BTC/USDT", "exchange": "bybit", "threshold": 71000.0, "condition": "above"},
     {"symbol": "BTC/USDT", "exchange": "bybit", "threshold": 59000.0, "condition": "below"},

@@ -5,6 +5,7 @@ from src.alerts.config import AlertSettings
 from src.alerts.models import PriceAlert
 from src.alerts.notifier import TelegramNotifier
 from src.alerts.sentiment import get_sentiment_provider
+from src.alerts.sentiment.huggingface import HuggingFaceSentiment
 from src.exchange_wrapper import get_price
 
 logger = logging.getLogger(__name__)
@@ -17,9 +18,17 @@ class PriceAlertEngine:
             settings.telegram_bot_token,
             settings.telegram_chat_id,
         )
+        # primary sentiment provider, Mistral or HugginFace
         self.sentiment = get_sentiment_provider(settings)
+        # secondary HF for fallback
+        self.hf_sentiment = HuggingFaceSentiment(settings.hf_token, settings.hf_model)
+        # cost tracking
+        self.cost_tracker = {
+            "mistral": {"requests": 0, "tokens": 0, "cost": 0.0},
+            "huggingface": {"requests": 0, "tokens": 0, "cost": 0.0},
+        }
 
-        # build alerts from config, each alert now has its own exchange
+        # build alerts
         self.alerts = []
         for alert_config in self.settings.alerts:
             self.alerts.append(
@@ -48,7 +57,6 @@ class PriceAlertEngine:
                 continue  # already fetched this symbol from this exchange
 
             try:
-                # use alert's exchange with its fallback list
                 fallback = alert.fallback_exchanges or self.settings.default_fallback_exchanges
                 price = get_price(
                     symbol = alert.symbol,
@@ -106,13 +114,65 @@ class PriceAlertEngine:
 
 
     def enhance_message(self, message: str) -> str:
+        # try primary provider with latency tracking
+        start = time.time()
         result = self.sentiment.classify(message)
+        elapsed = time.time() - start
+        provider = self.settings.sentiment_provider.lower()
+
         if result and result.get("labels"):
-            top_label = result["labels"][0]
-            top_score = result["scores"][0]
-            provider = self.settings.sentiment_provider
-            message += f"\n\n*Sentiment ({provider}):* {top_label} ({top_score:.2f})"
+            # success log latency & track cost
+            logger.info(f"Sentiment ({provider}) took {elapsed:.2f}s")
+            self._track_cost(provider, message, success = True)
+        else:
+            # primary failed, check if fallback is enabled
+            if self.settings.enable_sentiment_fallback:
+                logger.warning(f"{provider} failed, falling back to Hugging Face")
+                start = time.time()
+                result = self.hf_sentiment.classify(message)
+                elapsed = time.time() - start
+                provider = "huggingface"
+                if result and result.get("labels"):
+                    logger.info(f"Sentiment ({provider}) took {elapsed:.2f}s (fallback)")
+                    self._track_cost(provider, message, success = True)
+                else:
+                    logger.error("Both sentiment providers failed")
+                    return message  # no sentiment added
+            else:
+                # fallback disabled, log error & return original message
+                logger.error(f"Sentiment provider {provider} failed and fallback is disabled")
+                return message
+
+        # add sentiment to message
+        top_label = result["labels"][0]
+        top_score = result["scores"][0]
+        message += f"\n\n *Sentiment ({provider}):* {top_label} ({top_score:.2f})"
         return message
+
+
+    def _track_cost(self, provider: str, text: str, success: bool):
+        """Estimate token usage & accumulate cost."""
+        # rough estimate: 1 token ≈ 4 characters, very approx.
+        tokens = len(text) // 4
+        self.cost_tracker[provider]["requests"] += 1
+        self.cost_tracker[provider]["tokens"] += tokens
+
+        # mock pricing, per 1M tokens, adjust based on actual API
+        pricing = {
+            "mistral": 0.20,      # $0.20 per 1M tokens for small model
+            "huggingface": 0.0,   # free
+        }
+        cost = (tokens / 1_000_000) * pricing.get(provider, 0)
+        self.cost_tracker[provider]["cost"] += cost
+
+        # log cost summary every 10 requests
+        if self.cost_tracker[provider]["requests"] % 10 == 0:
+            logger.info(
+                f"Cost summary ({provider}): "
+                f"{self.cost_tracker[provider]['requests']} requests, "
+                f"{self.cost_tracker[provider]['tokens']} tokens, "
+                f"${self.cost_tracker[provider]['cost']:.4f}"
+            )
 
 
     def run_once(self) -> None:
