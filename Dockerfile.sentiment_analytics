@@ -1,0 +1,26 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
+# copy requirements
+COPY requirements-dev.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# install additional packages for analytics
+RUN pip install --no-cache-dir pymongo pandas scipy scikit-learn numpy
+
+# copy source
+COPY src/ /app/src/
+COPY scripts/ /app/scripts/
+
+# set env
+ENV PYTHONPATH=/app
+
+# health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8003/health || exit 1
+
+CMD ["python", "/app/scripts/sentiment_analytics_cli.py", "--symbol", "BTC/USDT", "--days", "30", "--action", "correlation"]

@@ -4,11 +4,14 @@ import pandas as pd
 from datetime import datetime, timedelta, timezone
 from src.alerts.config import AlertSettings
 from src.alerts.models import PriceAlert
+from src.alerts.models.sentiment import SentimentResult, SentimentRecord
 from src.alerts.notifier import TelegramNotifier
 from src.alerts.sentiment import get_sentiment_provider
 from src.alerts.sentiment.huggingface import HuggingFaceSentiment
-from src.exchange_wrapper import get_price
+from src.alerts.repositories.sentiment_repository import SentimentRepository
 from src.pattern_analytics.pattern_detector import PatternDetector
+from src.exchange_wrapper import get_price
+from typing import Optional, List, Dict, Any
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +32,11 @@ class PriceAlertEngine:
             "mistral": {"requests": 0, "tokens": 0, "cost": 0.0},
             "huggingface": {"requests": 0, "tokens": 0, "cost": 0.0},
         }
+        # Sentiment repository for historical storage
+        self.sentiment_repo = SentimentRepository(
+            mongo_uri = settings.mongo_uri or "mongodb://localhost:27017",
+            retention_seconds = settings.sentiment_retention_seconds,
+        )
         # build alerts
         self.alerts = []
         for alert_config in self.settings.alerts:
@@ -40,13 +48,13 @@ class PriceAlertEngine:
                     condition = alert_config["condition"],
                     fallback_exchanges = alert_config.get("fallback_exchanges"),
                 )
-            ) 
+            )
         logger.info(f"Loaded {len(self.alerts)} alerts")
         for alert in self.alerts:
             logger.info(
                 f"{alert.symbol} @ {alert.exchange} {alert.condition} ${alert.threshold}"
             )
-        
+
         self.pattern_detector = PatternDetector()
 
 
@@ -76,7 +84,7 @@ class PriceAlertEngine:
         """Evaluate all alerts and return list of messages."""
         messages = []
         now = datetime.now(timezone.utc)
-        cooldown = timedelta(hours = 1)
+        cooldown = timedelta(hours=1)
         for alert in self.alerts:
             key = f"{alert.exchange}:{alert.symbol}"
             current = prices.get(key)
@@ -111,40 +119,92 @@ class PriceAlertEngine:
         return messages
 
 
-    def enhance_message(self, message: str) -> str:
+    def enhance_message_with_sentiment(self, message: str, symbol: str, price: float, exchange: str) -> tuple[str, Optional[SentimentResult]]:
+        """
+        Enhance message with sentiment analysis and store the sentiment.
+        Returns:
+            Tuple of (enhanced_message, sentiment_result)
+        """
         # try primary provider with latency tracking
         start = time.time()
-        result = self.sentiment.classify(message)
+        result_data = self.sentiment.classify(message)
         elapsed = time.time() - start
         provider = self.settings.sentiment_provider.lower()
-        if result and result.get("labels"):
+        
+        sentiment_result = None
+        if result_data and result_data.get("labels"):
             # success log latency & track cost
             logger.info(f"Sentiment ({provider}) took {elapsed:.2f}s")
-            self._track_cost(provider, message, success = True)
+            self._track_cost(provider, message, success=True)
+            sentiment_result = SentimentResult(
+                labels = result_data["labels"],
+                scores = result_data["scores"],
+                text = message,
+                provider = provider,
+            )
         else:
             # primary failed, check if fallback is enabled
             if self.settings.enable_sentiment_fallback:
                 logger.warning(f"{provider} failed, falling back to Hugging Face")
                 start = time.time()
-                result = self.hf_sentiment.classify(message)
+                result_data = self.hf_sentiment.classify(message)
                 elapsed = time.time() - start
                 provider = "huggingface"
-                if result and result.get("labels"):
+                if result_data and result_data.get("labels"):
                     logger.info(f"Sentiment ({provider}) took {elapsed:.2f}s (fallback)")
-                    self._track_cost(provider, message, success = True)
+                    self._track_cost(provider, message, success=True)
+                    sentiment_result = SentimentResult(
+                        labels = result_data["labels"],
+                        scores = result_data["scores"],
+                        text = message,
+                        provider = provider,
+                    )
                 else:
                     logger.error("Both sentiment providers failed")
-                    return message  # no sentiment added
             else:
-                # fallback disabled, log error & return original message
+                # fallback disabled, log error
                 logger.error(f"Sentiment provider {provider} failed and fallback is disabled")
-                return message
 
-        # add sentiment to message
-        top_label = result["labels"][0]
-        top_score = result["scores"][0]
-        message += f"\n\n *Sentiment ({provider}):* {top_label} ({top_score:.2f})"
-        return message
+        # store sentiment in MongoDB if we got a result
+        if sentiment_result:
+            try:
+                self.sentiment_repo.store_sentiment(
+                    symbol = symbol,
+                    sentiment_label = sentiment_result.top_label or "neutral",
+                    confidence = sentiment_result.top_confidence or 0.0,
+                    text = message,
+                    provider = sentiment_result.provider,
+                    price = price,
+                    exchange = exchange,
+                    timestamp = datetime.now(timezone.utc),
+                    additional_metadata = {
+                        "alert_condition": "unknown",  # can be enhanced
+                        "all_labels": sentiment_result.labels,
+                        "all_scores": sentiment_result.scores,
+                    },
+                )
+                logger.debug(f"Stored sentiment for {symbol} @ {price}")
+            except Exception as e:
+                logger.error(f"Failed to store sentiment: {e}")
+
+        # Add sentiment to message
+        if sentiment_result:
+            top_label = sentiment_result.top_label
+            top_score = sentiment_result.top_confidence
+            message += f"\n\n *Sentiment ({provider}):* {top_label} ({top_score:.2f})"
+        
+        return message, sentiment_result
+
+
+    def enhance_message(self, message: str) -> str:
+        """
+        Legacy method - kept for backward compatibility.
+        This version doesn't store sentiment.
+        """
+        result = self.enhance_message_with_sentiment(
+            message, symbol = "unknown", price = 0.0, exchange = "unknown"
+        )
+        return result[0]
 
 
     def _track_cost(self, provider: str, text: str, success: bool):
@@ -168,7 +228,6 @@ class PriceAlertEngine:
                 f"${self.cost_tracker[provider]['cost']:.4f}"
             )
 
-
     def run_once(self) -> None:
         """single alert check cycle."""
         prices = self.fetch_prices()
@@ -180,24 +239,33 @@ class PriceAlertEngine:
         for msg in raw_messages:
             # extract symbol from message
             symbol = None
+            price = None
+            exchange = None
             for alert in self.alerts:
                 if alert.symbol in msg:
                     symbol = alert.symbol
+                    price_key = f"{alert.exchange}:{alert.symbol}"
+                    price = prices.get(price_key)
+                    exchange = alert.exchange
                     break
 
-            if symbol:
+            if symbol and price is not None:
                 # fetch price history for this symbol
                 df = self._get_price_history(symbol)
                 if df is not None:
                     pattern_info = self.pattern_detector.detect(df)
                     msg = self.pattern_detector.add_pattern_context_to_alert(msg, pattern_info)
-            enhanced = self.enhance_message(msg)
-            self.notifier.send(enhanced)
+
+            # use new method that stores sentiment
+            enhanced_msg, _ = self.enhance_message_with_sentiment(
+                msg, symbol = symbol or "unknown", price = price or 0.0, exchange = exchange or "unknown"
+            )
+            self.notifier.send(enhanced_msg)
 
 
     def run_forever(self) -> None:
         """main loop, runs every check_interval_seconds."""
-        logger.info("Price Alert Engine started")
+        logger.info("Price Alert Engine started with sentiment history storage")
         while True:
             try:
                 self.run_once()
@@ -214,6 +282,7 @@ class PriceAlertEngine:
         import ccxt
         import pandas as pd
 
+
         exchange = ccxt.binance()
         try:
             ohlcv = exchange.fetch_ohlcv(symbol, timeframe = timeframe, limit = limit)
@@ -222,7 +291,7 @@ class PriceAlertEngine:
 
             df = pd.DataFrame(
                 ohlcv,
-                columns = ["timestamp", "open", "high", "low", "close", "volume"]
+                columns = ["timestamp", "open", "high", "low", "close", "volume"],
             )
             df["timestamp"] = pd.to_datetime(df["timestamp"], unit = "ms")
             return df

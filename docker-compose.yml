@@ -44,6 +44,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    command: mongod --bind_ip_all
     networks: [crypto_network]
 
   data_collector:
@@ -285,6 +286,25 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  sentiment_analytics:
+    build:
+      context: .
+      dockerfile: Dockerfile.sentiment_analytics
+    container_name: crypto_sentiment_analytics
+    env_file:
+      - .env
+    environment:
+      MONGO_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/cryptobot?authSource=admin
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks: [crypto_network]
 
 volumes:
   postgres_data:  # named volume for Postgres data persistence
