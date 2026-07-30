@@ -234,12 +234,18 @@ services:
       - .env
     environment:
       - DATA_COLLECTOR_CONTAINER=crypto_data_collector
+      - ALERTS_CONTAINER=crypto_price_alerts
       - INIT_HISTORICAL_SCRIPT=/app/src/collection_admin/data/initialize_historical_data.py
       - UPDATE_HISTORICAL_SCRIPT=/app/src/collection_admin/data/update_historical_data.py
+      - ALERTS_SCRIPT="/app/scripts/run_alerts.py --once"
+      - PYTHONPATH=/opt/airflow/src:/app
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
+      - ./src:/opt/airflow/src:ro
       - ./src/collection_admin/data:/app/data
+      - ./scripts:/app/scripts:ro
+      - ./alerts.json:/app/alerts.json:ro
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "8080:8080"
@@ -267,11 +273,18 @@ services:
       - .env
     environment:
       - DATA_COLLECTOR_CONTAINER=crypto_data_collector
+      - ALERTS_CONTAINER=crypto_price_alerts
       - INIT_HISTORICAL_SCRIPT=/app/src/collection_admin/data/initialize_historical_data.py
       - UPDATE_HISTORICAL_SCRIPT=/app/src/collection_admin/data/update_historical_data.py
+      - ALERTS_SCRIPT="/app/scripts/run_alerts.py --once"
+      - PYTHONPATH=/opt/airflow/src:/app
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
+      - ./src:/opt/airflow/src:ro
+      - ./src/collection_admin/data:/app/data
+      - ./scripts:/app/scripts:ro
+      - ./alerts.json:/app/alerts.json:ro
       - /var/run/docker.sock:/var/run/docker.sock
     command: scheduler
     networks:

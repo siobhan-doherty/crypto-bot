@@ -1,5 +1,4 @@
 import sys
-
 import pytest
 from airflow.models import DagBag
 
@@ -10,7 +9,7 @@ if DAGS_DIR not in sys.path:
 
 @pytest.fixture
 def dag_bag():
-    return DagBag(dag_folder=DAGS_DIR, include_examples=False)
+    return DagBag(dag_folder = DAGS_DIR, include_examples = False)
 
 
 def test_no_import_errors(dag_bag):
@@ -19,7 +18,7 @@ def test_no_import_errors(dag_bag):
 
 def test_max_active_runs_not_one(dag_bag):
     """Prevent a single DAG run from blocking all others"""
-    # list actual DAG IDs
+    # list actual DAG IDs, price_alerts has max_active_runs=1 by design (prevent overlap)
     dag_ids = ["update_historical_data", "initialize_historical_data"]
     for dag_id in dag_ids:
         dag = dag_bag.dags.get(dag_id)
