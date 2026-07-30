@@ -25,7 +25,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install isort black mypy bandit ruff pytest pytest-cov
           pip install -r requirements-dev.txt
-          pip install -r requirements-test.txt
 
       - name: Check import order with isort
         run: isort --check-only --profile black src/ tests/
@@ -73,7 +72,6 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements-dev.txt
-          pip install -r requirements-test.txt
 
       - name: Build required images
         run: |
@@ -96,7 +94,6 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements-dev.txt
-          pip install -r requirements-test.txt
 
       # create required .env files for CI
       - name: Create .env files for CI
