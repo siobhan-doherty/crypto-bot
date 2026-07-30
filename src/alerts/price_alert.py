@@ -84,7 +84,7 @@ class PriceAlertEngine:
         """Evaluate all alerts and return list of messages."""
         messages = []
         now = datetime.now(timezone.utc)
-        cooldown = timedelta(hours=1)
+        cooldown = timedelta(hours = 1)
         for alert in self.alerts:
             key = f"{alert.exchange}:{alert.symbol}"
             current = prices.get(key)
@@ -130,12 +130,11 @@ class PriceAlertEngine:
         result_data = self.sentiment.classify(message)
         elapsed = time.time() - start
         provider = self.settings.sentiment_provider.lower()
-        
         sentiment_result = None
         if result_data and result_data.get("labels"):
             # success log latency & track cost
             logger.info(f"Sentiment ({provider}) took {elapsed:.2f}s")
-            self._track_cost(provider, message, success=True)
+            self._track_cost(provider, message, success = True)
             sentiment_result = SentimentResult(
                 labels = result_data["labels"],
                 scores = result_data["scores"],
@@ -152,7 +151,7 @@ class PriceAlertEngine:
                 provider = "huggingface"
                 if result_data and result_data.get("labels"):
                     logger.info(f"Sentiment ({provider}) took {elapsed:.2f}s (fallback)")
-                    self._track_cost(provider, message, success=True)
+                    self._track_cost(provider, message, success = True)
                     sentiment_result = SentimentResult(
                         labels = result_data["labels"],
                         scores = result_data["scores"],
@@ -250,8 +249,8 @@ class PriceAlertEngine:
                     break
 
             if symbol and price is not None:
-                # fetch price history for this symbol
-                df = self._get_price_history(symbol)
+                # fetch price history for this symbol from the alert's exchange
+                df = self._get_price_history(symbol, exchange = exchange)
                 if df is not None:
                     pattern_info = self.pattern_detector.detect(df)
                     msg = self.pattern_detector.add_pattern_context_to_alert(msg, pattern_info)
@@ -274,18 +273,22 @@ class PriceAlertEngine:
             time.sleep(self.settings.check_interval_seconds)
 
 
-    def _get_price_history(self, symbol: str, timeframe: str = "1m", limit: int = 60) -> pd.DataFrame:
+    def _get_price_history(self, symbol: str, exchange: Optional[str] = None, timeframe: str = "1m", limit: int = 60) -> pd.DataFrame:
         """
-        Fetch recent OHLCV data for symbol using CCXT.
+        Fetch recent OHLCV data for symbol using the exchange wrapper.
         Returns DataFrame with columns timestamp, open, high, low, close, volume.
+        Uses the provided exchange or defaults to binance.
         """
-        import ccxt
         import pandas as pd
+        from src.exchange_wrapper.exchange_factory import ExchangeFactory
 
+        if exchange is None:
+            exchange = "binance"
 
-        exchange = ccxt.binance()
         try:
-            ohlcv = exchange.fetch_ohlcv(symbol, timeframe = timeframe, limit = limit)
+            factory = ExchangeFactory.get_instance()
+            exchange_obj = factory.get_exchange(exchange)
+            ohlcv = exchange_obj.fetch_ohlcv(symbol, timeframe = timeframe, limit = limit)
             if not ohlcv:
                 return None
 
@@ -297,5 +300,5 @@ class PriceAlertEngine:
             return df
 
         except Exception as e:
-            logger.error(f"Failed to fetch historical data for {symbol}: {e}")
+            logger.error(f"Failed to fetch historical data for {symbol} from {exchange}: {e}")
             return None
