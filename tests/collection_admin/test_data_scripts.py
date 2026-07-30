@@ -1,19 +1,17 @@
+import pytest
 from unittest.mock import patch
 
-import pytest
 
-
-# tests for initialize_historical_data.py
-@pytest.mark.skip(reason="Patching path needs refactoring; script is low-priority")
-@patch("collection_admin.data.initialize_historical_data.save_to_collection")
-@patch("collection_admin.data.initialize_historical_data.requests.get")
-def test_initialize_historical_data_success(mock_get, mock_save):
+# tests for initialize_historical_data.py, requires pyspark which is a heavy dependency
+@pytest.mark.skip(reason = "Requires pyspark which is not installed in test environment")
+def test_initialize_historical_data_success():
+    """Test initialize_historical_data with mocked requests and MongoDB."""
     pass
 
 
-@pytest.mark.skip(reason="Patching path needs refactoring; script is low-priority")
-@patch("collection_admin.data.initialize_historical_data.requests.get")
-def test_initialize_historical_data_api_failure(mock_get):
+@pytest.mark.skip(reason = "Requires pyspark which is not installed in test environment")
+def test_initialize_historical_data_api_failure():
+    """Test initialize_historical_data with API failure."""
     pass
 
 

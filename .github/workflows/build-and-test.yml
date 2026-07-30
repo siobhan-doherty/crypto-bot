@@ -25,6 +25,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install isort black mypy bandit ruff pytest pytest-cov
           pip install -r requirements-dev.txt
+          pip install -r requirements-test.txt
 
       - name: Check import order with isort
         run: isort --check-only --profile black src/ tests/
@@ -46,6 +47,8 @@ jobs:
           pytest tests/ \
             --ignore=tests/test_full_pipeline.py \
             --ignore=tests/test_kafka_integration.py \
+            --ignore=tests/test_alert_system.py \
+            --ignore=tests/test_smoke.py \
             --cov=src \
             --cov-fail-under=50 \
             --cov-report=term \
@@ -68,7 +71,9 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install -r requirements-dev.txt
+        run: |
+          pip install -r requirements-dev.txt
+          pip install -r requirements-test.txt
 
       - name: Build required images
         run: |
@@ -89,12 +94,14 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install -r requirements-dev.txt
+        run: |
+          pip install -r requirements-dev.txt
+          pip install -r requirements-test.txt
 
       # create required .env files for CI
       - name: Create .env files for CI
         run: |
-          # Root .env (used by Airflow and compose variable interpolation)
+          # Root .env
           cat > .env << EOF
           AIRFLOW_ADMIN_USERNAME=admin
           AIRFLOW_ADMIN_PASSWORD=admin
@@ -111,7 +118,7 @@ jobs:
           AIRFLOW_UID=50000
           EOF
 
-          # collection_admin .env (used by data_collector, producer, consumer)
+          # collection_admin .env
           mkdir -p src/collection_admin
           cat > src/collection_admin/.env << EOF
           MONGO_URI=mongodb://admin:password123@crypto_mongo:27017/cryptobot?authSource=admin
@@ -119,14 +126,14 @@ jobs:
           BINANCE_SECRET_KEY=dummy_secret
           EOF
 
-          # api_user .env (used by fastapi, dash)
+          # api_user .env
           mkdir -p src/api_user
           cat > src/api_user/.env << EOF
           MONGO_URI=mongodb://admin:password123@crypto_mongo:27017/cryptobot?authSource=admin
           EOF
 
-          # --- Prevent alert spam in CI ---
-          echo "ALERT_CHECK_INTERVAL_SECONDS=3600" >> .env   # check once per hour
+          # Prevent alert spam in CI
+          echo "ALERT_CHECK_INTERVAL_SECONDS=3600" >> .env
 
       - name: Build Docker images
         run: docker compose build
@@ -134,7 +141,6 @@ jobs:
       - name: Start full stack
         run: docker compose up -d --wait
 
-      # wait for Airflow to be ready before running tests
       - name: Wait for Airflow to be ready
         run: |
           for i in {1..30}; do

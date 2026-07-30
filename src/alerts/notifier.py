@@ -13,6 +13,10 @@ class TelegramNotifier:
 
     def send(self, message: str) -> bool:
         """Send a plain text message via Telegram."""
+        if not message or not message.strip():
+            return False
+        
+        message = message[:4096]
         try:
             resp = requests.post(
                 self.api_url,
@@ -22,6 +26,7 @@ class TelegramNotifier:
             resp.raise_for_status()
             logger.info(f"Telegram alert sent: {message[:50]}...")
             return True
+
         except Exception as e:
             logger.error(f"Telegram send failed: {e}")
             return False
